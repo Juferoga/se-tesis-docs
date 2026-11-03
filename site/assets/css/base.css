@@ -1,0 +1,138 @@
+/* Recorrido guiado: barra superior con las etapas, y en cada etapa una narración por pasos (izquierda) junto a la escena interactiva (derecha). */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #18202b;
+  --muted: #5b6573;
+  --line: #dde2e8;
+  --soft: #eef1f5;
+  --key: #0b66b8;      /* clave K */
+  --key-soft: #e3eefa;
+  --ciph: #2f7d3a;     /* secuencias del cifrado */
+  --ciph-soft: #e6f2e7;
+  --pos: #c0581a;      /* secuencia de posiciones y audio */
+  --pos-soft: #fbece2;
+  --net: #6b46c1;      /* red neuronal */
+  --net-soft: #efeafb;
+  --hash: #4a5361;     /* SHA-512 */
+  --ok: #2f7d3a;
+  --bad: #b3261e;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --s-1: .8125rem; --s0: 1.0625rem; --s1: 1.25rem; --s2: 1.6rem; --s3: 2.3rem;
+  --r: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151b; --surface: #181d25; --ink: #e6e9ee; --muted: #9aa4b2; --line: #2b323d; --soft: #1f252e;
+    --key: #5aa6ee; --key-soft: #15283c; --ciph: #6cc078; --ciph-soft: #16291a; --pos: #f08a4b; --pos-soft: #33210f;
+    --net: #a88bf0; --net-soft: #241c3a; --hash: #a7b0bd; --ok: #6cc078; --bad: #f2867e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151b; --surface: #181d25; --ink: #e6e9ee; --muted: #9aa4b2; --line: #2b323d; --soft: #1f252e;
+  --key: #5aa6ee; --key-soft: #15283c; --ciph: #6cc078; --ciph-soft: #16291a; --pos: #f08a4b; --pos-soft: #33210f;
+  --net: #a88bf0; --net-soft: #241c3a; --hash: #a7b0bd; --ok: #6cc078; --bad: #f2867e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 var(--s0)/1.6 var(--f-body); }
+a { color: var(--key); }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--key); outline-offset: 2px; }
+
+/* Barra superior con las etapas */
+.barra { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
+.barra-in { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: .6rem; display: flex; gap: 1rem; align-items: center; }
+.marca { font: 700 1rem/1.1 var(--f-display); color: var(--ink); text-decoration: none; white-space: nowrap; }
+.etapas { display: flex; gap: .25rem; overflow-x: auto; scrollbar-width: none; margin-left: auto; }
+.etapas::-webkit-scrollbar { display: none; }
+.etapas a { display: flex; align-items: center; gap: .4rem; padding: .35rem .6rem; border-radius: 999px; font-size: var(--s-1); color: var(--muted); text-decoration: none; white-space: nowrap; }
+.etapas a b { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 50%; background: var(--soft); color: var(--ink); font: 600 .72rem/1 var(--f-mono); }
+.etapas a:hover { color: var(--ink); background: var(--soft); }
+.etapas a[aria-current="page"] { color: var(--ink); background: var(--soft); font-weight: 600; }
+.etapas a[aria-current="page"] b { background: var(--ink); color: var(--surface); }
+.tema { margin-left: .25rem; }
+
+/* Contenedor general */
+.pagina { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 2rem 4rem; }
+.cabeza { display: grid; gap: .5rem; margin-bottom: 1.5rem; max-width: 72ch; }
+.cabeza h1 { font: 700 clamp(1.8rem, 4vw, 2.7rem)/1.1 var(--f-display); margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+.cabeza p { margin: 0; color: var(--muted); font-size: var(--s1); }
+.eyebrow { font: 600 var(--s-1)/1.2 var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+[data-rol="key"] .eyebrow { color: var(--key); }
+[data-rol="ciph"] .eyebrow { color: var(--ciph); }
+[data-rol="pos"] .eyebrow { color: var(--pos); }
+[data-rol="net"] .eyebrow { color: var(--net); }
+
+/* Recorrido por pasos: narración + escena */
+.recorrido { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 1.5rem; align-items: start; }
+@media (max-width: 960px) { .recorrido { grid-template-columns: minmax(0, 1fr); } }
+.narracion { position: sticky; top: 4.5rem; display: grid; gap: 1rem; min-width: 0; }
+@media (max-width: 960px) { .narracion { position: static; order: 2; } }
+.escena { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 1rem; min-width: 0; min-height: 420px; display: grid; gap: 1rem; align-content: start; }
+.escena .lienzo { width: 100%; aspect-ratio: 4 / 3; max-width: 100%; border-radius: 8px; background: var(--soft); overflow: hidden; position: relative; }
+.escena .lienzo canvas { display: block; width: 100%; height: 100%; }
+.escena .ayuda3d { position: absolute; right: .5rem; bottom: .5rem; font-size: .75rem; color: var(--muted); background: var(--surface); padding: .2rem .45rem; border-radius: 6px; pointer-events: none; }
+
+.paso { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 1.25rem 1.35rem; }
+.paso h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: .25rem 0 .6rem; text-wrap: balance; }
+.paso p { margin: 0 0 .75rem; }
+.paso p:last-child { margin-bottom: 0; }
+.paso .analogia { border-left: 3px solid var(--key); background: var(--soft); padding: .6rem .85rem; border-radius: 0 8px 8px 0; font-size: .98rem; }
+.paso details { margin-top: .75rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+.paso details summary { cursor: pointer; font-weight: 600; color: var(--muted); font-size: var(--s-1); text-transform: uppercase; letter-spacing: .06em; }
+.paso details[open] summary { color: var(--ink); margin-bottom: .5rem; }
+
+.mando { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.mando .puntos { display: flex; gap: .35rem; flex-wrap: wrap; flex: 1; min-width: 0; }
+.mando .puntos button { width: .75rem; height: .75rem; padding: 0; border-radius: 50%; background: var(--line); border: 0; }
+.mando .puntos button[aria-current="step"] { background: var(--ink); transform: scale(1.25); }
+.mando .cuenta { font: 600 var(--s-1)/1 var(--f-mono); color: var(--muted); }
+.siguiente-etapa { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+.siguiente-etapa a { text-decoration: none; padding: .75rem 1rem; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--ink); }
+.siguiente-etapa a small { display: block; color: var(--muted); font-size: var(--s-1); }
+
+/* Piezas reutilizables */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 1.1rem 1.25rem; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 1rem; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 1rem; }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .35rem 1rem; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+.formula { font-family: var(--f-mono); font-size: .92em; background: var(--soft); border-radius: 8px; padding: .65rem .9rem; overflow-x: auto; white-space: nowrap; }
+.mono, code { font-family: var(--f-mono); font-size: .9em; }
+.num { font-variant-numeric: tabular-nums; }
+.note { font-size: var(--s-1); color: var(--muted); }
+.narra { background: var(--soft); border-radius: 8px; padding: .6rem .85rem; font-size: .95rem; }
+.narra b { color: var(--ink); }
+.controls { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: end; }
+.controls label { display: grid; gap: .25rem; font-size: var(--s-1); color: var(--muted); }
+input[type="number"], input[type="text"], select { font: 400 var(--s0) var(--f-mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: .4rem .55rem; min-width: 0; width: 11ch; }
+input[type="range"] { accent-color: var(--key); width: 100%; }
+button { font: 600 var(--s-1)/1 var(--f-body); color: var(--surface); background: var(--ink); border: 0; border-radius: 6px; padding: .6rem .9rem; cursor: pointer; }
+button.ghost { color: var(--ink); background: transparent; border: 1px solid var(--line); }
+button:disabled { opacity: .4; cursor: default; }
+.pill { display: inline-block; font: 600 .75rem/1 var(--f-mono); padding: .3rem .5rem; border-radius: 999px; background: var(--soft); color: var(--ink); }
+.pill.key { background: var(--key-soft); color: var(--key); }
+.pill.ciph { background: var(--ciph-soft); color: var(--ciph); }
+.pill.pos { background: var(--pos-soft); color: var(--pos); }
+.pill.net { background: var(--net-soft); color: var(--net); }
+.pill.ok { background: var(--ciph-soft); color: var(--ok); }
+.pill.bad { background: var(--pos-soft); color: var(--bad); }
+.bits { font-family: var(--f-mono); font-size: .85rem; letter-spacing: .04em; overflow-wrap: anywhere; }
+.scroll { overflow-x: auto; }
+table.data { border-collapse: collapse; width: 100%; font-size: .95rem; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.data th { font: 600 var(--s-1)/1.3 var(--f-body); color: var(--muted); }
+table.data td.r, table.data th.r { text-align: right; }
+.flow { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.flow .step { padding: .45rem .7rem; border-radius: 8px; background: var(--soft); font-size: .95rem; }
+.flow .arrow { color: var(--muted); }
+.resalta { animation: resalta 1.2s ease-out; }
+@keyframes resalta { from { background: var(--key-soft); } to { background: transparent; } }
+footer.pie { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 2rem; color: var(--muted); font-size: var(--s-1); border-top: 1px solid var(--line); }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>El receptor · Criptoestegoaudio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/base.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="assets/js/modelo.js"></script>
+<script type="module" src="assets/js/sitio.js"></script>
+<style>
+#rec-mapa { width: 100%; height: auto; display: block; }
+#rec-mapa .arista { fill: none; stroke: var(--line); stroke-width: 3; }
+#rec-mapa .luz { fill: none; stroke: var(--key); stroke-width: 3.5; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .7s ease; }
+#rec-mapa .luz.on { stroke-dashoffset: 0; }
+#rec-mapa .nodo rect { fill: var(--soft); stroke: var(--line); stroke-width: 1.5; transition: fill .4s, stroke .4s; }
+#rec-mapa .nodo .t1 { font: 600 13px var(--f-body); fill: var(--muted); }
+#rec-mapa .nodo .t2 { font: 400 10.5px var(--f-mono); fill: var(--muted); opacity: .45; }
+#rec-mapa .nodo.hecho rect { fill: var(--key-soft); stroke: var(--key); }
+#rec-mapa .nodo.hecho .t1 { fill: var(--ink); }
+#rec-mapa .nodo.hecho .t2 { fill: var(--key); opacity: 1; }
+#rec-mapa .nodo.actual rect { fill: var(--key); stroke: var(--key); }
+#rec-mapa .nodo.actual .t1, #rec-mapa .nodo.actual .t2 { fill: var(--surface); opacity: 1; }
+#rec-mapa .nodo.fin.hecho rect, #rec-mapa .nodo.fin.actual rect { fill: var(--ok); stroke: var(--ok); }
+#rec-mapa .nodo.fin.hecho .t1, #rec-mapa .nodo.fin.hecho .t2 { fill: var(--surface); }
+.rec-det { min-height: 15rem; display: grid; gap: .75rem; align-content: start; }
+.rec-det.entra { animation: rec-entra .45s ease-out; }
+@keyframes rec-entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.rec-det h3 { margin: 0; font: 700 1.05rem/1.3 var(--f-display); }
+.rec-tres { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: .6rem; }
+.rec-tres .card { padding: .7rem .8rem; }
+.rec-tres .card b { display: block; margin-bottom: .2rem; }
+.rec-celdas { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; }
+.rec-celda { background: var(--soft); border: 1px solid var(--line); border-radius: 4px; padding: .3rem .1rem; text-align: center; font: 600 .82rem/1.2 var(--f-mono); min-width: 0; overflow: hidden; }
+.rec-celda small { display: block; font: 400 .62rem/1.2 var(--f-mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.rec-celda.on { background: var(--key-soft); border-color: var(--key); color: var(--key); }
+.rec-celda.vacia { color: transparent; }
+.rec-xor { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; gap: .3rem .7rem; align-items: center; font: 400 .88rem/1.3 var(--f-mono); }
+.rec-xor .et { font-family: var(--f-body); color: var(--muted); font-size: .85rem; }
+.rec-xor .res { color: var(--key); font-weight: 600; }
+.rec-xor .lin { grid-column: 1 / -1; border-top: 1px solid var(--line); }
+#rec-tira { width: 100%; height: 90px; display: block; }
+.rec-int { display: grid; gap: .35rem; }
+.rec-fila { display: grid; grid-template-columns: 4.6rem minmax(0, 1fr); gap: .5rem; align-items: center; }
+.rec-fila .et { font: 600 .78rem/1.2 var(--f-mono); color: var(--muted); }
+.rec-barra { position: relative; display: flex; height: 1.9rem; border-radius: 4px; overflow: visible; }
+.rec-barra span { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; font: 400 .7rem/1 var(--f-mono); background: var(--soft); border: 1px solid var(--line); color: var(--muted); min-width: 0; }
+.rec-barra span.sel { background: var(--key); color: var(--surface); border-color: var(--key); font-weight: 600; }
+.rec-barra i { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1.5px; background: var(--ink); border-radius: 2px; }
+.rec-fila.pend { visibility: hidden; }
+.rec-maq { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: .6rem; align-items: stretch; }
+.rec-maq .card { padding: .7rem .85rem; }
+.rec-ok { display: flex; align-items: center; justify-content: center; gap: .6rem; padding: .8rem; border-radius: 8px; background: var(--ciph-soft); color: var(--ok); font: 700 1.15rem/1.2 var(--f-display); text-align: center; }
+.rec-ok.pop { animation: rec-pop .6s ease-out; }
+@keyframes rec-pop { 0% { transform: scale(.85); opacity: 0; } 70% { transform: scale(1.04); opacity: 1; } 100% { transform: none; } }
+.rec-mat { display: grid; grid-template-columns: 4.5rem repeat(4, minmax(0, 1fr)); gap: 4px; font-size: .82rem; }
+.rec-mat .h { color: var(--muted); text-align: center; align-self: end; }
+.rec-mat .h.f { text-align: left; align-self: center; }
+.rec-mat .c { display: grid; place-items: center; height: 2.1rem; border-radius: 6px; background: var(--soft); border: 1px solid var(--line); color: transparent; font-weight: 700; transition: background .3s, color .3s; }
+.rec-mat .c.on { background: var(--ciph-soft); border-color: var(--ok); color: var(--ok); }
+.rec-t { display: grid; grid-template-columns: minmax(7.5rem, max-content) minmax(0, 1fr) 4.4rem; gap: .35rem .6rem; align-items: center; font-size: .88rem; }
+.rec-t .v { text-align: right; font: 400 .82rem/1 var(--f-mono); }
+.rec-t .b { height: .8rem; border-radius: 3px; background: var(--key); min-width: 2px; transform-origin: left center; }
+.rec-t .b.red { background: var(--net); }
+.rec-t .tot { font-weight: 600; border-top: 1px solid var(--line); padding-top: .35rem; }
+.rec-ley { display: flex; gap: 1rem; flex-wrap: wrap; font-size: var(--s-1); color: var(--muted); }
+.rec-ley i { display: inline-block; width: .8rem; height: .8rem; border-radius: 2px; vertical-align: -1px; margin-right: .3rem; }
+.rec-hash { font: 400 .74rem/1.45 var(--f-mono); overflow-wrap: anywhere; color: var(--muted); background: var(--soft); border-radius: 6px; padding: .45rem .6rem; }
+.rec-hash b { color: var(--key); font-weight: 600; }
+.rec-explora { margin-top: 2.5rem; display: grid; gap: 1rem; }
+.rec-explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
+</style>
+</head>
+<body>
+<header class="barra" data-actual="recuperacion"></header>
+<main class="pagina" data-rol="key">
+  <div class="cabeza">
+    <span class="eyebrow">Etapa 6 · El receptor</span>
+    <h1>Con la misma clave y la misma red, el receptor deshace cada paso</h1>
+    <p>Además del estegoaudio, el receptor solo necesita la clave y la red neuronal. Con ellas repite los cálculos del emisor en orden inverso y obtiene el texto exacto.</p>
+  </div>
+
+  <div class="recorrido" id="recorrido">
+    <div class="narracion">
+      <article class="paso" data-paso="tiene">
+        <span class="eyebrow">Paso 1 · Punto de partida</span>
+        <h2>Qué tiene el receptor</h2>
+        <p>Tiene tres cosas. El estegoaudio, que puede viajar por cualquier medio. La clave K = (x0, r, N), que recibió antes por un canal seguro. Y la misma red neuronal que usó el emisor, que es pública.</p>
+        <p>No sabe cuántos bits hay escondidos ni en qué muestras están. Todo eso lo va a calcular con la clave.</p>
+        <p class="analogia">Es como recibir un cofre por correo. El cofre puede verlo cualquiera, pero solo quien tiene la llave lo abre.</p>
+      </article>
+      <article class="paso" data-paso="deriva">
+        <span class="eyebrow">Paso 2 · Deriva los parámetros</span>
+        <h2>SHA-512 da los mismos parámetros que al emisor</h2>
+        <p>El receptor calcula SHA-512 de la clave. Obtiene la misma cadena fija de 512 bits que obtuvo el emisor, porque SHA-512 siempre da la misma salida para la misma entrada.</p>
+        <p>De esa cadena toma las condiciones iniciales y los parámetros de las tres secuencias: dos para el cifrado y una para las posiciones. A la derecha están los valores, calculados en tu navegador.</p>
+        <p class="analogia">Es como una receta: con los mismos ingredientes sale siempre el mismo plato.</p>
+        <details><summary>Detalle técnico</summary><p>La entrada son 18 bytes: x0 y r como float64 big-endian y N como entero de 16 bits. De la salida se toman 8 bloques de 8 bytes; cada bloque se lee como entero, se desplaza 11 bits a la derecha y se divide entre 2<sup>53</sup> para obtener u ∈ [0, 1). Luego x = 0.001 + 0.998·u y r = 3.99 + 0.01·u (3.99 + 0.0099·u en la secuencia de posiciones).</p></details>
+      </article>
+      <article class="paso" data-paso="cabecera">
+        <span class="eyebrow">Paso 3 · Lee la cabecera</span>
+        <h2>Lee el último bit de 16 muestras</h2>
+        <p>Con la tercera secuencia regenera las posiciones. Toma las 16 primeras y en cada una lee solo el bit menos significativo (LSB) de la muestra: si la muestra es impar, el bit es 1; si es par, es 0.</p>
+        <p>Esos 16 bits son los dos primeros bytes del mensaje cifrado, que guardan la longitud.</p>
+        <p class="analogia">Es como leer primero la etiqueta de una caja para saber cuántas páginas trae.</p>
+        <details><summary>Detalle técnico</summary><p class="formula">w<sub>i</sub> = s′[p<sub>i</sub>] ∧ 1</p><p>∧ es el Y bit a bit con la máscara 1, que deja solo el último bit. En complemento a dos, el último bit también indica si un número negativo es par o impar, así que la regla vale para todas las muestras int16.</p></details>
+      </article>
+      <article class="paso" data-paso="longitud">
+        <span class="eyebrow">Paso 4 · Obtiene la longitud</span>
+        <h2>La longitud es 173 bytes</h2>
+        <p>Los 16 bits estaban cifrados. El receptor genera los dos primeros bytes del flujo de clave y aplica XOR. Sale 0x00AD, que es 173: el mensaje comprimido mide 173 bytes.</p>
+        <p>Sumando los 2 bytes de la longitud, el mensaje cifrado tiene n = 175 bytes, es decir L = 175 × 8 = 1400 bits.</p>
+      </article>
+      <article class="paso" data-paso="bits">
+        <span class="eyebrow">Paso 5 · Lee todos los bits</span>
+        <h2>Regenera las 1400 posiciones y lee 1400 bits</h2>
+        <p>Ahora que conoce L, sigue iterando la secuencia de posiciones hasta tener 1400. Son exactamente las que eligió el emisor, porque la secuencia sale de la misma clave.</p>
+        <p>En cada posición lee el último bit de la muestra. Obtiene los 1400 bits del mensaje cifrado.</p>
+      </article>
+      <article class="paso" data-paso="xor">
+        <span class="eyebrow">Paso 6 · Descifra</span>
+        <h2>Agrupa en bytes y aplica XOR</h2>
+        <p>Junta los bits de 8 en 8 y obtiene 175 bytes. Regenera el flujo de clave con las dos secuencias de cifrado y aplica XOR byte a byte.</p>
+        <p>XOR con el mismo valor dos veces se anula. Por eso el resultado es el mensaje comprimido original.</p>
+        <p class="analogia">Es como un interruptor: pulsarlo dos veces deja la luz como estaba.</p>
+        <details><summary>Detalle técnico</summary><p class="formula">(m ⊕ k) ⊕ k = m ⊕ (k ⊕ k) = m ⊕ 0 = m</p><p>m es un byte del mensaje comprimido, k el byte del flujo de clave en la misma posición y ⊕ la XOR bit a bit.</p></details>
+      </article>
+      <article class="paso" data-paso="red">
+        <span class="eyebrow">Paso 7 · Descomprime con la red</span>
+        <h2>La red da las mismas probabilidades y el decodificador elige el token</h2>
+        <p>Los bits del mensaje comprimido forman un número entre 0 y 1, el valor recibido. En cada paso la red recibe los tokens ya recuperados y da exactamente las mismas probabilidades que dio en la compresión.</p>
+        <p>Con ellas el decodificador divide el intervalo en subintervalos, mira en cuál cae el valor recibido y así sabe qué token fue. Lo agrega al texto y repite. Termina cuando encuentra el token de fin.</p>
+        <p class="analogia">Es como adivinar una palabra con pistas: el receptor recibe las mismas pistas que usó el emisor, y por eso acierta siempre.</p>
+        <details><summary>Detalle técnico</summary><p>El decodificador usa las mismas frecuencias enteras f<sub>v</sub> = ⌊p<sub>v</sub>(2<sup>24</sup> − V)⌋ + 1 que el codificador, así que los subintervalos coinciden exactamente. Para eso emisor y receptor deben usar la misma red, en float32 y en el mismo tipo de dispositivo. En GPU el mismo poema dio 174 bytes en vez de 173.</p></details>
+      </article>
+      <article class="paso" data-paso="verifica">
+        <span class="eyebrow">Paso 8 · Verificación</span>
+        <h2>El texto recuperado es idéntico al original</h2>
+        <p>El texto recuperado coincide byte a byte con el original, y su resumen SHA-256 es idéntico.</p>
+        <p>La prueba se repitió en un proceso separado que solo recibió el estegoaudio y la clave, y en otra máquina con otro procesador y otras versiones de Python y PyTorch.</p>
+        <details><summary>Detalle técnico</summary><p>SHA-256 convierte cualquier archivo en una cadena fija de 256 bits. Si cambia un solo bit del archivo, el resumen cambia por completo. Dos resúmenes iguales prueban que los textos son idénticos.</p></details>
+      </article>
+      <article class="paso" data-paso="casos">
+        <span class="eyebrow">Paso 9 · Más casos</span>
+        <h2>16 combinaciones, 16 recuperaciones exactas</h2>
+        <p>En Colab con GPU se probaron 4 textos con 4 audios: 16 combinaciones. Todas se recuperaron exactamente.</p>
+        <p>Uno de los textos fue el soneto 18 de Shakespeare. Se comprimió a 9 bytes, porque el modelo lo conoce: casi cada token era el que la red esperaba.</p>
+      </article>
+      <article class="paso" data-paso="tiempos">
+        <span class="eyebrow">Paso 10 · Tiempos</span>
+        <h2>Casi todo el tiempo lo usa la red</h2>
+        <p>El proceso completo, de ida y vuelta, tomó 113.47 s. Compresión y descompresión suman 110.06 s. El cifrado, la inserción y la extracción tardan milésimas de segundo.</p>
+        <p>Las barras de la escena están a escala: las etapas sin red casi no se ven.</p>
+      </article>
+      <div class="mando"></div>
+    </div>
+    <div class="escena">
+      <svg id="rec-mapa" viewBox="0 0 400 196" role="img" aria-label="Camino de vuelta del receptor, en ocho tramos"></svg>
+      <div class="rec-det" id="rec-det" aria-live="polite"></div>
+      <p class="narra" id="rec-narra"><b>Qué estás viendo:</b> …</p>
+    </div>
+  </div>
+
+  <section class="rec-explora" aria-labelledby="rec-ex-t">
+    <h2 id="rec-ex-t">Para explorar: el receptor con otra clave</h2>
+    <p>Cambia la clave y mira qué pasaría si el receptor la usara. Los parámetros, las posiciones y el flujo de clave cambian por completo, así que leería otras muestras y otros bits. Esta demostración no tiene el audio, solo recalcula lo que depende de la clave.</p>
+    <div class="card">
+      <div class="controls">
+        <label for="rec-x0">x0 <input type="number" id="rec-x0" step="0.000001" min="0.001" max="0.999" value="0.123456"></label>
+        <label for="rec-r">r <input type="number" id="rec-r" step="0.000001" min="3.99" max="3.999999" value="3.999952"></label>
+        <label for="rec-n">N <input type="number" id="rec-n" step="1" min="100" max="10000" value="6173"></label>
+        <button type="button" id="rec-calc">Recalcular</button>
+        <button type="button" class="ghost" id="rec-caso">Clave del caso de estudio</button>
+      </div>
+      <div class="scroll" style="margin-top:1rem">
+        <table class="data">
+          <thead><tr><th>Dato</th><th>Clave del caso</th><th>Tu clave</th></tr></thead>
+          <tbody id="rec-comp"></tbody>
+        </table>
+      </div>
+      <p class="note" id="rec-comp-nota"></p>
+    </div>
+  </section>
+  <nav class="siguiente-etapa" aria-label="Etapas"></nav>
+</main>
+<footer class="pie"></footer>
+<script type="module">
+import { recorrido, animar, alCambiarTema, color, sinMovimiento } from "./assets/js/guia.js";
+const Mo = window.Modelo, C = Mo.CASO, M = C.M, L = 1400, FS = 44100;
+const $ = id => document.getElementById(id);
+const fmtN = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ").replace("-", "−");
+const fmtT = s => { const m = Math.floor(s / 60), r = s - 60 * m; return m + ":" + r.toFixed(2).padStart(5, "0"); };
+
+const d = await Mo.derivar(C.x0, C.r, C.N);
+const pos = Mo.posiciones(d, L, M);
+const fl = Mo.flujo(d, C.n);
+const LONG = [0x00, 0xAD];                       // 173 en dos bytes, big-endian
+const CAB = [LONG[0] ^ fl.bytes[0], LONG[1] ^ fl.bytes[1]]; // bytes cifrados de la cabecera
+const bitsDe = bytes => bytes.flatMap(b => [...Mo.bin8(b)].map(Number));
+const W16 = bitsDe(CAB), K16 = bitsDe([fl.bytes[0], fl.bytes[1]]);
+
+/* ---------- Mapa del camino de vuelta ---------- */
+const NODOS = [
+  ["Receptor", "audio, K, red"], ["SHA-512", "6 parámetros"], ["16 LSB", Mo.hex(CAB).replace(/(..)(..)/, "$1 $2")], ["Longitud", "173 bytes"],
+  ["1400 LSB", "1400 bits"], ["XOR", "175 bytes"], ["Red", "293 tokens"], ["SHA-256", "idéntico ✓"],
+];
+const XY = [[50, 46], [150, 46], [250, 46], [350, 46], [350, 150], [250, 150], [150, 150], [50, 150]];
+const svg = $("rec-mapa"), NS = "http://www.w3.org/2000/svg";
+const el = (tag, at, padre) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); padre?.append(e); return e; };
+const tramos = [];
+for (let i = 0; i < 7; i++) {
+  const [a, b] = [XY[i], XY[i + 1]];
+  const dd = `M${a[0]} ${a[1]} L${b[0]} ${b[1]}`;
+  el("path", { d: dd, class: "arista" }, svg);
+  tramos.push(el("path", { d: dd, class: "luz", pathLength: 1 }, svg));
+}
+const nodos = NODOS.map(([t1, t2], i) => {
+  const g = el("g", { class: "nodo" + (i === 7 ? " fin" : ""), transform: `translate(${XY[i][0] - 44} ${XY[i][1] - 26})` }, svg);
+  el("rect", { width: 88, height: 52, rx: 9 }, g);
+  el("text", { x: 44, y: 23, "text-anchor": "middle", class: "t1" }, g).textContent = t1;
+  el("text", { x: 44, y: 40, "text-anchor": "middle", class: "t2" }, g).textContent = t2;
+  return g;
+});
+function pintarMapa(k) {
+  const tope = Math.min(k, 7);
+  nodos.forEach((n, i) => { n.classList.toggle("hecho", i < tope || (k >= 7 && i <= 7)); n.classList.toggle("actual", i === tope && k < 7); });
+  tramos.forEach((t, i) => t.classList.toggle("on", i < tope));
+}
+
+/* ---------- Paneles por paso ---------- */
+const det = $("rec-det"), narra = $("rec-narra");
+let cancelar = () => {};
+
+const p = (x, n = 6) => x.toFixed(n);
+function panelTiene() {
+  return `<div class="rec-tres">
+    <div class="card"><b>Estegoaudio</b><span class="note">WAV PCM de 16 bits, M = ${fmtN(M)} muestras. Por fuera es un audio normal.</span></div>
+    <div class="card"><b>Clave K</b><span class="mono">x0 = ${C.x0}<br>r = ${C.r}<br>N = ${C.N}</span><br><span class="note">Recibida por un canal seguro.</span></div>
+    <div class="card"><b>La misma red</b><span class="note">Qwen2.5-1.5B, con los mismos pesos y en float32. Es pública.</span></div>
+  </div>
+  <p class="note" style="margin:0">No recibe la longitud del mensaje ni la lista de posiciones.</p>`;
+}
+function panelDeriva() {
+  const h = Mo.hex(d.hash);
+  return `<div class="rec-hash">SHA-512(x0, r, N) = <b>${h.slice(0, 32)}</b>${h.slice(32, 64)}<b>${h.slice(64, 96)}</b>${h.slice(96)}</div>
+  <div class="scroll"><table class="data"><thead><tr><th>Secuencia</th><th class="r">Condición inicial</th><th class="r">Parámetro r</th><th class="r">Transitorio</th></tr></thead><tbody>
+    <tr><td>Cifrado 1</td><td class="r mono">x<sup>(1)</sup> = ${p(d.x1)}</td><td class="r mono">${p(d.r1)}</td><td class="r mono">N = ${fmtN(d.N)}</td></tr>
+    <tr><td>Cifrado 2</td><td class="r mono">x<sup>(2)</sup> = ${p(d.x2)}</td><td class="r mono">${p(d.r2)}</td><td class="r mono">N = ${fmtN(d.N)}</td></tr>
+    <tr><td>Posiciones</td><td class="r mono">x<sub>p</sub> = ${p(d.xp)}</td><td class="r mono">${p(d.rp)}</td><td class="r mono">N<sub>p</sub> = ${fmtN(d.Np)}</td></tr>
+  </tbody></table></div>
+  <p class="note" style="margin:0">Calculado en tu navegador con window.Modelo.derivar. Los mismos valores que usó el emisor.</p>`;
+}
+function panelCabecera() {
+  const cel = pos.P.slice(0, 16).map((q, i) => `<div class="rec-celda vacia" data-i="${i}"><small>${fmtN(q)}</small><span>${W16[i]}</span></div>`).join("");
+  return `<h3>Las 16 primeras posiciones y el bit leído en cada una</h3><div class="rec-celdas" id="rec-c16">${cel}</div>
+  <p class="note" style="margin:0">Arriba en cada casilla, el índice de la muestra p<sub>i</sub>; abajo, su último bit. Bits leídos: <span class="mono">${W16.join("").replace(/(.{8})/, "$1 ")}</span> = 0x${Mo.hex(CAB)}.</p>`;
+}
+function animCabecera() {
+  const cs = [...det.querySelectorAll(".rec-celda")];
+  return animar(1600, t => { const k = Math.round(t * 16); cs.forEach((c, i) => { c.classList.toggle("vacia", i >= k); c.classList.toggle("on", i === k - 1); }); });
+}
+function panelLongitud() {
+  const s = a => a.join("").replace(/(.{8})/, "$1 ");
+  const res = W16.map((b, i) => b ^ K16[i]);
+  return `<div class="rec-xor">
+    <span class="et">Bits leídos</span><span>${s(W16)}</span><span>0x${Mo.hex(CAB)}</span>
+    <span class="et">Flujo de clave</span><span>${s(K16)}</span><span>0x${Mo.hex(fl.bytes.slice(0, 2))}</span>
+    <span class="lin"></span>
+    <span class="et">XOR</span><span class="res">${s(res)}</span><span class="res">0x00ad</span>
+  </div>
+  <div class="rec-tres">
+    <div class="card"><b class="num">173 bytes</b><span class="note">mensaje comprimido</span></div>
+    <div class="card"><b class="num">n = 173 + 2 = 175</b><span class="note">bytes cifrados</span></div>
+    <div class="card"><b class="num">L = 175 × 8 = 1400</b><span class="note">bits escondidos</span></div>
+  </div>`;
+}
+function panelBits() {
+  return `<h3>Las 1400 posiciones a lo largo del audio (0:00 a 4:45)</h3>
+  <canvas id="rec-tira" role="img" aria-label="Las 1400 posiciones repartidas por todo el audio"></canvas>
+  <p class="num" style="margin:0" id="rec-cuenta"></p>`;
+}
+let visibles = 0;
+function dibujarTira() {
+  const cv = $("rec-tira"); if (!cv) return;
+  const dpr = devicePixelRatio || 1, w = cv.clientWidth || 300, h = 90;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  const top = 6, alto = 52;
+  g.fillStyle = color("soft"); g.fillRect(0, top, w, alto);
+  g.strokeStyle = color("line"); g.strokeRect(.5, top + .5, w - 1, alto - 1);
+  g.globalAlpha = .6; g.fillStyle = color("key");
+  for (let i = 0; i < visibles; i++) g.fillRect(Math.floor(pos.P[i] / M * w), top + 6, 1, alto - 12);
+  g.globalAlpha = 1; g.fillStyle = color("muted"); g.font = "11px " + color("f-mono"); g.textBaseline = "top";
+  const marcas = w < 420 ? [0, 120, 240] : [0, 60, 120, 180, 240];
+  for (const s of marcas) { const x = s / 285 * w; g.fillRect(x, top + alto, 1, 4); g.textAlign = s === 0 ? "left" : "center"; g.fillText(Math.floor(s / 60) + ":00", x, top + alto + 8); }
+  g.textAlign = "right"; g.fillText("4:45", w, top + alto + 8);
+  const c = $("rec-cuenta");
+  if (c) c.innerHTML = `Posiciones leídas: <strong>${fmtN(visibles)}</strong> de ${fmtN(L)} · iteraciones usadas: ${fmtN(pos.iter)} · colisiones: ${fmtN(pos.iter - L)}`;
+}
+function animBits() { return animar(1800, t => { visibles = Math.round(L * t * t); dibujarTira(); }); }
+function panelXor() {
+  const k = Mo.hex(fl.bytes.slice(2, 8)).replace(/(..)/g, "$1 ").trim();
+  return `<div class="scroll"><table class="data"><thead><tr><th>Byte</th><th class="r">Leído</th><th class="r">Flujo de clave</th><th class="r">Resultado</th></tr></thead><tbody>
+    <tr><td>1</td><td class="r mono">${Mo.hex([CAB[0]])}</td><td class="r mono">⊕ ${Mo.hex([fl.bytes[0]])}</td><td class="r mono"><b>00</b></td></tr>
+    <tr><td>2</td><td class="r mono">${Mo.hex([CAB[1]])}</td><td class="r mono">⊕ ${Mo.hex([fl.bytes[1]])}</td><td class="r mono"><b>ad</b></td></tr>
+    <tr><td>3 a 175</td><td class="r mono">…</td><td class="r mono">⊕ ${k} …</td><td class="r">mensaje comprimido</td></tr>
+  </tbody></table></div>
+  <p class="note" style="margin:0">El flujo de clave de 175 bytes se calcula en tu navegador con las dos secuencias de cifrado. Los bytes 3 a 175 del audio no están en esta página: allí solo se muestra la operación.</p>
+  <div class="flow"><span class="step">1400 bits</span><span class="arrow">→</span><span class="step">175 bytes</span><span class="arrow">→</span><span class="step">⊕ flujo de clave</span><span class="arrow">→</span><span class="step">173 bytes comprimidos</span></div>`;
+}
+
+/* Decodificación con probabilidades de ejemplo (las mismas de la etapa 1) */
+const EJ = [
+  { obs: "noche", ps: [["noche", .5], ["luna", .3], ["otros", .2]] },
+  { obs: "de", ps: [["de", .6], ["es", .25], ["otros", .15]] },
+  { obs: "luna", ps: [["estrellas", .35], ["luna", .25], ["perfumes", .15], ["otros", .25]] },
+  { obs: "callada", ps: [["llena", .55], ["blanca", .2], ["callada", .1], ["otros", .15]] },
+  { obs: "⟨fin⟩", ps: [["⟨fin⟩", .7], ["«,»", .2], ["otros", .1]] },
+];
+const ivs = []; { let lo = 0, hi = 1; for (const e of EJ) { ivs.push([lo, hi]); let a = lo; for (const [t, q] of e.ps) { const b = a + (hi - lo) * q; if (t === e.obs) { lo = a; hi = b; break; } a = b; } } ivs.push([lo, hi]); }
+const [fLo, fHi] = ivs[EJ.length];
+let VAL = 0, VB = ""; { for (let m = 1; m < 40; m++) { const q = 2 ** m, k = Math.ceil(fLo * q); if (k / q < fHi) { VAL = k / q; VB = k.toString(2).padStart(m, "0"); break; } } }
+function panelRed() {
+  const filas = EJ.map((e, i) => {
+    const [lo, hi] = ivs[i], x = (VAL - lo) / (hi - lo);
+    const seg = e.ps.map(([t, q]) => `<span class="${t === e.obs ? "sel" : ""}" style="width:${q * 100}%" title="${t}: ${q}">${t}</span>`).join("");
+    return `<div class="rec-fila pend" data-i="${i}"><span class="et">token ${i + 1}</span><div class="rec-barra">${seg}<i style="left:${(x * 100).toFixed(2)}%"></i></div></div>`;
+  }).join("");
+  return `<p class="note" style="margin:0"><b>Valores de ejemplo</b>: probabilidades inventadas para la demostración; la red real reparte la probabilidad entre 151 936 salidas. Valor recibido: 0.${VB}₂ = ${VAL.toFixed(6)}. La raya negra marca dónde cae dentro del intervalo actual, ampliado al ancho completo.</p>
+  <div class="rec-int">${filas}</div>
+  <p class="mono" id="rec-texto" style="margin:0">Texto: </p>`;
+}
+function animRed() {
+  const fs = [...det.querySelectorAll(".rec-fila")], tx = $("rec-texto");
+  return animar(2600, t => {
+    const k = Math.min(EJ.length, Math.ceil(t * EJ.length));
+    fs.forEach((f, i) => f.classList.toggle("pend", i >= k));
+    tx.textContent = "Texto: " + EJ.slice(0, k).map(e => e.obs).join(" ") + (k === EJ.length ? "  (fin: se detiene)" : "");
+  });
+}
+function panelVerifica() {
+  return `<div class="rec-ok" id="rec-okv">SHA-256(recuperado) = SHA-256(original) ✓</div>
+  <div class="rec-maq">
+    <div class="card"><span class="eyebrow">Emisor</span><p style="margin:.3rem 0 0">Intel Core i5-10300H<br>Python 3.12 · PyTorch 2.5</p></div>
+    <div class="card"><span class="eyebrow">Receptor</span><p style="margin:.3rem 0 0">Intel Xeon de 2.20 GHz<br>Python 3.13 · PyTorch 2.11</p></div>
+  </div>
+  <p class="note" style="margin:0">El receptor corrió en un proceso separado que solo recibió el estegoaudio y la clave.</p>`;
+}
+function panelCasos() {
+  let h = `<div class="rec-mat"><span></span>${[1, 2, 3, 4].map(a => `<span class="h">Audio ${a}</span>`).join("")}`;
+  for (let t = 1; t <= 4; t++) { h += `<span class="h f">Texto ${t}</span>`; for (let a = 1; a <= 4; a++) h += `<span class="c" data-k="${(t - 1) * 4 + a - 1}">✓</span>`; }
+  return h + `</div><p class="note" style="margin:0">Cada casilla es una combinación de texto y audio probada en Colab con GPU. La marca indica recuperación exacta.</p>
+  <div class="rec-tres"><div class="card"><b class="num">16 / 16</b><span class="note">recuperadas exactamente</span></div><div class="card"><b class="num">9 bytes</b><span class="note">el soneto 18 de Shakespeare comprimido</span></div></div>`;
+}
+function animCasos() { const cs = [...det.querySelectorAll(".rec-mat .c")]; return animar(1500, t => cs.forEach((c, i) => c.classList.toggle("on", i < Math.round(t * 16)))); }
+const T = [["Carga del audio", 0.018], ["Carga de la red", 3.34, 1], ["Compresión", 53.29, 1], ["Flujo de clave + XOR", 0.001], ["Inserción LSB", 0.008], ["Guardado", 0.043], ["Extracción LSB", 0.002], ["Descifrado", 0.001], ["Descompresión", 56.77, 1]];
+const tmax = Math.max(...T.map(t => t[1]));
+function panelTiempos() {
+  return `<div class="rec-t">${T.map(([n, t, red]) => `<span>${n}</span><div class="b${red ? " red" : ""}" style="width:${(t / tmax * 100).toFixed(3)}%"></div><span class="v">${String(t)} s</span>`).join("")}
+    <span class="tot">Total</span><span class="tot"></span><span class="v tot">113.47 s</span></div>
+  <div class="rec-ley"><span><i style="background:var(--net)"></i>usa la red neuronal</span><span><i style="background:var(--key)"></i>no usa la red</span></div>`;
+}
+function animTiempos() { const bs = [...det.querySelectorAll(".rec-t .b")]; return animar(1200, t => bs.forEach(b => (b.style.transform = `scaleX(${Math.max(.02, t)})`))); }
+
+const PASOS = [
+  { panel: panelTiene, narra: "los tres datos que tiene el receptor. En el mapa de arriba solo está encendido el punto de partida; el resto del camino todavía está por recorrer." },
+  { panel: panelDeriva, narra: "la salida de SHA-512 para la clave del caso (en hexadecimal, 128 dígitos) y los seis valores que se toman de ella. Se enciende el tramo hacia «SHA-512»." },
+  { panel: panelCabecera, anim: animCabecera, narra: "las 16 primeras posiciones de la secuencia, calculadas en tu navegador, y el último bit de la muestra en cada una. Juntos forman los dos bytes cifrados de la cabecera." },
+  { panel: panelLongitud, narra: "la XOR de los 16 bits leídos con los 16 primeros bits del flujo de clave. El resultado es 173 en binario, la longitud del mensaje comprimido." },
+  { panel: panelBits, anim: animBits, after: () => dibujarTira(), narra: "la tira representa las 25 143 552 muestras del audio, de izquierda a derecha. Cada marca es una de las 1400 posiciones regeneradas con la clave; ninguna se repite." },
+  { panel: panelXor, narra: "los dos primeros bytes descifrados (0x00 y 0xAD) y la operación que se aplica a los 173 bytes restantes. Se enciende el tramo «XOR»." },
+  { panel: panelRed, anim: animRed, narra: "cada barra es el intervalo actual dividido en subintervalos según las probabilidades de ejemplo. El valor recibido cae en el subintervalo resaltado y ese es el token recuperado. Al llegar al token de fin, el decodificador se detiene." },
+  { panel: panelVerifica, anim: () => { $("rec-okv")?.classList.add("pop"); return () => {}; }, narra: "el camino completo encendido y la comprobación final: el resumen SHA-256 del texto recuperado es igual al del original, también en otra máquina." },
+  { panel: panelCasos, anim: animCasos, narra: "la matriz de 4 textos por 4 audios probada en Colab con GPU. Las 16 combinaciones se recuperaron exactamente." },
+  { panel: panelTiempos, anim: animTiempos, narra: "el tiempo de cada etapa en una barra proporcional. Las barras moradas son las que usan la red neuronal y ocupan casi todo el total de 113.47 s." },
+];
+
+let actual = 0;
+function mostrar(i) {
+  cancelar(); actual = i;
+  const P = PASOS[i];
+  pintarMapa(i);
+  det.innerHTML = P.panel();
+  det.classList.remove("entra"); void det.offsetWidth; if (!sinMovimiento()) det.classList.add("entra");
+  narra.innerHTML = "<b>Qué estás viendo:</b> " + P.narra;
+  P.after?.();
+  if (P.anim) cancelar = P.anim(); else cancelar = () => {};
+}
+recorrido($("recorrido"), i => mostrar(i));
+addEventListener("resize", () => { if (actual === 4) dibujarTira(); });
+alCambiarTema(() => { if (actual === 4) dibujarTira(); });
+
+/* ---------- Para explorar ---------- */
+const fila = (a, b, c) => `<tr><td>${a}</td><td class="mono">${b}</td><td class="mono">${c}</td></tr>`;
+async function comparar(x0, r, N) {
+  const nota = $("rec-comp-nota");
+  if (!(x0 >= 0.001 && x0 <= 0.999) || !(r >= 3.99 && r < 4) || !(Number.isInteger(N) && N >= 100 && N <= 10000)) {
+    nota.textContent = "Usa x0 en [0.001, 0.999], r en [3.99, 4) y N entero en [100, 10 000].";
+    return;
+  }
+  const e = await Mo.derivar(x0, r, N), pe = Mo.posiciones(e, 16, M), fe = Mo.flujo(e, 8);
+  const igual = x0 === C.x0 && r === C.r && N === C.N;
+  $("rec-comp").innerHTML =
+    fila("x<sup>(1)</sup>, r<sup>(1)</sup>", `${p(d.x1)}, ${p(d.r1)}`, `${p(e.x1)}, ${p(e.r1)}`) +
+    fila("x<sup>(2)</sup>, r<sup>(2)</sup>", `${p(d.x2)}, ${p(d.r2)}`, `${p(e.x2)}, ${p(e.r2)}`) +
+    fila("x<sub>p</sub>, r<sub>p</sub>", `${p(d.xp)}, ${p(d.rp)}`, `${p(e.xp)}, ${p(e.rp)}`) +
+    fila("Primeras 3 posiciones", pos.P.slice(0, 3).map(fmtN).join(", "), pe.P.slice(0, 3).map(fmtN).join(", ")) +
+    fila("Primera posición (tiempo)", fmtT(Math.floor(pos.P[0] / 2) / FS), fmtT(Math.floor(pe.P[0] / 2) / FS)) +
+    fila("Flujo de clave (8 bytes)", Mo.hex(fl.bytes.slice(0, 8)), Mo.hex(fe.bytes));
+  const comunes = pe.P.filter(q => pos.P.slice(0, 16).includes(q)).length;
+  nota.textContent = igual ? "Es la clave del caso: todo coincide y el receptor recupera el texto."
+    : `Con esta clave, de las 16 primeras posiciones coinciden ${comunes} con las del caso. El receptor leería otros bits y no obtendría la longitud 173.`;
+}
+const leer = () => comparar(parseFloat($("rec-x0").value), parseFloat($("rec-r").value), parseInt($("rec-n").value, 10));
+$("rec-calc").addEventListener("click", leer);
+$("rec-caso").addEventListener("click", () => { $("rec-x0").value = C.x0; $("rec-r").value = C.r; $("rec-n").value = C.N; leer(); });
+comparar(C.x0, C.r, C.N);
+</script>
+</body>
+</html>

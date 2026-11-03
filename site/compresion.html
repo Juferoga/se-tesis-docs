@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Compresión · Criptoestegoaudio</title>
+<meta name="description" content="Cómo una red neuronal y un codificador aritmético dejan un poema de 928 bytes en 173 bytes sin perder nada.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/base.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="assets/js/modelo.js"></script>
+<script type="module" src="assets/js/sitio.js"></script>
+<style>
+.vista { display: grid; gap: .85rem; min-width: 0; }
+.vista.entra { animation: co-entra .45s ease-out; }
+@keyframes co-entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.vista h3 { margin: 0; font: 700 var(--s1)/1.25 var(--f-display); }
+.co-et { font-size: var(--s-1); color: var(--muted); margin: .2rem 0 -.4rem; }
+.paso .formula { margin: .4rem 0 .75rem; }
+.paso dl.kv { margin: .4rem 0 .75rem; font-size: .95rem; }
+
+/* Vista 1: qué entra y qué sale */
+.co-tubo { display: grid; gap: .5rem; }
+.co-caja { padding: .7rem .9rem; border-radius: 8px; background: var(--soft); border-left: 4px solid var(--line); }
+.co-caja.net { background: var(--net-soft); border-left-color: var(--net); }
+.co-caja b.num { font-family: var(--f-mono); }
+.co-flecha { text-align: center; color: var(--muted); line-height: 1; }
+.co-poema { font-style: italic; color: var(--muted); font-size: .95rem; margin: .3rem 0 0; }
+
+/* Vista 2: tokens */
+.co-tokens { display: flex; flex-wrap: wrap; gap: .35rem; }
+.co-tok { display: inline-grid; gap: .15rem; justify-items: center; padding: .4rem .55rem; border-radius: 8px; background: var(--net-soft); border: 1px solid var(--net); font: 600 1rem/1.1 var(--f-mono); white-space: pre; }
+.co-tok:nth-child(even) { background: var(--surface); }
+.co-tok small { font: 400 .68rem/1.1 var(--f-mono); color: var(--muted); }
+.co-tok .esp { color: var(--net); }
+.vista.entra .co-tok { animation: co-tok .4s ease-out backwards; }
+@keyframes co-tok { from { opacity: 0; transform: scale(.6); } }
+.co-unido { font: 600 1.15rem/1.4 var(--f-mono); padding: .5rem .75rem; background: var(--soft); border-radius: 8px; }
+.co-mini { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: .5rem; }
+.co-mini div { background: var(--soft); border-radius: 8px; padding: .5rem .7rem; font-size: .88rem; color: var(--muted); }
+.co-mini b { display: block; font: 600 1.15rem/1.2 var(--f-mono); color: var(--ink); }
+
+/* Vista 3: neurona */
+#compresion-nsvg { width: 100%; height: auto; display: block; background: var(--soft); border-radius: 8px; }
+#compresion-nsvg text { font-family: var(--f-mono); fill: var(--ink); }
+.co-deslizas { display: grid; gap: .45rem; }
+.co-deslizas label { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) 3rem; gap: .6rem; align-items: center; font: 600 .9rem var(--f-mono); }
+.co-deslizas label output { text-align: right; }
+.co-deslizas input[type="range"] { accent-color: var(--net); }
+
+/* Vista 3D */
+.co-contador { position: absolute; left: .5rem; top: .5rem; max-width: calc(100% - 1rem); font: 600 .78rem/1.3 var(--f-mono); color: var(--net); background: var(--surface); padding: .3rem .5rem; border-radius: 6px; pointer-events: none; }
+.co-leyenda { display: flex; flex-wrap: wrap; gap: .4rem .9rem; font-size: .85rem; color: var(--muted); }
+.co-leyenda i { display: inline-block; width: .8rem; height: .8rem; border-radius: 3px; vertical-align: -1px; margin-right: .3rem; }
+
+/* Vista tabla y barras */
+.co-pb { display: grid; grid-template-columns: minmax(0, 1fr) 4.4rem; gap: .4rem; align-items: center; min-width: 7rem; }
+.co-pista { height: .9rem; background: var(--soft); border-radius: 4px; overflow: hidden; }
+.co-pista i { display: block; height: 100%; min-width: 2px; background: var(--net); border-radius: 4px; }
+.co-pista i.gris { background: var(--muted); }
+.co-pista i.ref { background: var(--line); }
+.vista.entra .co-pista i { animation: co-barra .9s ease-out backwards; }
+@keyframes co-barra { from { transform: scaleX(0); } }
+.co-pista i { transform-origin: left center; }
+tr.uno td:first-child { font-weight: 600; }
+.co-fila { display: grid; grid-template-columns: 7.2rem minmax(0, 1fr) 3.8rem; gap: .6rem; align-items: center; font-size: .95rem; }
+.co-fila b { text-align: right; font-variant-numeric: tabular-nums; }
+.co-fila .co-pista { height: 1.15rem; }
+@media (max-width: 480px) { .co-fila { grid-template-columns: 5.6rem minmax(0, 1fr) 3.4rem; font-size: .85rem; } }
+
+/* Vista información */
+.co-medidor { display: grid; gap: .4rem; }
+.co-medidor .valor { font: 600 1.5rem/1.2 var(--f-mono); color: var(--net); }
+.co-botones { display: flex; flex-wrap: wrap; gap: .4rem; }
+.co-dado { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .8rem; align-items: center; background: var(--soft); border-radius: 8px; padding: .7rem .9rem; }
+.co-dado svg { width: 3rem; height: 3rem; }
+
+/* Codificador aritmético (adaptado de la demostración del artículo) */
+.comp-barra { display: flex; height: 3.2rem; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.comp-seg { min-width: 0; display: grid; place-items: center; padding: 0 .2rem; font-size: .8rem; line-height: 1.15; text-align: center; overflow: hidden; background: var(--soft); color: var(--muted); border-right: 1px solid var(--line); }
+.comp-seg:last-child { border-right: 0; }
+.comp-seg.obs { background: var(--net); color: var(--surface); font-weight: 600; }
+.comp-seg.fin { background: var(--net-soft); color: var(--net); font-weight: 600; }
+.comp-ext { display: flex; justify-content: space-between; gap: .3rem 1rem; flex-wrap: wrap; font: .76rem/1.4 var(--f-mono); color: var(--muted); margin-top: -.4rem; }
+.comp-ext span:last-child { text-align: right; }
+.comp-regla { position: relative; height: 1rem; background: var(--soft); border: 1px solid var(--line); border-radius: 4px; }
+.comp-sel { position: absolute; top: 0; bottom: 0; background: var(--net); border-radius: 3px; transition: left .35s, width .35s; }
+.comp-mitad { position: absolute; top: -3px; bottom: -3px; left: 50%; width: 2px; background: var(--ink); }
+.comp-evento { margin: 0; min-height: 3em; font-size: .95rem; }
+.comp-cinta { display: flex; flex-wrap: wrap; gap: .25rem; min-height: 2rem; padding: .4rem; background: var(--soft); border-radius: 6px; }
+.comp-cinta span { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 4px; background: var(--surface); border: 1px solid var(--line); }
+.comp-cinta span.nuevo { background: var(--net); color: var(--surface); border-color: var(--net); }
+.comp-cinta span.term { border-style: dashed; border-color: var(--net); }
+.comp-cinta span.oculto { visibility: hidden; }
+
+/* Requisito */
+.co-maq { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: .6rem; }
+.co-maq .card { padding: .8rem 1rem; }
+.co-maq .card h3 { font-size: 1.05rem; margin-bottom: .4rem; }
+.co-res { display: grid; gap: .4rem; }
+.co-res div { display: flex; justify-content: space-between; gap: .6rem; flex-wrap: wrap; align-items: center; padding: .55rem .8rem; border-radius: 8px; background: var(--soft); }
+.paso ul { margin: 0 0 .75rem; padding-left: 1.2rem; }
+.co-explora { margin-top: 3rem; }
+.co-explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0 0 .4rem; }
+.co-explora details.card summary { cursor: pointer; font-weight: 600; }
+.co-explora details.card p { margin: .5rem 0 .2rem; }
+</style>
+</head>
+<body>
+<header class="barra" data-actual="compresion"></header>
+<main class="pagina" data-rol="net">
+  <div class="cabeza">
+    <span class="eyebrow">Etapa 1 · Compresión sin pérdida con una red neuronal</span>
+    <h1>Una red que adivina el texto y un codificador que aprovecha la adivinanza</h1>
+    <p>Mientras mejor predice la red el siguiente fragmento del poema, menos bits hacen falta para escribirlo. Así los 928 bytes del poema quedan en 173 bytes y se recuperan idénticos.</p>
+  </div>
+
+  <div class="recorrido" id="recorrido">
+    <div class="narracion">
+      <article class="paso" data-paso="entra-sale">
+        <span class="eyebrow">Paso 1</span>
+        <h2>Qué entra y qué sale</h2>
+        <p>Entra el poema «Nocturno» de José Asunción Silva: 901 caracteres que ocupan 928 bytes en UTF-8, la forma normal de guardar texto. Sale una cadena de 173 bytes.</p>
+        <p>Es compresión <b>sin pérdida</b>: al descomprimir se obtiene exactamente el mismo texto, byte por byte. Comprimir primero hace que haya menos bits que esconder en el audio.</p>
+        <p class="analogia">En el juego de adivinar palabras, si tu compañero adivina casi siempre, basta con decirle «sí» o «no» unas pocas veces. La red neuronal es ese compañero que adivina muy bien.</p>
+      </article>
+      <article class="paso" data-paso="tokens" hidden>
+        <span class="eyebrow">Paso 2</span>
+        <h2>El texto se parte en tokens</h2>
+        <p>La red no lee letras sueltas: lee <b>tokens</b>, trozos que pueden ser una palabra, parte de una palabra o un signo. «dulce», por ejemplo, quedó partido en « dul» y «ce». El poema completo tiene <b>293 tokens</b>.</p>
+        <p>Al final se agrega un token de fin, para que el receptor sepa dónde detenerse. Al unir los tokens se obtienen exactamente los bytes originales.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>Se usa BPE (codificación por pares de bytes) a nivel de byte: se parte de los bytes sueltos y se unen los pares más frecuentes en textos de entrenamiento. Como trabaja sobre bytes, es reversible para cualquier texto UTF-8. El vocabulario tiene 151 665 tokens. La capa de salida de la red tiene V = 151 936 salidas; las 271 restantes son de relleno y no corresponden a ningún token.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="neurona" hidden>
+        <span class="eyebrow">Paso 3</span>
+        <h2>Qué es una neurona artificial</h2>
+        <p>Una neurona artificial recibe varios números, multiplica cada uno por un <b>peso</b>, suma los resultados y un <b>sesgo</b>, y pasa la suma por una función llamada <b>activación</b>. Sale un solo número.</p>
+        <p>Mueve los deslizadores de la escena: verás cómo cambia la suma y la salida. Una red neuronal son muchas neuronas así, organizadas en capas: la salida de una capa es la entrada de la siguiente.</p>
+        <p class="analogia">Es como decidir si salir a caminar: miras el clima, el tiempo libre y el cansancio, le das a cada cosa su importancia, sumas y decides.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>Salida = SiLU(w<sub>1</sub>x<sub>1</sub> + w<sub>2</sub>x<sub>2</sub> + w<sub>3</sub>x<sub>3</sub> + b), con SiLU(z) = z / (1 + e<sup>−z</sup>). Los pesos y el sesgo de la demostración son valores de ejemplo. En la red real, los pesos se aprendieron durante el entrenamiento con retropropagación, ajustándolos para predecir bien el siguiente token en grandes cantidades de texto.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="red" hidden>
+        <span class="eyebrow">Paso 4</span>
+        <h2>La red: Qwen2.5-1.5B, 28 capas apiladas</h2>
+        <p>La red usada es <b>Qwen2.5-1.5B</b>, pública y ya entrenada. Tiene 1.54×10<sup>9</sup> parámetros (unos 1540 millones de pesos y sesgos) repartidos en <b>28 capas</b>.</p>
+        <p>Cada token entra por abajo convertido en una lista de 1536 números y sube capa por capa. Cada capa ajusta esa lista usando lo que sabe del texto anterior.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>Es un Transformer de solo decodificador con dimensión 1536. Se ejecuta en float32 (números en coma flotante de 32 bits, IEEE 754) en CPU con 4 hilos. Los valores 28, 1536 y 8960 están en el <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B/blob/main/config.json">config.json oficial</a> del modelo.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="capa" hidden>
+        <span class="eyebrow">Paso 5</span>
+        <h2>Dentro de una capa: atención y perceptrón</h2>
+        <p>Cada capa tiene dos partes:</p>
+        <ul>
+          <li><b>Autoatención</b>: el token mira los tokens anteriores y toma de ellos lo que le sirve. Así « dul» sabe que viene después de «Oh».</li>
+          <li><b>Red prealimentada</b> (un perceptrón multicapa): procesa cada token por separado. Pasa de 1536 a 8960 neuronas y vuelve a 1536.</li>
+        </ul>
+        <p class="analogia">La atención es leer de nuevo la frase para entender el contexto; el perceptrón es pensar un momento con lo que ya entendiste.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>La autoatención usa 12 cabezas de consulta y 2 de clave/valor: cada par clave/valor lo comparten 6 cabezas de consulta. La red prealimentada usa la activación SwiGLU, construida con SiLU. Esta subcapa está definida en Vaswani et al. (2017), «Attention is all you need», sección 3.3.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="salida" hidden>
+        <span class="eyebrow">Paso 6</span>
+        <h2>La salida: una probabilidad para cada token posible</h2>
+        <p>Arriba de la pila, una última capa convierte la lista de 1536 números en 151 936 puntuaciones, una por salida. La función <b>softmax</b> las vuelve probabilidades positivas que suman 1.</p>
+        <p>Después de «Oh» y « dul», la red le dio <b>39.93 %</b> al token «ce», que es el que sigue en el poema. Fue su opción más probable.</p>
+        <details><summary>Detalle técnico</summary>
+          <div class="formula">p(v | x<sub>&lt;t</sub>) = e<sup>z<sub>v</sub></sup> / Σ<sub>u</sub> e<sup>z<sub>u</sub></sup></div>
+          <p>p(v | x<sub>&lt;t</sub>) es la probabilidad de que el token en la posición t sea v, dados los tokens anteriores x<sub>&lt;t</sub>; z<sub>v</sub> es la puntuación que la capa lineal le da a v; la suma recorre las V = 151 936 salidas u.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="probabilidades" hidden>
+        <span class="eyebrow">Paso 7</span>
+        <h2>Lo que predijo la red en el poema</h2>
+        <p>La tabla muestra, para los primeros 8 tokens del poema, la probabilidad que les dio la red y su posición en la lista de candidatos (1 = el más probable).</p>
+        <p>«Oh» al inicio fue una sorpresa: quedó en el puesto 1587. En cambio, «ida» después de «ál» era casi seguro: 97.29 %. En el poema completo, el token correcto fue el más probable en <b>113 de 293</b> casos (38.6 %).</p>
+      </article>
+      <article class="paso" data-paso="informacion" hidden>
+        <span class="eyebrow">Paso 8</span>
+        <h2>Cuánta información trae cada token</h2>
+        <p>Un token muy probable casi no aporta información; uno sorpresivo aporta mucha. La información de un token con probabilidad p es <b>−log<sub>2</sub> p</b> y se mide en <b>shannons (Sh)</b>.</p>
+        <p>Puede tener decimales, porque los tokens comparten bits dentro del mensaje comprimido. Lo que siempre es entero es el tamaño total en bits.</p>
+        <p class="analogia">Un dado tiene 6 caras: cada lanzamiento trae log<sub>2</sub> 6 = 2.585 Sh. Anotar 100 lanzamientos cabe en 259 bits, menos que los 300 que usarías con 3 bits por lanzamiento.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>El shannon es la unidad de información de la norma ISO/IEC 80000-13. Un token con p = 0.5 aporta 1 Sh; con p = 0.25, 2 Sh. Los 8 primeros tokens del poema suman 68.80 Sh. La suma sobre todo el texto es, casi exactamente, el número de bits del mensaje comprimido.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="aritmetico" hidden>
+        <span class="eyebrow">Paso 9</span>
+        <h2>El codificador aritmético</h2>
+        <p>Todo el mensaje se representa con un intervalo dentro de [0, 1). En cada paso, el intervalo se divide en subintervalos, uno por token, cuya <b>longitud</b> es proporcional a la probabilidad que dio la red. Se conserva el subintervalo del token que de verdad sigue.</p>
+        <p>Cuando los primeros bits de los dos extremos coinciden, ya no pueden cambiar: <b>se escriben en el mensaje comprimido</b> y el intervalo se amplía al doble (renormalización). Pulsa «Siguiente token» para verlo.</p>
+        <p class="analogia">Es como dar una dirección cada vez más precisa: país, ciudad, barrio, calle. Un token probable es un barrio grande y se describe con pocas palabras.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>Bit pendiente: si el intervalo queda alrededor de 0.5, entre 0.25 y 0.75, también se amplía al doble, pero el bit se decide cuando el intervalo se mueve hacia un lado. La demostración usa probabilidades de ejemplo y float64, suficiente para cinco pasos; el programa real usa enteros de 62 bits para los extremos.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="frecuencias" hidden>
+        <span class="eyebrow">Paso 10</span>
+        <h2>De probabilidades a números enteros</h2>
+        <p>Las probabilidades de la red tienen decimales. Para que emisor y receptor corten el intervalo exactamente igual, sin diferencias de redondeo, cada probabilidad se convierte en un número entero, su <b>frecuencia</b>:</p>
+        <div class="formula">f<sub>v</sub> = ⌊ p<sub>v</sub> · (2<sup>24</sup> − V) ⌋ + 1</div>
+        <p>El «+1» garantiza que ningún token quede con frecuencia cero, porque un token con frecuencia cero no se podría escribir. Prueba la calculadora.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>La longitud del subintervalo de v es proporcional a f<sub>v</sub> / Σ<sub>u</sub> f<sub>u</sub>. Se restan V unidades a 2<sup>24</sup> para reservar la unidad extra de cada salida, de modo que la suma de frecuencias no supere 2<sup>24</sup>.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="resultado" hidden>
+        <span class="eyebrow">Paso 11</span>
+        <h2>El resultado: 928 → 173 bytes</h2>
+        <p>La red neuronal deja el poema en <b>173 bytes</b>. Los compresores de uso común lo dejan entre 535 y 597 bytes. Son <b>1.54 bits por carácter</b>, frente a 8.24 del texto original.</p>
+        <p>La longitud en bits es casi la información total del texto más 2 bits que cierran el último intervalo:</p>
+        <div class="formula">ℓ ≈ Σ<sub>t=1</sub><sup>Q+1</sup> −log<sub>2</sub> p(x<sub>t</sub> | x<sub>&lt;t</sub>) + 2</div>
+        <details><summary>Detalle técnico</summary>
+          <p>Q = 293 es el número de tokens del poema y el término Q+1 es el token de fin. Tiempos medidos: compresión 53.29 s y descompresión 56.77 s, con la red ya cargada; cargar la red toma 3.34 s. A los 173 bytes se les agregan 2 bytes con la longitud, para un total de 175 bytes (1400 bits) que pasan al cifrado.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="requisito" hidden>
+        <span class="eyebrow">Paso 12</span>
+        <h2>Emisor y receptor deben usar la misma red</h2>
+        <p>El receptor descomprime repitiendo las mismas predicciones. Por eso necesita la misma red, con los mismos pesos y la misma configuración: float32 y el mismo tipo de procesador.</p>
+        <p>Una diferencia mínima en una sola probabilidad cambia los subintervalos, y el receptor ya no recupera el texto. Con el mismo poema, en una tarjeta gráfica (GPU) se obtuvieron <b>174 bytes</b> en lugar de 173.</p>
+        <p>La red es pública: conocerla no permite leer el mensaje. La parte secreta es la clave K, que entra en la siguiente etapa.</p>
+      </article>
+      <div class="mando"></div>
+    </div>
+    <div class="escena">
+      <!-- 1 · Qué entra y qué sale -->
+      <div class="vista" id="compresion-v-flujo">
+        <div class="co-tubo">
+          <div class="co-caja"><span class="eyebrow">Entra</span><br>Texto UTF-8 · <b class="num">901</b> caracteres · <b class="num">928</b> bytes
+            <p class="co-poema">«Oh dulce niña pálida…»</p>
+            <div class="co-pista" style="margin-top:.5rem"><i class="gris" style="width:100%"></i></div></div>
+          <div class="co-flecha">↓</div>
+          <div class="co-caja net">Tokens · <b class="num">293</b> + token de fin</div>
+          <div class="co-flecha">↓</div>
+          <div class="co-caja net">Red neuronal · una probabilidad para cada token posible</div>
+          <div class="co-flecha">↓</div>
+          <div class="co-caja net">Codificador aritmético · convierte probabilidades en bits</div>
+          <div class="co-flecha">↓</div>
+          <div class="co-caja"><span class="eyebrow">Sale</span><br>Mensaje comprimido · <b class="num">173</b> bytes
+            <div class="co-pista" style="margin-top:.5rem"><i style="width:18.64%"></i></div></div>
+        </div>
+        <p class="note">Las barras están a escala: 173 bytes son el 18.6 % de 928.</p>
+      </div>
+
+      <!-- 2 · Tokens -->
+      <div class="vista" id="compresion-v-tokens" hidden>
+        <h3>Los primeros 8 tokens del poema</h3>
+        <div class="co-tokens" id="compresion-toks"></div>
+        <label class="note"><input type="checkbox" id="compresion-verbytes"> Mostrar los bytes UTF-8 de cada token</label>
+        <div class="co-et">Al unir los tokens:</div>
+        <div class="co-unido" id="compresion-unido"></div>
+        <div class="co-mini">
+          <div><b>293</b>tokens en el poema</div>
+          <div><b>151 665</b>tokens en el vocabulario</div>
+          <div><b>151 936</b>salidas de la red (V)</div>
+          <div><b>+1</b>token de fin</div>
+        </div>
+        <p class="note">El símbolo ␣ marca un espacio al inicio del token. Los bytes se calculan aquí mismo con el codificador UTF-8 del navegador.</p>
+      </div>
+
+      <!-- 3 · Neurona -->
+      <div class="vista" id="compresion-v-neurona" hidden>
+        <h3>Una neurona, con valores de ejemplo</h3>
+        <svg id="compresion-nsvg" viewBox="0 0 440 290" role="img" aria-label="Neurona con tres entradas, sus pesos y una salida">
+          <g id="compresion-nlineas"></g>
+          <g id="compresion-nnodos"></g>
+          <g id="compresion-nplot" transform="translate(300,240)"></g>
+        </svg>
+        <div class="co-deslizas">
+          <label>x₁<input type="range" id="compresion-x1" min="-2" max="2" step="0.1" value="1"><output id="compresion-o1">1.0</output></label>
+          <label>x₂<input type="range" id="compresion-x2" min="-2" max="2" step="0.1" value="0.5"><output id="compresion-o2">0.5</output></label>
+          <label>x₃<input type="range" id="compresion-x3" min="-2" max="2" step="0.1" value="-0.5"><output id="compresion-o3">-0.5</output></label>
+        </div>
+        <div class="formula" id="compresion-ncalc" style="white-space:normal"></div>
+        <p class="note">Pesos w = (0.8, −0.6, 1.2) y sesgo b = 0.2: valores de ejemplo. Línea gruesa = peso grande; línea punteada = peso negativo.</p>
+      </div>
+
+      <!-- 4–6 · Escena 3D -->
+      <div class="vista" id="compresion-v-3d" hidden>
+        <div class="lienzo" id="compresion-lienzo" role="img" aria-label="Pila de 28 capas de la red, cada una con autoatención y red prealimentada; un token sube por la pila y arriba sale un abanico de probabilidades"><span class="co-contador" id="compresion-contador"></span></div>
+        <div class="co-leyenda">
+          <span><i style="background:var(--net)"></i>Autoatención</span>
+          <span><i style="background:var(--net);opacity:.45"></i>Red prealimentada 1536 → 8960 → 1536</span>
+          <span><i style="background:var(--muted)"></i>Embedding y capa de salida</span>
+        </div>
+      </div>
+
+      <!-- 7 · Tabla real -->
+      <div class="vista" id="compresion-v-tabla" hidden>
+        <h3>Primeros 8 tokens: lo que predijo la red</h3>
+        <div class="scroll">
+          <table class="data">
+            <thead><tr><th>Token</th><th>Probabilidad</th><th class="r">Posición</th><th class="r">Sh</th></tr></thead>
+            <tbody id="compresion-tbody"></tbody>
+            <tfoot><tr><td colspan="3"><b>Suma de los 8 tokens</b></td><td class="r"><b>68.80</b></td></tr></tfoot>
+          </table>
+        </div>
+        <p class="note">Posición: lugar del token correcto en la lista de candidatos ordenada de mayor a menor probabilidad. Sh: información −log<sub>2</sub> p (paso siguiente).</p>
+        <div class="co-pb" style="grid-template-columns:minmax(0,1fr) auto"><div class="co-pista"><i style="width:38.6%"></i></div><span class="num"><b>113 de 293</b> (38.6 %) en el puesto 1</span></div>
+      </div>
+
+      <!-- 8 · Información -->
+      <div class="vista" id="compresion-v-sh" hidden>
+        <h3>Probabilidad → información</h3>
+        <div class="co-medidor">
+          <label class="note" for="compresion-psh">Probabilidad p (escala logarítmica)</label>
+          <input type="range" id="compresion-psh" min="-7" max="0" step="0.01" value="-1">
+          <div><span class="mono" id="compresion-ptxt"></span> → <span class="valor" id="compresion-shtxt"></span></div>
+          <div class="co-pista" style="height:1.1rem"><i id="compresion-shbar" style="width:0"></i></div>
+          <span class="note">La barra llega al final con 24 Sh, el valor de « dul».</span>
+        </div>
+        <div class="co-botones" id="compresion-presets">
+          <button type="button" class="ghost" data-p="0.5">p = 1/2</button>
+          <button type="button" class="ghost" data-p="0.25">p = 1/4</button>
+          <button type="button" class="ghost" data-p="0.16666666666666666">dado: 1/6</button>
+          <button type="button" class="ghost" data-p="0.3993">«ce» 39.93 %</button>
+          <button type="button" class="ghost" data-p="0.9729">«ida» 97.29 %</button>
+          <button type="button" class="ghost" data-p="0.000021">«Oh» 0.0021 %</button>
+        </div>
+        <div class="co-dado">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="3" width="42" height="42" rx="8" fill="var(--net-soft)" stroke="var(--net)" stroke-width="2"/><g fill="var(--net)"><circle cx="15" cy="14" r="3.5"/><circle cx="33" cy="14" r="3.5"/><circle cx="15" cy="24" r="3.5"/><circle cx="33" cy="24" r="3.5"/><circle cx="15" cy="34" r="3.5"/><circle cx="33" cy="34" r="3.5"/></g></svg>
+          <div>Un lanzamiento: log<sub>2</sub> 6 = <b>2.585 Sh</b>. Cien lanzamientos: 258.5 Sh, que caben en <b>259 bits</b> (con 3 bits por lanzamiento harían falta 300).</div>
+        </div>
+      </div>
+
+      <!-- 9 · Codificador aritmético -->
+      <div class="vista" id="compresion-v-arit" hidden>
+        <div class="controls">
+          <button id="compresion-play" type="button">▶ Reproducir</button>
+          <button id="compresion-sig" type="button" class="ghost">Siguiente token</button>
+          <button id="compresion-reini" type="button" class="ghost">Reiniciar</button>
+          <label for="compresion-vel">Velocidad
+            <select id="compresion-vel"><option value="0.5">Lenta</option><option value="1" selected>Normal</option><option value="2">Rápida</option></select>
+          </label>
+          <span class="pill" id="compresion-paso">Paso 0 de 5</span>
+        </div>
+        <p class="note" style="margin:0">Texto de ejemplo: <span class="mono" id="compresion-texto"></span>. Son <b>probabilidades de ejemplo</b>; la red real reparte la probabilidad entre 151 936 salidas.</p>
+        <div class="co-et">Intervalo actual [bajo, alto), ampliado al ancho completo y dividido según las probabilidades del token siguiente</div>
+        <div class="comp-barra" id="compresion-barra"></div>
+        <div class="comp-ext"><span id="compresion-bajo"></span><span id="compresion-alto"></span></div>
+        <div class="co-et">Dónde está el intervalo dentro de [0, 1) <span class="note">(la línea marca 0.5)</span></div>
+        <div class="comp-regla"><span class="comp-sel" id="compresion-sel"></span><span class="comp-mitad"></span></div>
+        <p class="comp-evento"><b>Qué está pasando:</b> <span id="compresion-evento"></span></p>
+        <div class="co-et">Mensaje comprimido</div>
+        <div class="comp-cinta bits" id="compresion-cinta"></div>
+        <dl class="kv">
+          <dt>Información acumulada</dt><dd id="compresion-sh"></dd>
+          <dt>Bits escritos</dt><dd id="compresion-nb"></dd>
+          <dt>Bits pendientes</dt><dd id="compresion-pend"></dd>
+        </dl>
+      </div>
+
+      <!-- 10 · Frecuencias enteras -->
+      <div class="vista" id="compresion-v-frec" hidden>
+        <h3>Calculadora de frecuencia entera</h3>
+        <div class="controls">
+          <label for="compresion-p">Probabilidad p<sub>v</sub>
+            <input type="text" id="compresion-p" value="0.3" inputmode="decimal">
+          </label>
+          <button type="button" class="ghost" id="compresion-p1">p = 0.3</button>
+          <button type="button" class="ghost" id="compresion-p2">p = 1e-9</button>
+        </div>
+        <p class="formula" id="compresion-f" style="white-space:normal"></p>
+        <dl class="kv">
+          <dt>p<sub>v</sub></dt><dd>probabilidad que da la red al token v.</dd>
+          <dt>f<sub>v</sub></dt><dd>frecuencia entera del token v.</dd>
+          <dt>2<sup>24</sup></dt><dd>16 777 216 unidades que se reparten entre todas las salidas.</dd>
+          <dt>V</dt><dd>151 936 salidas de la red. 2<sup>24</sup> − V = 16 625 280.</dd>
+          <dt>⌊·⌋</dt><dd>función piso: redondea hacia abajo. ⌊4 987 584.9⌋ = 4 987 584.</dd>
+          <dt>+1</dt><dd>ningún token queda con frecuencia 0.</dd>
+        </dl>
+      </div>
+
+      <!-- 11 · Resultado -->
+      <div class="vista" id="compresion-v-result" hidden>
+        <h3>Tamaño del poema con cada método</h3>
+        <div class="co-fila"><span>UTF-8 original</span><div class="co-pista"><i class="ref" style="width:100%"></i></div><b>928 B</b></div>
+        <div class="co-fila"><span>LZMA</span><div class="co-pista"><i class="gris" style="width:64.33%"></i></div><b>597 B</b></div>
+        <div class="co-fila"><span>bzip2</span><div class="co-pista"><i class="gris" style="width:60.34%"></i></div><b>560 B</b></div>
+        <div class="co-fila"><span>zlib</span><div class="co-pista"><i class="gris" style="width:57.65%"></i></div><b>535 B</b></div>
+        <div class="co-fila"><span><b>Red neuronal</b></span><div class="co-pista"><i style="width:18.64%"></i></div><b>173 B</b></div>
+        <p class="note">Barras a escala respecto a los 928 bytes originales.</p>
+        <div class="co-mini">
+          <div><b>1.54</b>bits por carácter con la red</div>
+          <div><b>8.24</b>bits por carácter en UTF-8</div>
+          <div><b>53.29 s</b>compresión</div>
+          <div><b>56.77 s</b>descompresión</div>
+          <div><b>3.34 s</b>carga de la red</div>
+        </div>
+      </div>
+
+      <!-- 12 · Requisito -->
+      <div class="vista" id="compresion-v-req" hidden>
+        <div class="co-maq">
+          <div class="card"><h3>Emisor</h3><dl class="kv"><dt>Red</dt><dd>Qwen2.5-1.5B</dd><dt>Pesos</dt><dd>los mismos</dd><dt>Números</dt><dd>float32</dd><dt>Equipo</dt><dd>CPU, 4 hilos</dd></dl></div>
+          <div class="card"><h3>Receptor</h3><dl class="kv"><dt>Red</dt><dd>Qwen2.5-1.5B</dd><dt>Pesos</dt><dd>los mismos</dd><dt>Números</dt><dd>float32</dd><dt>Equipo</dt><dd>CPU, 4 hilos</dd></dl></div>
+        </div>
+        <div class="co-res">
+          <div><span>Poema comprimido en CPU</span><span class="pill ok">173 bytes</span></div>
+          <div><span>El mismo poema en GPU</span><span class="pill bad">174 bytes</span></div>
+        </div>
+        <p class="note">Con otra configuración cambian las probabilidades en los últimos decimales, y con ellas los subintervalos. Por eso emisor y receptor fijan la misma.</p>
+      </div>
+
+      <p class="narra" id="compresion-narra"><b>Qué estás viendo:</b> …</p>
+    </div>
+  </div>
+
+  <section class="co-explora" aria-labelledby="compresion-explora-t">
+    <h2 id="compresion-explora-t">Para explorar: palabras de esta etapa</h2>
+    <div class="grid3">
+      <details class="card"><summary>Parámetro</summary><p>Cada peso y cada sesgo de la red. Son números fijos que se aprendieron en el entrenamiento. Esta red tiene 1.54×10<sup>9</sup>.</p></details>
+      <details class="card"><summary>Capa</summary><p>Un grupo de neuronas que trabajan en paralelo sobre la misma entrada. La salida de una capa es la entrada de la siguiente.</p></details>
+      <details class="card"><summary>float32</summary><p>Formato de número en coma flotante de 32 bits (IEEE 754). Usar otro formato cambiaría ligeramente las probabilidades.</p></details>
+      <details class="card"><summary>Softmax</summary><p>Función que convierte V puntuaciones cualesquiera en V probabilidades positivas que suman 1. A mayor puntuación, mayor probabilidad.</p></details>
+      <details class="card"><summary>Subintervalo</summary><p>Un trozo del intervalo actual. Elegir el subintervalo de un token equivale a decir «el texto sigue con este token».</p></details>
+      <details class="card"><summary>Renormalización</summary><p>Cuando los extremos ya comparten su primer bit, ese bit se escribe y el intervalo se amplía al doble. Así el intervalo nunca se vuelve tan pequeño que la computadora no pueda representarlo.</p></details>
+    </div>
+  </section>
+
+  <nav class="siguiente-etapa" aria-label="Etapas"></nav>
+</main>
+<footer class="pie"></footer>
+<script type="module">
+import { recorrido, animar, sinMovimiento, color } from "./assets/js/guia.js";
+import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
+
+const $ = id => document.getElementById(id);
+const miles = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+/* ================= Tokens ================= */
+const TOKS = ["Oh", " dul", "ce", " ni", "ña", " p", "ál", "ida"];
+const enc = new TextEncoder();
+$("compresion-toks").innerHTML = TOKS.map((t, k) => {
+  const vis = t.startsWith(" ") ? `<span class="esp">␣</span>${t.slice(1)}` : t;
+  const hex = [...enc.encode(t)].map(b => b.toString(16).toUpperCase().padStart(2, "0")).join(" ");
+  return `<span class="co-tok" style="animation-delay:${k * 90}ms">${vis}<small hidden>${hex}</small></span>`;
+}).join("");
+$("compresion-unido").textContent = TOKS.join("") + "…";
+$("compresion-verbytes").addEventListener("change", ev => document.querySelectorAll(".co-tok small").forEach(s => (s.hidden = !ev.target.checked)));
+
+/* ================= Neurona ================= */
+const W = [0.8, -0.6, 1.2], B = 0.2;
+const silu = z => z / (1 + Math.exp(-z));
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, at, padre) => { const n = document.createElementNS(NS, tag); for (const k in at) n.setAttribute(k, at[k]); padre?.append(n); return n; };
+const ENT = [[62, 45], [62, 125], [62, 205]], NEU = [230, 125], SAL = [390, 125];
+const lineas = ENT.map(([x, y], k) => {
+  const l = el("line", { x1: x + 26, y1: y, x2: NEU[0] - 34, y2: NEU[1], stroke: "var(--net)", "stroke-width": 1 + 4 * Math.abs(W[k]), "stroke-dasharray": W[k] < 0 ? "6 5" : "none", "stroke-linecap": "round" }, $("compresion-nlineas"));
+  el("text", { x: x + 34, y: y + (k === 0 ? -8 : k === 1 ? -8 : 20), "font-size": 12, fill: "var(--muted)" }, $("compresion-nlineas")).textContent = `w${"₁₂₃"[k]} = ${W[k]}`;
+  return l;
+});
+el("line", { x1: NEU[0] + 34, y1: NEU[1], x2: SAL[0] - 26, y2: SAL[1], stroke: "var(--ink)", "stroke-width": 2 }, $("compresion-nlineas"));
+const nodos = $("compresion-nnodos");
+const txtEnt = ENT.map(([x, y], k) => { el("circle", { cx: x, cy: y, r: 26, fill: "var(--surface)", stroke: "var(--line)", "stroke-width": 2 }, nodos); el("text", { x: x - 34, y: y + 5, "text-anchor": "end", "font-size": 14, "font-weight": 600 }, nodos).textContent = "x" + "₁₂₃"[k]; return el("text", { x, y: y + 5, "text-anchor": "middle", "font-size": 13 }, nodos); });
+const cNeu = el("circle", { cx: NEU[0], cy: NEU[1], r: 38, fill: "var(--net-soft)", stroke: "var(--net)", "stroke-width": 3 }, nodos);
+el("text", { x: NEU[0], y: NEU[1] - 4, "text-anchor": "middle", "font-size": 13 }, nodos).textContent = "Σ + b";
+const tZ = el("text", { x: NEU[0], y: NEU[1] + 14, "text-anchor": "middle", "font-size": 12, fill: "var(--muted)" }, nodos);
+const cSal = el("circle", { cx: SAL[0], cy: SAL[1], r: 26, fill: "var(--net)", stroke: "var(--net)", "stroke-width": 2 }, nodos);
+const tSal = el("text", { x: SAL[0], y: SAL[1] + 5, "text-anchor": "middle", "font-size": 13, "font-weight": 600 }, nodos);
+el("text", { x: SAL[0], y: SAL[1] - 34, "text-anchor": "middle", "font-size": 11, fill: "var(--muted)" }, nodos).textContent = "salida";
+// mini gráfica de SiLU
+const plot = $("compresion-nplot");
+el("rect", { x: -70, y: -45, width: 180, height: 75, rx: 6, fill: "var(--surface)", stroke: "var(--line)" }, plot);
+const px = z => 10 + z * 22, py = a => 0 - a * 9;
+el("line", { x1: -65, y1: 0, x2: 105, y2: 0, stroke: "var(--line)" }, plot);
+el("line", { x1: 10, y1: -42, x2: 10, y2: 28, stroke: "var(--line)" }, plot);
+let dCurva = ""; for (let z = -3.4; z <= 4.41; z += 0.1) dCurva += (dCurva ? "L" : "M") + px(z).toFixed(1) + " " + py(silu(z)).toFixed(1);
+el("path", { d: dCurva, fill: "none", stroke: "var(--net)", "stroke-width": 2 }, plot);
+el("text", { x: -64, y: -30, "font-size": 11, fill: "var(--muted)" }, plot).textContent = "SiLU";
+const punto = el("circle", { r: 4.5, fill: "var(--ink)" }, plot);
+function neurona() {
+  const x = [1, 2, 3].map(k => +$("compresion-x" + k).value);
+  x.forEach((v, k) => { $("compresion-o" + (k + 1)).textContent = v.toFixed(1); txtEnt[k].textContent = v.toFixed(1); });
+  const z = x.reduce((s, v, k) => s + v * W[k], B), a = silu(z);
+  lineas.forEach((l, k) => l.setAttribute("stroke-opacity", (0.25 + 0.75 * Math.min(1, Math.abs(W[k] * x[k]) / 1.6)).toFixed(2)));
+  tZ.textContent = `z = ${z.toFixed(2)}`; tSal.textContent = a.toFixed(2);
+  cSal.setAttribute("fill-opacity", (0.25 + 0.75 * Math.min(1, Math.max(0, a) / 3)).toFixed(2));
+  tSal.setAttribute("fill", a > 1.2 ? "var(--surface)" : "var(--ink)");
+  const zc = Math.max(-3.4, Math.min(4.4, z));
+  punto.setAttribute("cx", px(zc)); punto.setAttribute("cy", py(silu(zc)));
+  const f = v => (v < 0 ? `(${v.toFixed(1)})` : v.toFixed(1));
+  $("compresion-ncalc").innerHTML = `z = 0.8·${f(x[0])} + (−0.6)·${f(x[1])} + 1.2·${f(x[2])} + 0.2 = <b>${z.toFixed(2)}</b><br>salida = SiLU(z) = z / (1 + e<sup>−z</sup>) = <b>${a.toFixed(2)}</b>`;
+}
+[1, 2, 3].forEach(k => $("compresion-x" + k).addEventListener("input", neurona));
+neurona();
+
+/* ================= Tabla real ================= */
+const FILAS = [["Oh", "0.0021 %", 0.0021, "1587", "15.57"], [" dul", "&lt; 0.0001 %", 0, "40 721", "24.00"], ["ce", "39.93 %", 39.93, "1", "1.32"], [" ni", "0.02 %", 0.02, "563", "12.49"],
+  ["ña", "79.17 %", 79.17, "1", "0.34"], [" p", "0.17 %", 0.17, "60", "9.18"], ["ál", "1.72 %", 1.72, "9", "5.86"], ["ida", "97.29 %", 97.29, "1", "0.04"]];
+$("compresion-tbody").innerHTML = FILAS.map(([t, ps, p, pos, sh]) =>
+  `<tr${pos === "1" ? ' class="uno"' : ""}><td class="mono">«${t.replace(/^ /, "␣")}»</td><td><div class="co-pb"><div class="co-pista"><i style="width:${p}%"></i></div><span class="num">${ps}</span></div></td><td class="r">${pos}</td><td class="r">${sh}</td></tr>`).join("");
+
+/* ================= Información en Sh ================= */
+function sh(p) {
+  $("compresion-ptxt").textContent = `p = ${p >= 0.001 ? (+p.toPrecision(4)).toString() : p.toExponential(2)}`;
+  const i = -Math.log2(p);
+  $("compresion-shtxt").textContent = `${i.toFixed(3)} Sh`;
+  $("compresion-shbar").style.width = Math.min(100, (i / 24) * 100) + "%";
+}
+$("compresion-psh").addEventListener("input", ev => sh(10 ** +ev.target.value));
+$("compresion-presets").addEventListener("click", ev => { const b = ev.target.closest("button"); if (!b) return; const p = +b.dataset.p; $("compresion-psh").value = Math.log10(p); sh(p); });
+sh(0.5); $("compresion-psh").value = Math.log10(0.5);
+
+/* ================= Codificador aritmético (probabilidades de ejemplo) ================= */
+const quieto = () => sinMovimiento();
+const espera = ms => new Promise(res => setTimeout(res, quieto() ? 0 : ms));
+const vel = () => Number($("compresion-vel").value) || 1;
+function reproductor({ pasoFn, hayMas, reset, finalFn, base }) {
+  let corriendo = false, ocupado = false;
+  const marcar = () => { $("compresion-play").textContent = corriendo ? "⏸ Pausa" : "▶ Reproducir"; };
+  async function uno(anim) { if (ocupado || !hayMas()) return; ocupado = true; try { await pasoFn(anim && !quieto(), base / vel()); } finally { ocupado = false; } }
+  async function bucle() {
+    if (quieto()) { finalFn(); corriendo = false; marcar(); return; }
+    while (corriendo && hayMas()) { await uno(true); if (corriendo && hayMas()) await espera(base * .6 / vel()); }
+    corriendo = false; marcar();
+  }
+  $("compresion-play").addEventListener("click", () => { if (corriendo) { corriendo = false; marcar(); return; } if (!hayMas()) reset(); corriendo = true; marcar(); bucle(); });
+  $("compresion-sig").addEventListener("click", () => { corriendo = false; marcar(); if (!hayMas()) reset(); uno(true); });
+  $("compresion-reini").addEventListener("click", () => { corriendo = false; marcar(); if (!ocupado) reset(); else setTimeout(reset, 50); });
+  return { parar() { corriendo = false; marcar(); } };
+}
+const PASOS_A = [
+  { obs: "noche", ps: [["noche", .5], ["luna", .3], ["otros", .2]] },
+  { obs: "de", ps: [["de", .6], ["es", .25], ["otros", .15]] },
+  { obs: "luna", ps: [["estrellas", .35], ["luna", .25], ["perfumes", .15], ["otros", .25]] },
+  { obs: "callada", ps: [["llena", .55], ["blanca", .2], ["callada", .1], ["otros", .15]] },
+  { obs: "⟨fin⟩", ps: [["⟨fin⟩", .7], ["«,»", .2], ["otros", .1]] },
+];
+$("compresion-texto").textContent = PASOS_A.map(p => "«" + p.obs + "»").join(" ");
+const fmt = x => x.toFixed(6);
+const bin = (x, n = 12) => { let s = "0."; for (let i = 0; i < n; i++) { x *= 2; if (x >= 1) { s += "1"; x -= 1; } else s += "0"; } return s + "…₂"; };
+let st;
+const INTRO = "Paso 0: el intervalo es [0, 1). La barra ya está dividida para el primer token: cada subintervalo tiene una longitud proporcional a su probabilidad. El resaltado es el del token que sigue, «noche».";
+function reiniciar() { st = { i: 0, lo: 0, hi: 1, bits: [], pend: 0, sh: 0, evento: INTRO, fin: false }; pintarA(); }
+function escribir(b, nuevos) {
+  st.bits.push({ b, nuevo: true }); nuevos.push(b);
+  for (; st.pend > 0; st.pend--) { const c = b === "0" ? "1" : "0"; st.bits.push({ b: c, nuevo: true }); nuevos.push(c); }
+}
+function calcular() {
+  st.bits.forEach(x => (x.nuevo = false));
+  const paso = PASOS_A[st.i], w = st.hi - st.lo;
+  let c = 0, p = 0;
+  for (const [t, q] of paso.ps) { if (t === paso.obs) { p = q; break; } c += q; }
+  const lo = st.lo + c * w, hi = st.lo + (c + p) * w;
+  st.lo = lo; st.hi = hi; st.sh += -Math.log2(p);
+  const nuevos = []; let ampl = 0, pendNuevos = 0;
+  for (;;) {
+    if (st.hi <= .5) { escribir("0", nuevos); st.lo *= 2; st.hi *= 2; ampl++; }
+    else if (st.lo >= .5) { escribir("1", nuevos); st.lo = 2 * st.lo - 1; st.hi = 2 * st.hi - 1; ampl++; }
+    else if (st.lo >= .25 && st.hi <= .75) { st.pend++; pendNuevos++; st.lo = 2 * st.lo - .5; st.hi = 2 * st.hi - .5; ampl++; }
+    else break;
+  }
+  st.i++;
+  let txt = `Paso ${st.i}: se conserva el subintervalo de «${paso.obs}» (probabilidad ${p}, información ${(-Math.log2(p)).toFixed(3)} Sh), que era [${fmt(lo)}, ${fmt(hi)}). `;
+  txt += nuevos.length ? `Bajo y alto empezaban con los mismos bits: se escriben «${nuevos.join("")}» en el mensaje comprimido. ` : "Bajo y alto no comparten bits iniciales: todavía no se escribe nada. ";
+  if (pendNuevos) txt += `${pendNuevos === 1 ? "Una ampliación quedó" : pendNuevos + " ampliaciones quedaron"} con bit pendiente, porque el intervalo estaba alrededor de 0.5. `;
+  txt += ampl ? `El intervalo se amplió al doble ${ampl} ${ampl === 1 ? "vez" : "veces"}.` : "No hubo ampliación.";
+  if (st.i === PASOS_A.length) {
+    const term = []; st.pend++;
+    const ant = st.bits.length;
+    escribir(st.lo < .25 ? "0" : "1", term);
+    for (let k = ant; k < st.bits.length; k++) st.bits[k].term = true;
+    txt += ` Cierre: se escriben «${term.join("")}», que señalan un punto dentro del intervalo final. Total: ${st.bits.length} bits para ${st.sh.toFixed(3)} Sh de información.`;
+    st.fin = true;
+  }
+  st.evento = txt;
+}
+async function zoom(dur) {
+  const segs = [...$("compresion-barra").children];
+  const op = { duration: dur, easing: "ease-in-out", fill: "forwards" };
+  const anims = segs.map(s => s.animate([{ flexBasis: s.style.flexBasis }, { flexBasis: s.classList.contains("obs") ? "100%" : "0%" }], op));
+  await Promise.race([Promise.all(anims.map(a => a.finished.catch(() => {}))), espera(dur + 150)]);
+}
+async function volar(dur) {
+  const nuevos = [...$("compresion-cinta").querySelectorAll("span.nuevo")];
+  if (!nuevos.length) return;
+  const origen = $("compresion-barra").getBoundingClientRect();
+  const vuelos = nuevos.map((dst, k) => {
+    dst.classList.add("oculto");
+    const r = dst.getBoundingClientRect();
+    const f = document.createElement("span");
+    f.textContent = dst.textContent; f.setAttribute("aria-hidden", "true");
+    Object.assign(f.style, { position: "fixed", left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px", display: "grid", placeItems: "center", borderRadius: "4px",
+      font: "600 .85rem/1 " + color("f-mono"), background: color("net"), color: color("surface"), zIndex: 50, pointerEvents: "none" });
+    document.body.append(f);
+    const dx = origen.left + origen.width / 2 - r.left, dy = origen.top + origen.height / 2 - r.top;
+    const a = f.animate([{ transform: `translate(${dx}px, ${dy}px) scale(1.6)` }, { transform: "translate(0, 0) scale(1)" }], { duration: dur, delay: k * dur * .25, easing: "cubic-bezier(.3,.7,.4,1)", fill: "backwards" });
+    const fin = () => { f.remove(); dst.classList.remove("oculto"); };
+    return Promise.race([a.finished.catch(() => {}), espera(dur * (1 + k * .25) + 150)]).then(fin);
+  });
+  await Promise.all(vuelos);
+}
+async function siguiente(anim, dur) { if (st.fin) return; if (anim) await zoom(dur * .55); calcular(); pintarA(); if (anim) await volar(dur * .5); }
+function pintarA() {
+  const barra = $("compresion-barra"); barra.textContent = "";
+  if (!st.fin) {
+    const paso = PASOS_A[st.i];
+    for (const [t, q] of paso.ps) {
+      const s = document.createElement("div");
+      s.className = "comp-seg" + (t === paso.obs ? " obs" : "");
+      s.style.flex = `0 0 ${q * 100}%`; s.title = `${t}: ${q}`;
+      const e = document.createElement("span"); e.append(t, document.createElement("br"), String(q)); s.append(e);
+      barra.append(s);
+    }
+  } else {
+    const s = document.createElement("div"); s.className = "comp-seg fin"; s.style.flex = "0 0 100%";
+    s.textContent = "Intervalo final: el mensaje comprimido señala un punto dentro de él"; barra.append(s);
+  }
+  $("compresion-bajo").textContent = `bajo = ${fmt(st.lo)} = ${bin(st.lo)}`;
+  $("compresion-alto").textContent = `alto = ${fmt(st.hi)} = ${bin(st.hi)}`;
+  const sel = $("compresion-sel"); sel.style.left = (st.lo * 100) + "%"; sel.style.width = ((st.hi - st.lo) * 100) + "%";
+  $("compresion-evento").textContent = st.evento;
+  const cinta = $("compresion-cinta"); cinta.textContent = "";
+  if (!st.bits.length) { const e = document.createElement("em"); e.className = "note"; e.textContent = "(vacío: todavía no se ha escrito ningún bit)"; cinta.append(e); }
+  for (const x of st.bits) { const s = document.createElement("span"); s.textContent = x.b; if (x.nuevo) s.classList.add("nuevo"); if (x.term) s.classList.add("term"); cinta.append(s); }
+  $("compresion-sh").textContent = st.sh.toFixed(3) + " Sh";
+  $("compresion-nb").textContent = st.bits.length + " bits";
+  $("compresion-pend").textContent = String(st.pend);
+  $("compresion-paso").textContent = `Paso ${st.i} de ${PASOS_A.length}`;
+}
+const repA = reproductor({ pasoFn: siguiente, hayMas: () => !st.fin, reset: reiniciar, finalFn: () => { while (!st.fin) calcular(); pintarA(); }, base: 1600 });
+reiniciar();
+
+/* ================= Calculadora de frecuencias ================= */
+const V = 151936, U = 2 ** 24 - V;
+function calc() {
+  const raw = $("compresion-p").value.trim(), p = Number(raw.replace(",", "."));
+  const out = $("compresion-f");
+  if (raw === "" || !Number.isFinite(p) || p < 0 || p > 1) { out.textContent = "Escribe una probabilidad entre 0 y 1."; return; }
+  const piso = Math.floor(p * U);
+  out.textContent = `f = ⌊${p} × ${miles(U)}⌋ + 1 = ${miles(piso)} + 1 = ${miles(piso + 1)}`;
+}
+$("compresion-p").addEventListener("input", calc);
+$("compresion-p1").addEventListener("click", () => { $("compresion-p").value = "0.3"; calc(); });
+$("compresion-p2").addEventListener("click", () => { $("compresion-p").value = "1e-9"; calc(); });
+calc();
+
+/* ================= Escena 3D: la pila de 28 capas ================= */
+const e = escena3d($("compresion-lienzo"), { camara: [7, 7, 11.5], mirar: [0, 5, 0] });
+let C = e.colores();
+const NL = 28, Y0 = 0.9, DY = 0.32, GAP = 0.14, TOP = Y0 + NL * DY + 0.1;
+const geoLosa = new THREE.BoxGeometry(3.2, 0.1, 2.2), geoBorde = new THREE.EdgesGeometry(geoLosa);
+const colorFfn = () => C.net.clone().lerp(C.surface, 0.45);
+function losa(c) {
+  const m = new THREE.Mesh(geoLosa, new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0, transparent: true, opacity: 0.3, depthWrite: false }));
+  m.add(new THREE.LineSegments(geoBorde, new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: 0.5 })));
+  e.scene.add(m); return m;
+}
+const subs = [];
+for (let L = 0; L < NL; L++) { subs.push(losa(C.net)); subs.push(losa(colorFfn())); }
+const emb = losa(C.muted), lin = losa(C.muted);
+emb.position.y = 0.35; lin.position.y = TOP + 0.15;
+
+// Detalle de la capa 1: 12 cabezas de consulta y 2 de clave/valor; perceptrón 1536 → 8960 → 1536 (6 → 14 → 6 puntos).
+const matDet = new THREE.MeshStandardMaterial({ color: C.net, emissive: C.net, emissiveIntensity: 0.2 });
+const matDet2 = new THREE.MeshStandardMaterial({ color: C.ink });
+const matHilo = new THREE.LineBasicMaterial({ color: C.net, transparent: true, opacity: 0.35 });
+const detAtt = new THREE.Group(), detFfn = new THREE.Group();
+const bolita = new THREE.SphereGeometry(0.07, 12, 12), bola = new THREE.SphereGeometry(0.13, 16, 16);
+const hilosAtt = [];
+const kv = [-0.5, 0.5].map(x => { const m = new THREE.Mesh(bola, matDet2); m.position.set(x, 0.12, 0.55); detAtt.add(m); return m; });
+for (let q = 0; q < 12; q++) {
+  const m = new THREE.Mesh(bolita, matDet); m.position.set(-1.32 + q * 0.24, 0.1, -0.55); detAtt.add(m);
+  hilosAtt.push(m.position.x, 0.1, -0.55, kv[q < 6 ? 0 : 1].position.x, 0.12, 0.55);
+}
+const gHA = new THREE.BufferGeometry(); gHA.setAttribute("position", new THREE.Float32BufferAttribute(hilosAtt, 3));
+detAtt.add(new THREE.LineSegments(gHA, matHilo));
+const filas = [6, 14, 6], zf = [-0.75, 0, 0.75], posF = filas.map((n, r) => [...Array(n)].map((_, k) => new THREE.Vector3((k - (n - 1) / 2) * (r === 1 ? 0.2 : 0.34), 0.1, zf[r])));
+posF.flat().forEach(p => { const m = new THREE.Mesh(bolita, matDet); m.position.copy(p); detFfn.add(m); });
+const hilosF = [];
+for (let r = 0; r < 2; r++) for (const a of posF[r]) for (const b of posF[r + 1]) hilosF.push(a.x, a.y, a.z, b.x, b.y, b.z);
+const gHF = new THREE.BufferGeometry(); gHF.setAttribute("position", new THREE.Float32BufferAttribute(hilosF, 3));
+const matHiloF = matHilo.clone(); matHiloF.opacity = 0.18;
+detFfn.add(new THREE.LineSegments(gHF, matHiloF));
+subs[0].add(detAtt); subs[1].add(detFfn);
+
+// Abanico de probabilidades sobre la capa de salida.
+const NB = 21, R = 1.7, alturas = [];
+const EJ = [0.06, 0.1, 0.05, 0.14, 0.08, 0.22, 0.1, 0.3, 0.16, 0.45], geoBar = new THREE.BoxGeometry(0.17, 1, 0.17);
+const barras = [];
+for (let k = 0; k < NB; k++) {
+  const a = -1.25 + 2.5 * k / (NB - 1), centro = k === (NB - 1) / 2;
+  const h = centro ? 39.93 / 100 * 5 : EJ[Math.min(k, NB - 1 - k) % EJ.length];
+  const m = new THREE.Mesh(geoBar, new THREE.MeshStandardMaterial({ color: centro ? C.net : C.muted }));
+  m.userData = { h, centro };
+  m.position.set(R * Math.sin(a), 0, -R * Math.cos(a) + R * 0.7);
+  e.scene.add(m); barras.push(m); alturas.push(h);
+}
+let crecer = 1;
+function ponerBarras() { barras.forEach(b => { const h = Math.max(0.001, b.userData.h * crecer); b.scale.y = h; b.position.y = TOP + 0.3 + h / 2; }); }
+ponerBarras();
+
+// Token que viaja.
+const matTok = new THREE.MeshStandardMaterial({ color: C.net, emissive: C.net, emissiveIntensity: 0.5 });
+const token = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 20), matTok);
+const rotTok = etiqueta("«Oh» « dul»", { color: "net", tam: 0.32 }); rotTok.position.set(1.0, 0.1, 0); token.add(rotTok);
+e.scene.add(token);
+
+// Rótulos.
+const rot = (t, c, x, y, z = 0, tam = 0.34) => { const s = etiqueta(t, { color: c, tam }); s.position.set(x, y, z); e.scene.add(s); return s; };
+const rCapas = rot("× 28 capas", "net", -3.2, 5.2, 0, 0.75);
+const rEmb = rot("Embedding: token → 1536 números", "muted", 0, -0.25, 1.3, 0.42);
+const rLin = rot("Capa lineal + softmax", "muted", -3.3, TOP + 0.15, 0, 0.45);
+const rCe = rot("«ce» 39.93 %", "net", 0, TOP + 2.75, R * 0.7 - R, 0.36);
+const rOtras = rot("otras 151 935 salidas: 60.07 % (alturas de ejemplo)", "muted", 0, TOP + 2.35, R * 0.7 - R, 0.2);
+const rAtt = rot("Autoatención · 12 cabezas de consulta, 2 de clave/valor", "net", 0, 0, 1.5, 0.2);
+const rFfn = rot("Red prealimentada · 1536 → 8960 → 1536", "net", 0, 0, 1.5, 0.2);
+
+// Estado.
+let modo = "pila", abrir = 0;
+const posSub = s => { const L = s >> 1, ffn = s & 1; return Y0 + L * DY + (ffn ? GAP : 0) + (L === 0 ? (ffn ? 0.95 * abrir : 0) : 1.3 * abrir); };
+const contador = $("compresion-contador");
+let ultimoTxt = "";
+const decir = t => { if (t !== ultimoTxt) { contador.textContent = t; ultimoTxt = t; } };
+function cuadro(t) {
+  let yTok, activa = -1, txt;
+  if (modo === "pila") {
+    const u = (t % 9) / 9, y0 = -0.5, y1 = TOP + 0.5;
+    yTok = y0 + u * (y1 - y0);
+    if (yTok < Y0 - 0.12) txt = "Embedding: el token se vuelve una lista de 1536 números";
+    else if (yTok > TOP - 0.05) txt = "Capa lineal + softmax → probabilidades";
+    else {
+      const L = Math.max(0, Math.min(NL - 1, Math.floor((yTok - Y0 + 0.09) / DY)));
+      const ffn = yTok - (Y0 + L * DY) > GAP / 2 ? 1 : 0;
+      activa = 2 * L + ffn;
+      txt = `Capa ${L + 1} de 28 · ${ffn ? "red prealimentada" : "autoatención"}`;
+    }
+  } else if (modo === "capa") {
+    const ffn = Math.floor(t / 1.6) % 2;
+    activa = ffn;
+    const y = posSub(ffn), ant = posSub(1 - ffn), u = Math.min(1, (t % 1.6) / 0.5);
+    yTok = ant + (y - ant) * (u * u * (3 - 2 * u));
+    txt = ffn ? "Capa 1 · red prealimentada: 1536 → 8960 → 1536 neuronas" : "Capa 1 · autoatención: 12 cabezas de consulta, 2 de clave/valor";
+  } else {
+    yTok = TOP + 0.15; txt = "Salida: 151 936 probabilidades; «ce» recibe 39.93 %";
+  }
+  token.position.set(modo === "capa" ? -1.75 : 0, yTok, 0);
+  subs.forEach((m, s) => {
+    m.position.y = posSub(s);
+    const lejos = modo === "capa" && s > 1;
+    const on = s === activa;
+    m.material.opacity = on ? 0.9 : lejos ? 0.05 : 0.28;
+    m.material.emissiveIntensity = on ? 0.55 : 0;
+    m.children[0].material.opacity = lejos ? 0.08 : 0.5;
+  });
+  lin.material.emissiveIntensity = modo === "abanico" ? 0.5 : 0;
+  lin.material.opacity = modo === "abanico" ? 0.7 : 0.3;
+  detAtt.visible = detFfn.visible = abrir > 0.02;
+  detAtt.scale.setScalar(Math.max(0.01, abrir)); detFfn.scale.setScalar(Math.max(0.01, abrir));
+  const pulso = 0.2 + 0.5 * (0.5 + 0.5 * Math.sin(t * 6));
+  matDet.emissiveIntensity = pulso;
+  rAtt.visible = rFfn.visible = abrir > 0.5;
+  rAtt.position.y = posSub(0) - 0.3; rFfn.position.y = posSub(1) + 0.32;
+  rAtt.position.z = 1.45; rFfn.position.z = 1.45;
+  rCapas.visible = modo !== "capa";
+  rEmb.visible = modo === "pila";
+  rCe.visible = rOtras.visible = modo === "abanico";
+  rTokVisible();
+  decir(txt);
+}
+function rTokVisible() { rotTok.visible = modo !== "abanico"; }
+e.alCuadro((dt, t) => cuadro(t));
+e.alTema(c => {
+  C = c;
+  subs.forEach((m, s) => { const col = s & 1 ? colorFfn() : C.net; m.material.color.copy(col); m.material.emissive.copy(col); m.children[0].material.color.copy(col); });
+  [emb, lin].forEach(m => { m.material.color.copy(C.muted); m.material.emissive.copy(C.muted); m.children[0].material.color.copy(C.muted); });
+  matDet.color.copy(C.net); matDet.emissive.copy(C.net); matDet2.color.copy(C.ink); matHilo.color.copy(C.net); matHiloF.color.copy(C.net);
+  barras.forEach(b => b.material.color.copy(b.userData.centro ? C.net : C.muted));
+  matTok.color.copy(C.net); matTok.emissive.copy(C.net);
+});
+cuadro(4.5);
+
+const CAM = {
+  pila: [[7.2, 6.4, 12.6], [0, 5.3, 0]],
+  capa: [[3.6, 3.4, 5.2], [0, 1.5, 0]],
+  abanico: [[0, TOP + 3.6, 6.2], [0, TOP + 0.9, 0]],
+};
+let cancelarCam = () => {}, cancelarAbrir = () => {}, cancelarCrecer = () => {};
+function mover([p, t], ms = 1200, directo = false) {
+  cancelarCam();
+  const p0 = e.camera.position.clone(), t0 = e.controls.target.clone(), p1 = new THREE.Vector3(...p), t1 = new THREE.Vector3(...t);
+  if (directo) { e.camera.position.copy(p1); e.controls.target.copy(t1); return; }
+  cancelarCam = animar(ms, u => { e.camera.position.lerpVectors(p0, p1, u); e.controls.target.lerpVectors(t0, t1, u); });
+}
+function irModo(m, directo) {
+  modo = m;
+  cancelarAbrir(); cancelarCrecer();
+  const a0 = abrir, a1 = m === "capa" ? 1 : 0;
+  if (directo) abrir = a1; else cancelarAbrir = animar(900, u => (abrir = a0 + (a1 - a0) * u));
+  if (m === "abanico" && !directo) cancelarCrecer = animar(1400, u => { crecer = u; ponerBarras(); });
+  else { crecer = 1; ponerBarras(); }
+  mover(CAM[m], 1200, directo);
+  cuadro(m === "pila" ? 4.5 : 0.2);
+}
+
+/* ================= Recorrido ================= */
+const VISTAS = ["flujo", "tokens", "neurona", "3d", "3d", "3d", "tabla", "sh", "arit", "frec", "result", "req"];
+const MODOS = { 3: "pila", 4: "capa", 5: "abanico" };
+const NARRA = [
+  "El camino completo de esta etapa: el poema entra arriba y sale abajo convertido en 173 bytes. Las barras grises y moradas están a escala.",
+  "Los 8 primeros tokens reales del poema. Al unirlos aparece «Oh dulce niña pálida». Marca la casilla para ver los bytes de cada token: el ␣ es un espacio y «ñ», «á» ocupan 2 bytes cada una.",
+  "Tres entradas (izquierda) entran a la neurona (centro) por líneas cuyo grosor es el peso. La neurona suma y aplica SiLU; el punto negro de la gráfica muestra dónde cae la suma.",
+  "La pila de 28 capas, vista de lado. La bolita morada es el token; mientras sube, se ilumina la subcapa por la que pasa. Arriba, en gris, la capa de salida.",
+  "La primera capa, separada de las demás. En la losa de abajo, 12 puntos morados (cabezas de consulta) se conectan a 2 negros (clave/valor). En la de arriba, el perceptrón: 6 → 14 → 6 puntos representan 1536 → 8960 → 1536 neuronas.",
+  "Sobre la capa de salida se abre un abanico con una barra por salida. La barra alta es «ce», con 39.93 %. Las barras grises representan las otras 151 935 salidas; sus alturas son valores de ejemplo.",
+  "Las probabilidades reales de los 8 primeros tokens. Las filas en negrita son tokens que la red puso en el primer lugar.",
+  "Mueve el deslizador o pulsa un botón: mientras menor es la probabilidad, más larga la barra de información. Abajo, el ejemplo del dado.",
+  "Arriba, el intervalo actual dividido entre los candidatos; el resaltado es el token que sigue. En medio, dónde queda dentro de [0, 1). Abajo, los bits que ya se escribieron en el mensaje comprimido.",
+  "Escribe una probabilidad o usa los botones. Incluso p = 1e-9 recibe frecuencia 1, así que ese token todavía se podría escribir.",
+  "Tamaños medidos del poema con cada compresor, a escala. La barra morada es la red neuronal: menos de un tercio de lo que deja el mejor compresor clásico.",
+  "Emisor y receptor con la misma configuración. Abajo, lo que pasó al cambiar de CPU a GPU: el tamaño cambió de 173 a 174 bytes.",
+];
+const narra = $("compresion-narra");
+let primera = true, vistaActual = null;
+recorrido($("recorrido"), (i) => {
+  const v = VISTAS[i];
+  document.querySelectorAll(".escena .vista").forEach(d => (d.hidden = d.id !== "compresion-v-" + v));
+  const nodo = $("compresion-v-" + v);
+  if (v !== vistaActual) { nodo.classList.remove("entra"); void nodo.offsetWidth; if (!sinMovimiento()) nodo.classList.add("entra"); }
+  if (vistaActual === "arit" && v !== "arit") repA.parar();
+  vistaActual = v;
+  if (MODOS[i]) irModo(MODOS[i], primera || sinMovimiento());
+  narra.innerHTML = `<b>Qué estás viendo:</b> ${NARRA[i]}`;
+  primera = false;
+});
+</script>
+</body>
+</html>

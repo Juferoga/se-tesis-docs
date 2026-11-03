@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Preguntas frecuentes · Criptoestegoaudio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/base.css">
+<script type="module" src="assets/js/sitio.js"></script>
+<style>
+.pre-sec { margin-top: 2.5rem; display: grid; gap: 1rem; }
+.pre-sec > h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
+.pre-faq { display: grid; gap: .6rem; max-width: 80ch; }
+.pre-faq details.card { padding: .85rem 1.1rem; }
+.pre-faq summary { cursor: pointer; font-weight: 600; font-size: 1.08rem; }
+.pre-faq details[open] summary { color: var(--key); margin-bottom: .45rem; }
+.pre-faq details p { margin: 0; }
+.pre-faq .ir { display: inline-block; margin-top: .5rem; font-size: var(--s-1); font-weight: 600; }
+.pre-buscar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.pre-buscar input { width: min(100%, 26rem); font-family: var(--f-body); }
+.pre-letras { display: flex; flex-wrap: wrap; gap: .3rem; }
+.pre-letras a { font: 600 var(--s-1)/1 var(--f-mono); padding: .35rem .5rem; border-radius: 6px; background: var(--soft); color: var(--ink); text-decoration: none; }
+.pre-glos { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: .75rem; margin: 0; }
+.pre-glos .card { display: grid; gap: .3rem; align-content: start; scroll-margin-top: 5rem; }
+.pre-glos dt { font: 700 1.08rem/1.25 var(--f-display); }
+.pre-glos dt .letra { display: none; }
+.pre-glos dd { margin: 0; color: var(--ink); }
+.pre-glos dd.dónde { font-size: var(--s-1); }
+.pre-vacio { color: var(--muted); }
+.pre-refs { padding-left: 1.2rem; display: grid; gap: .4rem; max-width: 90ch; margin: 0; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<header class="barra" data-actual="preguntas"></header>
+<main class="pagina" data-rol="key">
+  <div class="cabeza">
+    <span class="eyebrow">Para cerrar · Dudas que ya surgieron</span>
+    <h1>Preguntas frecuentes</h1>
+    <p>Las preguntas que surgieron al revisar el artículo, cada una con su respuesta corta y la etapa donde se explica en detalle. Más abajo hay un glosario con todos los términos del sitio y las referencias para verificar.</p>
+  </div>
+
+  <section class="pre-sec" aria-labelledby="pre-faq-t">
+    <h2 id="pre-faq-t">Preguntas</h2>
+    <div class="pre-faq">
+      <details class="card" open>
+        <summary>¿Cada una de las 28 capas tiene a su vez otra red?</summary>
+        <p>Sí. Cada capa del Transformer tiene dos subcapas: la autoatención, que combina la información de los tokens anteriores, y una red prealimentada (perceptrón multicapa) que procesa cada token por separado, con 1536 → 8960 → 1536 neuronas. Así la define el artículo original del Transformer (Vaswani et al., 2017, sección 3.3), y los tamaños están en la configuración oficial de Qwen2.5-1.5B.</p>
+        <a class="ir" href="compresion.html">Ver etapa 1 · Compresión →</a>
+      </details>
+      <details class="card">
+        <summary>¿Qué es lo «proporcional» en el codificador aritmético?</summary>
+        <p>La longitud de cada subintervalo. En cada paso el intervalo actual se divide en un subintervalo por token posible, y la longitud de cada uno es proporcional a la probabilidad que la red le da. El codificador conserva el del token que aparece en el texto, así que la longitud se multiplica por p.</p>
+        <a class="ir" href="compresion.html">Ver la demostración en la etapa 1 →</a>
+      </details>
+      <details class="card">
+        <summary>¿Qué significa que los bits «se escriben en el mensaje comprimido»?</summary>
+        <p>Cuando los dos extremos del intervalo empiezan con los mismos bits, todo número que quede dentro empieza también con ellos, y esos bits ya no pueden cambiar. Por eso se escriben en el mensaje comprimido y el intervalo se amplía al doble por cada bit escrito. Así el programa trabaja con enteros de 62 bits sin necesitar precisión infinita.</p>
+        <a class="ir" href="compresion.html">Ver etapa 1 · Compresión →</a>
+      </details>
+      <details class="card">
+        <summary>¿Qué es cada término de f<sub>v</sub> = ⌊p<sub>v</sub>(2<sup>24</sup> − V)⌋ + 1?</summary>
+        <p>p<sub>v</sub> es la probabilidad del token v; f<sub>v</sub> su frecuencia entera; 2<sup>24</sup> = 16 777 216 las unidades que se reparten; V = 151 936 las salidas de la red; ⌊·⌋ redondea hacia abajo; el +1 garantiza que ningún token quede con frecuencia cero, y se restan V unidades para que la suma no pase de 2<sup>24</sup>. Se usan enteros para que el emisor y el receptor obtengan exactamente los mismos subintervalos.</p>
+        <a class="ir" href="compresion.html">Ver etapa 1 · Compresión →</a>
+      </details>
+      <details class="card">
+        <summary>¿Cómo puede un token valer 0.04 «bits» si los bits son enteros?</summary>
+        <p>Los bits del archivo sí son enteros: el mensaje comprimido tiene 1384. Lo que puede ser decimal es la información de cada token, −log<sub>2</sub> p, que se mide en shannons (Sh) según la norma ISO/IEC 80000-13. Es como un dado: una cara tiene log<sub>2</sub> 6 = 2.585 Sh; un lanzamiento necesita 3 bits, pero 100 lanzamientos caben en 259 bits y no en 300. Lo entero es el total.</p>
+        <a class="ir" href="compresion.html">Ver etapa 1 · Compresión →</a>
+      </details>
+      <details class="card">
+        <summary>Si hay dos secuencias en el cifrado, ¿cuál es la otra condición inicial?</summary>
+        <p>Ninguna de las dos usa directamente el x<sub>0</sub> y el r de la clave. Las dos salen de la clave con SHA-512: x<sup>(1)</sup> = 0.436400, r<sup>(1)</sup> = 3.991783 y x<sup>(2)</sup> = 0.671569, r<sup>(2)</sup> = 3.998479. La secuencia de posiciones usa x<sub>p</sub> = 0.843506, r<sub>p</sub> = 3.996021.</p>
+        <a class="ir" href="clave.html">Ver etapa 2 · Clave →</a>
+      </details>
+      <details class="card">
+        <summary>Si SHA-512 genera las condiciones iniciales, ¿para qué se definen x<sub>0</sub> y r antes?</summary>
+        <p>Porque x<sub>0</sub>, r y N no son condiciones iniciales: son la clave secreta K, como una contraseña que comparten el emisor y el receptor. Se definen una vez y de ellas salen, con SHA-512, las condiciones iniciales y los parámetros reales de las tres secuencias.</p>
+        <a class="ir" href="clave.html">Ver etapa 2 · Clave →</a>
+      </details>
+      <details class="card">
+        <summary>¿SHA-512 produce las secuencias?</summary>
+        <p>No. SHA-512 solo produce una cadena fija de 512 bits. Las secuencias salen del mapa logístico, iterado a partir de los valores que se toman de esa cadena. En sistemas dinámicos, a esa secuencia se le llama órbita; en este sitio se le dice secuencia.</p>
+        <a class="ir" href="caos.html">Ver etapa 3 · Caos →</a>
+      </details>
+      <details class="card">
+        <summary>¿Por qué se binarizan las dos secuencias y luego se aplica XOR?</summary>
+        <p>Cada secuencia da números entre 0 y 1. Con el umbral en 0.5, cada número se vuelve un bit: mayor que 0.5 da 1, menor o igual da 0. La XOR de las dos cadenas de bits es el flujo de clave. Se usan dos para que, aunque alguien reconstruyera una secuencia, todavía le faltara la otra.</p>
+        <a class="ir" href="cifrado.html">Ver etapa 4 · Cifrado →</a>
+      </details>
+      <details class="card">
+        <summary>¿«8n iteraciones adicionales» significa que antes hubo otras 8n?</summary>
+        <p>No. Cada secuencia arranca de su propia condición inicial, se itera N veces y esos valores se descartan (transitorio). Después se itera 8n veces más, y esos valores sí se usan, uno por cada bit del mensaje. «Adicionales» quiere decir «después del transitorio».</p>
+        <a class="ir" href="caos.html">Ver etapa 3 · Caos →</a>
+      </details>
+      <details class="card">
+        <summary>¿De dónde sale el espacio de clave de 2<sup>112.91</sup>?</summary>
+        <p>En memoria la clave ocupa 144 bits (64 de x<sub>0</sub>, 64 de r y 16 de N). Se cuentan los valores distintos que puede tomar cada componente dentro de su rango: 4.49 × 10<sup>16</sup> para x<sub>0</sub> (55.32 bits), 2.25 × 10<sup>13</sup> para r (44.36 bits) y 9 901 para N (13.27 bits). Eso suma 112.95 bits; como el 97.67 % de las claves son válidas, quedan 2<sup>112.91</sup> claves, más que el mínimo recomendado de 2<sup>100</sup>.</p>
+        <a class="ir" href="seguridad.html">Ver etapa 7 · Seguridad →</a>
+      </details>
+      <details class="card">
+        <summary>¿Por qué SHA-512 no estaba en la versión anterior del artículo?</summary>
+        <p>Se agregó en esta revisión. Al recalcular el espacio de clave, como pidió un evaluador, se encontró que en la versión anterior N solo desplazaba la misma secuencia, y el espacio real quedaba en unos 2<sup>89.7</sup>. Derivar los parámetros de la clave completa con SHA-512 corrige ese problema: cualquier cambio mínimo en K produce secuencias completamente distintas.</p>
+        <a class="ir" href="clave.html">Ver etapa 2 · Clave →</a>
+      </details>
+    </div>
+  </section>
+
+  <section class="pre-sec" aria-labelledby="pre-glos-t">
+    <h2 id="pre-glos-t">Glosario</h2>
+    <p style="margin:0;max-width:72ch">Todos los términos que se explican en el sitio, en orden alfabético. Escribe en el buscador para filtrar por nombre o por contenido.</p>
+    <div class="pre-buscar">
+      <label for="pre-q" class="note">Buscar término</label>
+      <input type="text" id="pre-q" placeholder="Por ejemplo: bit, hash, audio…" autocomplete="off">
+      <span class="note" id="pre-cuenta" aria-live="polite"></span>
+    </div>
+    <nav class="pre-letras" id="pre-letras" aria-label="Letras del glosario"></nav>
+    <dl class="pre-glos" id="pre-glos"></dl>
+    <p class="pre-vacio" id="pre-vacio" hidden>Ningún término coincide con la búsqueda.</p>
+  </section>
+
+  <section class="pre-sec" aria-labelledby="pre-refs-t">
+    <h2 id="pre-refs-t">Referencias para verificar</h2>
+    <ul class="pre-refs">
+      <li>A. Vaswani et al., «Attention is all you need», 2017, sección 3.3. <a href="https://arxiv.org/abs/1706.03762">arxiv.org/abs/1706.03762</a></li>
+      <li>Qwen Team, configuración oficial de Qwen2.5-1.5B (capas, dimensión 1536, capa interna 8960). <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B/blob/main/config.json">huggingface.co/Qwen/Qwen2.5-1.5B</a></li>
+      <li>I. H. Witten, R. M. Neal y J. G. Cleary, «Arithmetic coding for data compression», <i>Communications of the ACM</i>, 30(6), 520–540, 1987.</li>
+      <li>C. E. Shannon, «A mathematical theory of communication», <i>Bell System Technical Journal</i>, 27, 379–423, 1948.</li>
+      <li>ISO/IEC 80000-13, <i>Quantities and units, Part 13: Information science and technology</i> (unidad shannon, Sh).</li>
+      <li>NIST FIPS 180-4, <i>Secure Hash Standard</i> (SHA-256 y SHA-512). <a href="https://csrc.nist.gov/pubs/fips/180-4/upd1/final">csrc.nist.gov</a></li>
+      <li>R. M. May, «Simple mathematical models with very complicated dynamics», <i>Nature</i>, 261, 459–467, 1976 (mapa logístico).</li>
+      <li>IEEE 754-2019, <i>Standard for Floating-Point Arithmetic</i> (binary64).</li>
+    </ul>
+  </section>
+  <nav class="siguiente-etapa" aria-label="Etapas"></nav>
+</main>
+<footer class="pie"></footer>
+<script type="module">
+const E = {
+  "compresion.html": "Etapa 1 · Compresión", "clave.html": "Etapa 2 · Clave", "caos.html": "Etapa 3 · Caos", "cifrado.html": "Etapa 4 · Cifrado",
+  "insercion.html": "Etapa 5 · Audio", "recuperacion.html": "Etapa 6 · Receptor", "seguridad.html": "Etapa 7 · Seguridad",
+};
+const G = [
+  ["Token", "La unidad de texto con la que trabaja la red. Puede ser una palabra, parte de una palabra o un signo. En el poema, «dulce» quedó partido en dos tokens: « dul» y «ce». Cada token tiene un número dentro del vocabulario.", "compresion.html"],
+  ["BPE", "Codificación por pares de bytes (byte pair encoding). Se parte de los bytes sueltos y se van uniendo los pares que más se repiten en textos de entrenamiento, hasta formar un vocabulario. Como trabaja sobre bytes, cualquier texto UTF-8 se puede representar y recuperar exactamente.", "compresion.html"],
+  ["Neurona", "Recibe varios números, multiplica cada uno por un peso, suma los resultados y un sesgo, y aplica una función no lineal (aquí SiLU). El resultado es un solo número que pasa a la capa siguiente.", "compresion.html"],
+  ["Capa", "Un grupo de neuronas que trabajan en paralelo sobre la misma entrada. La salida de una capa es la entrada de la siguiente. Qwen2.5-1.5B apila 28 capas, cada una con autoatención y red prealimentada (perceptrón multicapa) 1536 → 8960 → 1536.", "compresion.html"],
+  ["Parámetro (de la red)", "Cada peso y cada sesgo de la red. Son números fijos que se aprendieron en el entrenamiento. Esta red tiene 1.54 × 10⁹, unos 1540 millones.", "compresion.html"],
+  ["float32", "Formato de número en coma flotante de 32 bits (IEEE 754). Todos los cálculos de la red se hacen con este formato; usar otro cambiaría ligeramente las probabilidades.", "compresion.html"],
+  ["float64", "Formato IEEE 754 binary64: 1 bit de signo, 11 de exponente y 52 de fracción, con 53 bits de precisión efectiva. Equivale a unos 15 a 17 dígitos decimales. Como es un estándar, la misma operación da el mismo resultado en cualquier equipo que lo cumpla.", "clave.html"],
+  ["Softmax", "Función que convierte V puntuaciones cualesquiera en V probabilidades positivas que suman 1. A mayor puntuación, mayor probabilidad.", "compresion.html"],
+  ["Sh (shannon)", "Unidad de información según la norma ISO/IEC 80000-13. Un token con probabilidad p aporta −log₂ p Sh, que puede ser decimal: con p = 0.5 aporta 1 Sh; con p = 0.25, 2 Sh. Los bits, en cambio, miden tamaños y son enteros.", "compresion.html"],
+  ["Subintervalo", "Un trozo del intervalo actual del codificador aritmético. Su longitud es proporcional a la probabilidad del token. Elegir el subintervalo de un token equivale a decir «el texto sigue con este token».", "compresion.html"],
+  ["Función piso", "⌊x⌋ es el mayor entero que no supera a x; en la práctica, redondea hacia abajo. Por ejemplo, ⌊4 987 584.9⌋ = 4 987 584.", "compresion.html"],
+  ["Hash (función resumen)", "Función que recibe una entrada de cualquier tamaño y devuelve una salida de tamaño fijo, siempre la misma para la misma entrada. En una función hash criptográfica es inviable recuperar la entrada desde la salida, y un cambio mínimo en la entrada cambia cerca de la mitad de los bits de la salida.", "clave.html"],
+  ["SHA-512", "Función hash criptográfica de la familia SHA-2 (NIST FIPS 180-4). Su salida tiene siempre 512 bits. En este modelo se aplica una vez a la clave para obtener las condiciones iniciales y los parámetros; las secuencias las genera después el mapa logístico.", "clave.html"],
+  ["SHA-256", "Función resumen de la misma familia, con salida de 256 bits. Si cambia un solo bit del archivo, el resumen cambia por completo. Se usa para comprobar que el texto recuperado es idéntico al original.", "recuperacion.html"],
+  ["Hexadecimal", "Escritura en base 16, con los dígitos 0 a 9 y a a f (a = 10, …, f = 15). Cada dígito representa 4 bits, así que un byte se escribe con dos dígitos. Ejemplo: 0xAD = 1010 1101 = 173.", "clave.html"],
+  ["Big-endian", "Orden en que se guardan los bytes de un número que ocupa varios: primero el más significativo, como se escribe un número decimal de izquierda a derecha. N = 6173 = 0x181D se guarda como los bytes 18 y 1D.", "clave.html"],
+  ["ulp", "Unidad en el último lugar (unit in the last place): la distancia entre un float64 y el siguiente que el formato puede representar. Es el cambio más pequeño posible; entre 2 y 4 vale 2⁻⁵¹ ≈ 4.44 × 10⁻¹⁶.", "seguridad.html"],
+  ["Condición inicial", "El valor x con el que arranca una secuencia del mapa logístico, antes de la primera iteración. En el modelo hay tres: x⁽¹⁾, x⁽²⁾ y xp, y las tres salen del hash de la clave.", "caos.html"],
+  ["Parámetro de control", "Es r, el número que multiplica en la fórmula r·x·(1 − x). Decide el comportamiento: con r menor que 3 la secuencia se estabiliza en un valor, entre 3 y 3.57 oscila entre 2, 4, 8… valores, y a partir de ≈ 3.57 aparece el caos.", "caos.html"],
+  ["Transitorio", "Las primeras iteraciones de una secuencia, que se calculan y se descartan para que olvide su valor de arranque. Se descartan N en las secuencias de cifrado y Np = N + 1000 en la de posiciones.", "caos.html"],
+  ["Exponente de Lyapunov", "Mide qué tan rápido se separan dos valores iniciales muy cercanos. Para el mapa logístico es el promedio de ln|r·(1 − 2xᵢ)| a lo largo de la secuencia. Si es positivo, la secuencia es caótica.", "caos.html"],
+  ["Ventana periódica", "Un intervalo pequeño de r, dentro de la región caótica, donde la secuencia vuelve a repetirse con un periodo fijo. La más visible empieza en r = 1 + √8 ≈ 3.8284. Daría bits que se repiten, por eso se evita.", "caos.html"],
+  ["Umbral", "El valor de corte que convierte un número real en un bit. Aquí es 0.5: si x > 0.5 el bit es 1 y si x ≤ 0.5 el bit es 0.", "cifrado.html"],
+  ["XOR", "El «o exclusivo»: da 1 si exactamente uno de los dos bits es 1. Cumple x ⊕ x = 0 y x ⊕ 0 = x, así que aplicar XOR dos veces con el mismo flujo de clave devuelve el dato original.", "cifrado.html"],
+  ["Muestra", "Un número que mide la presión del sonido en un instante. El audio digital es una lista de esos números tomados 44 100 veces por segundo en cada canal.", "insercion.html"],
+  ["Trama", "El conjunto de muestras de todos los canales en un mismo instante. En estéreo, una trama son dos muestras: la izquierda y la derecha.", "insercion.html"],
+  ["PCM", "Modulación por código de pulsos: la forma más directa de guardar audio. Cada muestra se escribe tal cual como un entero, sin compresión.", "insercion.html"],
+  ["int16", "Entero con signo de 16 bits. Puede tomar 65 536 valores, desde −32 768 hasta 32 767.", "insercion.html"],
+  ["Complemento a dos", "La forma en que el computador escribe los enteros negativos en binario: se invierten todos los bits y se suma 1. Así −1 es 1111111111111111. El último bit sigue indicando si el número es par o impar.", "insercion.html"],
+  ["LSB", "Bit menos significativo: el bit de la derecha de un número binario. Cambiarlo altera la muestra en una sola unidad de 65 536 posibles.", "insercion.html"],
+  ["Colisión", "Que la secuencia de posiciones produzca una muestra que ya se había elegido. Se descarta y se toma el valor siguiente, para que ningún bit borre a otro.", "insercion.html"],
+  ["MSE", "Error cuadrático medio: se resta cada muestra modificada de la original, se eleva al cuadrado y se promedia. Cuanto más pequeño, más parecidos son los audios. En el caso de estudio vale 2.76 × 10⁻⁵.", "insercion.html"],
+  ["PSNR", "Relación señal a ruido de pico: compara el cuadrado del valor máximo de la señal con el MSE, en decibelios. Por encima de 80 dB el oído no distingue los dos audios; el caso de estudio da 135.89 dB.", "insercion.html"],
+  ["dB (decibelio)", "Escala logarítmica para comparar dos magnitudes. Cada 10 dB más significa una relación 10 veces mayor.", "insercion.html"],
+  ["BER", "Tasa de error de bits: el porcentaje de bits extraídos que no coinciden con los insertados. Un BER de 0 % significa que todos llegaron bien.", "seguridad.html"],
+  ["Espacio de clave", "El número total de claves distintas que se pueden usar. En este modelo es 2<sup>112.91</sup> ≈ 9.78 × 10³³ claves válidas, aunque la clave ocupe 144 bits en memoria.", "seguridad.html"],
+  ["Fuerza bruta", "Probar todas las claves posibles una por una. El tiempo es el tamaño del espacio de clave dividido por las claves que se prueban por segundo.", "seguridad.html"],
+  ["Código corrector de errores", "Bits extra calculados a partir del mensaje que permiten detectar y corregir algunos bits dañados. Reed-Solomon es uno de los más usados; aparece, por ejemplo, en los códigos QR. El modelo todavía no lo usa.", "seguridad.html"],
+].sort((a, b) => a[0].localeCompare(b[0], "es", { sensitivity: "base" }));
+
+const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const inicial = t => norm(t)[0].toUpperCase();
+const idDe = t => "pre-t-" + norm(t).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const dl = document.getElementById("pre-glos");
+dl.innerHTML = G.map(([t, d, p]) => `<div class="card" id="${idDe(t)}" data-txt="${norm(t + " " + d).replace(/"/g, "")}" data-letra="${inicial(t)}"><dt>${t}</dt><dd>${d}</dd><dd class="dónde"><a href="${p}">${E[p]} →</a></dd></div>`).join("");
+const letras = [...new Set(G.map(g => inicial(g[0])))];
+document.getElementById("pre-letras").innerHTML = letras.map(l => `<a href="#${idDe(G.find(g => inicial(g[0]) === l)[0])}">${l}</a>`).join("");
+
+const q = document.getElementById("pre-q"), cuenta = document.getElementById("pre-cuenta"), vacio = document.getElementById("pre-vacio");
+function filtrar() {
+  const s = norm(q.value.trim());
+  let n = 0;
+  for (const c of dl.children) { const ok = !s || c.dataset.txt.includes(s); c.hidden = !ok; if (ok) n++; }
+  cuenta.textContent = `${n} de ${G.length} términos`;
+  vacio.hidden = n > 0;
+}
+q.addEventListener("input", filtrar);
+filtrar();
+</script>
+</body>
+</html>

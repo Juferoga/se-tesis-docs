@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panorama · Criptoestegoaudio</title>
+<meta name="description" content="Cómo se esconde un texto dentro de un audio para que solo quien tiene la clave lo lea, y cómo se recupera exacto: compresión con una red neuronal, cifrado con secuencias caóticas e inserción en el bit menos significativo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/base.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="assets/js/modelo.js"></script>
+<script type="module" src="assets/js/sitio.js"></script>
+<style>
+.ini-tablero { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .4rem; }
+.ini-tablero li { position: relative; padding: .45rem .5rem; border-radius: 8px; background: var(--soft); border-top: 3px solid var(--line); font-size: .82rem; line-height: 1.25; transition: box-shadow .3s, transform .3s; min-width: 0; }
+.ini-tablero li b { display: block; font: 600 .95rem/1.2 var(--f-mono); }
+.ini-tablero li[data-c="net"] { border-top-color: var(--net); }
+.ini-tablero li[data-c="ciph"] { border-top-color: var(--ciph); }
+.ini-tablero li[data-c="pos"] { border-top-color: var(--pos); }
+.ini-tablero li.on { box-shadow: 0 0 0 2px var(--ink); transform: translateY(-2px); background: var(--surface); }
+.ini-sentido { font: 600 var(--s-1)/1.2 var(--f-mono); color: var(--muted); margin: 0; }
+.ini-sentido b { color: var(--key); }
+.ini-cifras { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .3rem .9rem; margin: .5rem 0 0; font-size: .95rem; }
+.ini-cifras dt { color: var(--muted); }
+.ini-cifras dd { margin: 0; font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) { .ini-cifras { grid-template-columns: minmax(0, 1fr); } .ini-cifras dd { margin-bottom: .35rem; } .ini-tablero li { font-size: .74rem; } .ini-tablero li b { font-size: .82rem; } }
+.ini-mapa { margin-top: 3rem; }
+.ini-mapa h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0 0 .4rem; }
+.ini-mapa > p { margin: 0 0 1.2rem; color: var(--muted); max-width: 70ch; }
+.ini-tarjeta { display: grid; gap: .35rem; text-decoration: none; color: var(--ink); border-top: 4px solid var(--line); transition: transform .2s, box-shadow .2s; }
+.ini-tarjeta:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgb(0 0 0 / .08); }
+.ini-tarjeta .t { display: flex; align-items: center; gap: .55rem; font: 700 var(--s1)/1.2 var(--f-display); }
+.ini-tarjeta .n { display: inline-grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 50%; font: 600 .85rem/1 var(--f-mono); background: var(--soft); }
+.ini-tarjeta p { margin: 0; color: var(--muted); font-size: .97rem; }
+.ini-tarjeta[data-c="net"] { border-top-color: var(--net); } .ini-tarjeta[data-c="net"] .n { background: var(--net-soft); color: var(--net); }
+.ini-tarjeta[data-c="key"] { border-top-color: var(--key); } .ini-tarjeta[data-c="key"] .n { background: var(--key-soft); color: var(--key); }
+.ini-tarjeta[data-c="ciph"] { border-top-color: var(--ciph); } .ini-tarjeta[data-c="ciph"] .n { background: var(--ciph-soft); color: var(--ciph); }
+.ini-tarjeta[data-c="pos"] { border-top-color: var(--pos); } .ini-tarjeta[data-c="pos"] .n { background: var(--pos-soft); color: var(--pos); }
+.ini-tarjeta[data-c="ink"] { border-top-color: var(--ink); }
+.paso ul { margin: 0 0 .75rem; padding-left: 1.2rem; }
+.paso li { margin-bottom: .25rem; }
+</style>
+</head>
+<body>
+<header class="barra" data-actual="inicio"></header>
+<main class="pagina" data-rol="key">
+  <div class="cabeza">
+    <span class="eyebrow">Etapa 0 · Panorama</span>
+    <h1>Un texto escondido en un audio que solo abre quien tiene la clave</h1>
+    <p>Este sitio explica, paso a paso, un modelo que comprime un texto, lo cifra y lo esconde dentro de una canción. Quien tiene la clave lo recupera exacto, letra por letra. Empieza aquí para ver el recorrido completo.</p>
+  </div>
+
+  <div class="recorrido" id="recorrido">
+    <div class="narracion">
+      <article class="paso" data-paso="problema">
+        <span class="eyebrow">Paso 1</span>
+        <h2>El problema: mandar un secreto sin que se note</h2>
+        <p>Queremos enviar un texto a otra persona dentro de un archivo de audio. Quien escuche el audio debe oír solo música. Quien tenga la clave debe poder sacar el texto y leerlo idéntico al original.</p>
+        <p>Para lograrlo, el emisor hace tres cosas en orden: <b>comprime</b> el texto, lo <b>cifra</b> y lo <b>esconde</b> en el audio. El receptor hace lo contrario.</p>
+        <p class="analogia">Es como escribir una nota en clave, doblarla muy pequeña y meterla entre las páginas de un libro: el libro se ve igual, y solo quien sabe dónde buscar y cómo leerla la encuentra.</p>
+      </article>
+      <article class="paso" data-paso="comprimir" hidden>
+        <span class="eyebrow">Paso 2 · Emisor</span>
+        <h2>Primero, comprimir</h2>
+        <p>El texto se escribe con menos bits sin perder nada. Una red neuronal adivina qué fragmento viene después, y un codificador aprovecha esas apuestas: lo fácil de adivinar ocupa muy poco.</p>
+        <p>El poema del ejemplo pasa de <b class="num">928</b> bytes a <b class="num">173</b> bytes. Se le agregan <b class="num">2</b> bytes que anotan esa longitud, para un total de <b class="num">175</b> bytes.</p>
+        <p class="analogia">Si alguien te dice «Había una vez…», el resto de la frase casi no necesita escribirse: ya lo adivinas.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>La red es Qwen2.5-1.5B (pública). El texto se parte en 293 tokens y la red da una probabilidad a cada uno. Un codificador aritmético convierte esas probabilidades en bits: el tamaño final es casi la suma de −log<sub>2</sub> p de cada token. Comprimir antes de esconder reduce las muestras de audio que hay que tocar. Todo está en la <a href="compresion.html">Etapa 1</a>.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="cifrar" hidden>
+        <span class="eyebrow">Paso 3 · Emisor</span>
+        <h2>Luego, cifrar con la clave</h2>
+        <p>Los 175 bytes comprimidos se mezclan con una lista de bits que solo se puede fabricar con la clave K. El resultado parece ruido: aunque alguien lo sacara del audio, no podría leerlo.</p>
+        <p>Esa lista de bits sale de dos secuencias del mapa logístico, una fórmula muy simple cuyos resultados cambian por completo con un cambio mínimo en el punto de partida.</p>
+        <p class="analogia">Es como un candado de combinación: el mismo candado sirve a todos, pero solo abre con la combinación correcta.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>Cada valor de las secuencias se convierte en un bit: si es mayor que 0.5 da 1; si es menor o igual que 0.5 da 0. Los bits de las dos secuencias se combinan con XOR (da 1 si son distintos y 0 si son iguales) y forman el flujo de clave. Cada bit del mensaje se combina con XOR con un bit de ese flujo. Ver <a href="caos.html">Etapa 3</a> y <a href="cifrado.html">Etapa 4</a>.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="esconder" hidden>
+        <span class="eyebrow">Paso 4 · Emisor</span>
+        <h2>Por último, esconder en el audio</h2>
+        <p>Un audio digital es una lista enorme de números, llamados muestras. Cada bit cifrado reemplaza el último bit de una muestra, el que menos pesa. Ese cambio mueve la muestra una sola unidad entre 65 536 posibles: el oído no lo nota.</p>
+        <p>Otra secuencia, también fabricada con la clave K, decide qué muestras se usan. Sin la clave no se sabe dónde buscar.</p>
+        <p class="analogia">Es como cambiar por un grano de otro color 1400 granos de arena escogidos en una playa: nadie los distingue, salvo quien tiene el mapa.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>Ese último bit se llama bit menos significativo (LSB). Se insertan L = 1400 bits en un audio de M = 25 143 552 muestras, es decir, se modifica el 0.006 % de las muestras. Las posiciones salen de una tercera secuencia del mapa logístico y no se repiten. Ver <a href="insercion.html">Etapa 5</a>.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="clave" hidden>
+        <span class="eyebrow">Paso 5</span>
+        <h2>La clave K: lo único secreto</h2>
+        <p>La clave K son tres números, x<sub>0</sub>, r y N, que emisor y receptor acuerdan antes, como una contraseña. De ella salen el flujo de bits del cifrado y la lista de muestras del audio.</p>
+        <p>Todo lo demás es público: la red neuronal, las fórmulas y el programa. Aunque alguien los conozca, sin K no puede encontrar los bits ni descifrarlos.</p>
+        <p class="analogia">Como en una cerradura comercial: cualquiera puede comprar el mismo modelo y estudiarlo, pero solo tu llave abre tu puerta.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>En el caso de estudio, K = (x<sub>0</sub> = 0.123456, r = 3.999952, N = 6173). Esos números no se iteran directamente: se pasan por SHA-512, que produce una cadena fija de 512 bits. De esa cadena se toman las condiciones iniciales y los parámetros de las tres secuencias. La clave ocupa 144 bits en memoria y hay 2<sup>112.91</sup> claves válidas. Ver <a href="clave.html">Etapa 2</a> y <a href="seguridad.html">Etapa 7</a>.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="receptor" hidden>
+        <span class="eyebrow">Paso 6 · Receptor</span>
+        <h2>El receptor deshace todo en orden inverso</h2>
+        <p>El receptor recibe el audio con el mensaje y tiene la misma clave K. No necesita el audio original.</p>
+        <ul>
+          <li>Con K sabe qué muestras leer y saca de ellas los 1400 bits.</li>
+          <li>Con K fabrica el mismo flujo de bits y deshace el cifrado.</li>
+          <li>Con la misma red neuronal descomprime y obtiene el texto.</li>
+        </ul>
+        <p class="analogia">Como desarmar un paquete: se quita primero lo último que se puso.</p>
+        <details><summary>Detalle técnico</summary>
+          <p>XOR aplicado dos veces con el mismo flujo devuelve el dato original, por eso el descifrado es la misma operación. La red, con los mismos pesos y la misma configuración, recalcula las mismas probabilidades, y el decodificador aritmético reconstruye los tokens uno por uno hasta el token de fin. Ver <a href="recuperacion.html">Etapa 6</a>.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="cifras" hidden>
+        <span class="eyebrow">Paso 7</span>
+        <h2>Las cifras del caso de estudio</h2>
+        <p>El modelo se probó con el poema «Nocturno» de José Asunción Silva, escondido en una canción. Estos son los números medidos:</p>
+        <dl class="ini-cifras">
+          <dt>Texto</dt><dd><b>901</b> caracteres, <b>928</b> bytes</dd>
+          <dt>Comprimido</dt><dd><b>173</b> + <b>2</b> de longitud = <b>175</b> bytes = <b>1400</b> bits</dd>
+          <dt>Audio</dt><dd>WAV de 16 bits, 44 100 Hz, estéreo, 4 min 45 s: <b>M = 25 143 552</b> muestras</dd>
+          <dt>Muestras usadas</dt><dd><b>0.006 %</b></dd>
+          <dt>Calidad</dt><dd>PSNR de <b>135.89 dB</b></dd>
+          <dt>Recuperación</dt><dd><span class="pill ok">exacta</span>, verificada con SHA-256</dd>
+        </dl>
+        <details><summary>Detalle técnico</summary>
+          <p>1400 / 25 143 552 = 0.0056 %, que se redondea a 0.006 %. El PSNR compara el audio original con el que lleva el mensaje: mientras más alto, más parecidos; 135.89 dB indica una diferencia ínfima. SHA-256 calcula un resumen de 256 bits de cada texto: el del original y el del recuperado son iguales, así que los textos coinciden byte por byte.</p>
+        </details>
+      </article>
+      <article class="paso" data-paso="uso" hidden>
+        <span class="eyebrow">Paso 8</span>
+        <h2>Cómo usar este sitio</h2>
+        <p>Cada etapa del menú superior es una página como esta: pasos cortos con una idea cada uno y, a su lado (encima en el teléfono), una escena que cambia con cada paso. Avanza con «Siguiente →», con los puntos o con las flechas ← → del teclado.</p>
+        <p>Si quieres fórmulas y precisión, abre «Detalle técnico». Si no, puedes saltarlo: el texto principal se entiende solo. Las escenas 3D se giran arrastrando y se acercan con la rueda o pellizcando.</p>
+        <p>Debajo tienes el mapa de las etapas. Si tienes poco tiempo, empieza por la 1 (compresión) y la 7 (seguridad).</p>
+      </article>
+      <div class="mando"></div>
+    </div>
+    <div class="escena">
+      <div class="lienzo" id="ini-lienzo" role="img" aria-label="Línea de ensamblaje del mensaje: texto, compresión, cifrado e inserción en una onda de audio, con la clave conectada al cifrado y a la inserción"></div>
+      <p class="ini-sentido" id="ini-sentido"><b>Emisor →</b> el mensaje avanza de izquierda a derecha</p>
+      <ol class="ini-tablero" id="ini-tablero">
+        <li data-c="ink">Texto<b>928 B</b></li>
+        <li data-c="net">Comprimido<b>175 B</b></li>
+        <li data-c="ciph">Cifrado<b>175 B</b></li>
+        <li data-c="pos">En el audio<b>1400 bits</b></li>
+      </ol>
+      <p class="narra" id="ini-narra"><b>Qué estás viendo:</b> …</p>
+    </div>
+  </div>
+
+  <section class="ini-mapa" aria-labelledby="ini-mapa-t">
+    <h2 id="ini-mapa-t">Mapa del recorrido</h2>
+    <p>Cada etapa tiene su propia página con pasos y escenas. Puedes seguirlas en orden o ir directo a la que te interese.</p>
+    <div class="grid3">
+      <a class="card ini-tarjeta" data-c="net" href="compresion.html"><span class="t"><span class="n">1</span>Compresión</span><p>Una red neuronal predice cada fragmento del texto y un codificador aritmético lo escribe en 173 bytes sin perder nada.</p></a>
+      <a class="card ini-tarjeta" data-c="key" href="clave.html"><span class="t"><span class="n">2</span>Clave</span><p>Cómo los tres números de K, pasados por SHA-512, dan los puntos de partida y los parámetros de tres secuencias.</p></a>
+      <a class="card ini-tarjeta" data-c="key" href="caos.html"><span class="t"><span class="n">3</span>Caos</span><p>El mapa logístico: una fórmula simple cuya secuencia cambia por completo si el punto de partida cambia un poquito.</p></a>
+      <a class="card ini-tarjeta" data-c="ciph" href="cifrado.html"><span class="t"><span class="n">4</span>Cifrado</span><p>Dos secuencias se vuelven bits, se combinan con XOR y forman el flujo que vuelve ilegible el mensaje.</p></a>
+      <a class="card ini-tarjeta" data-c="pos" href="insercion.html"><span class="t"><span class="n">5</span>Audio</span><p>Cada bit cifrado va al último bit de una muestra de audio elegida por una tercera secuencia.</p></a>
+      <a class="card ini-tarjeta" data-c="pos" href="recuperacion.html"><span class="t"><span class="n">6</span>Receptor</span><p>Con la misma clave se leen las mismas muestras, se descifra y la misma red devuelve el texto exacto.</p></a>
+      <a class="card ini-tarjeta" data-c="key" href="seguridad.html"><span class="t"><span class="n">7</span>Seguridad</span><p>Cuántas claves existen, qué pasa con una clave casi igual y cuánto cambia el audio.</p></a>
+      <a class="card ini-tarjeta" data-c="ink" href="preguntas.html"><span class="t"><span class="n">?</span>Preguntas</span><p>Respuestas cortas a las dudas más comunes y las referencias del artículo.</p></a>
+    </div>
+  </section>
+
+  <nav class="siguiente-etapa" aria-label="Etapas"></nav>
+</main>
+<footer class="pie"></footer>
+<script type="module">
+import { recorrido, animar, sinMovimiento } from "./assets/js/guia.js";
+import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
+
+const lienzo = document.getElementById("ini-lienzo");
+const e = escena3d(lienzo, { camara: [0.6, 4.5, 14], mirar: [0.6, 0.6, 0] });
+let C = e.colores();
+
+/* ---------- Estaciones de la línea de ensamblaje ---------- */
+const X = { texto: -6, comp: -2.8, cif: 0.4, aud: 5 };
+const AUD0 = 2.6, AUD1 = 7.4;
+
+function disco(x, r, nombre) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.08, 48), new THREE.MeshStandardMaterial({ color: C[nombre], transparent: true, opacity: 0.22 }));
+  m.position.set(x, -0.5, 0); m.userData.c = nombre; e.scene.add(m); return m;
+}
+const bases = [disco(X.texto, 1.25, "muted"), disco(X.comp, 1.0, "net"), disco(X.cif, 1.0, "ciph")];
+const placa = new THREE.Mesh(new THREE.BoxGeometry(AUD1 - AUD0 + 0.6, 0.08, 1.6), new THREE.MeshStandardMaterial({ color: C.pos, transparent: true, opacity: 0.18 }));
+placa.position.set((AUD0 + AUD1) / 2, -0.5, 0); placa.userData.c = "pos"; e.scene.add(placa); bases.push(placa);
+
+/* ---------- Onda de audio: muestras como tallos verticales ---------- */
+const onda = x => 0.55 * Math.sin((x - AUD0) * 3.1) + 0.3 * Math.sin((x - AUD0) * 7.3 + 1) + 0.15 * Math.sin((x - AUD0) * 13.7);
+const NS = 260, tallos = [];
+const pts = [];
+for (let i = 0; i < NS; i++) {
+  const x = AUD0 + (AUD1 - AUD0) * i / (NS - 1), y = onda(x) + 0.4;
+  tallos.push(new THREE.Vector3(x, y, 0));
+  pts.push(x, -0.42, 0, x, y, 0);
+}
+const gT = new THREE.BufferGeometry(); gT.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+const matT = new THREE.LineBasicMaterial({ color: C.muted, transparent: true, opacity: 0.35 });
+e.scene.add(new THREE.LineSegments(gT, matT));
+const curva = new THREE.CatmullRomCurve3(tallos);
+const matOnda = new THREE.MeshStandardMaterial({ color: C.muted });
+e.scene.add(new THREE.Mesh(new THREE.TubeGeometry(curva, 400, 0.03, 6, false), matOnda));
+
+/* ---------- El mensaje: 27 bloques que viajan por la línea ---------- */
+const N = 27;
+let semilla = 7;
+const azar = () => (semilla = (semilla * 16807) % 2147483647) / 2147483647;
+const S = [[], [], [], []], TAM = [0.5, 0.2, 0.2, 0.17], ROT = [];
+const rejilla = (cx, cy, esp, i) => new THREE.Vector3(cx + ((i % 3) - 1) * esp, cy + (Math.floor(i / 9) - 1) * esp, ((Math.floor(i / 3) % 3) - 1) * esp);
+const perm = [...Array(N).keys()].sort(() => azar() - 0.5);
+const elegidos = new Set();
+while (elegidos.size < N) elegidos.add(8 + Math.floor(azar() * (NS - 16)));
+const lista = [...elegidos].sort(() => azar() - 0.5);
+for (let i = 0; i < N; i++) {
+  S[0].push(rejilla(X.texto, 0.75, 0.62, i));
+  S[1].push(rejilla(X.comp, 0.4, 0.26, i));
+  S[2].push(rejilla(X.cif, 0.4, 0.3, perm[i]));
+  S[3].push(tallos[lista[i]].clone());
+  ROT.push(new THREE.Euler(azar() * 3, azar() * 3, azar() * 3));
+}
+const geoB = new THREE.BoxGeometry(1, 1, 1);
+const bloques = [...Array(N)].map(() => { const m = new THREE.Mesh(geoB, new THREE.MeshStandardMaterial({ color: C.muted, roughness: 0.6 })); e.scene.add(m); return m; });
+
+/* ---------- La clave K y sus conexiones ---------- */
+const llave = new THREE.Group();
+const matK = new THREE.MeshStandardMaterial({ color: C.key, emissive: C.key, emissiveIntensity: 0 });
+const anillo = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.09, 12, 32), matK); anillo.position.x = -0.55;
+const cana = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.12, 0.12), matK); cana.position.x = 0.2;
+const d1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.22, 0.1), matK); d1.position.set(0.45, -0.15, 0);
+const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.1), matK); d2.position.set(0.6, -0.12, 0);
+llave.add(anillo, cana, d1, d2);
+const PK = new THREE.Vector3(2.6, 3.0, 0);
+llave.position.copy(PK); e.scene.add(llave);
+const matL = new THREE.MeshStandardMaterial({ color: C.key, transparent: true, opacity: 0.45 });
+const enlaces = [new THREE.Vector3(X.cif, 1.35, 0), new THREE.Vector3(X.aud, 1.45, 0)].map(fin => {
+  const c = new THREE.QuadraticBezierCurve3(PK.clone().add(new THREE.Vector3(0, -0.2, 0)), new THREE.Vector3((PK.x + fin.x) / 2, PK.y + 0.2, 0), fin);
+  e.scene.add(new THREE.Mesh(new THREE.TubeGeometry(c, 40, 0.025, 6, false), matL));
+  const chispa = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), matK); e.scene.add(chispa);
+  return { c, chispa };
+});
+
+/* ---------- Rótulos ---------- */
+const rot = (t, c, x, y, tam = 0.46) => { const s = etiqueta(t, { color: c, tam }); s.position.set(x, y, 0); e.scene.add(s); return s; };
+rot("Texto", "ink", X.texto, 2.25);
+rot("1 · Comprimir", "net", X.comp, 1.6);
+rot("2 · Cifrar", "ciph", X.cif, 1.6);
+rot("3 · Esconder en el audio", "pos", X.aud, 1.85);
+rot("Clave K", "key", PK.x, PK.y + 0.6);
+const rEmisor = rot("Emisor  →", "muted", 0.6, 4.3, 0.55);
+const rReceptor = rot("←  Receptor", "key", 0.6, 4.3, 0.55);
+rReceptor.visible = false;
+
+/* ---------- Estado: f va de 0 (texto) a 3 (en el audio) ---------- */
+let f = 0, claveActiva = 0;
+const tmp = new THREE.Vector3(), cA = new THREE.Color(), cB = new THREE.Color();
+const colorDe = k => [C.muted, C.net, C.ciph, C.pos][k];
+const suave = t => t * t * (3 - 2 * t);
+function pintar(tiempo = 0) {
+  const k = Math.min(2, Math.floor(f)), t = f - k;
+  const w2 = Math.max(0, 1 - Math.abs(f - 2));
+  bloques.forEach((b, i) => {
+    const ti = suave(Math.max(0, Math.min(1, t * 1.6 - (i / N) * 0.6)));
+    tmp.lerpVectors(S[k][i], S[k + 1][i], ti);
+    tmp.y += Math.sin(Math.PI * ti) * (k === 2 ? 1.1 : 0.55);
+    b.position.copy(tmp);
+    b.scale.setScalar(TAM[k] + (TAM[k + 1] - TAM[k]) * ti);
+    cA.copy(colorDe(k)); cB.copy(colorDe(k + 1));
+    b.material.color.copy(cA.lerp(cB, ti));
+    const giro = w2 * (1 + 0.25 * Math.sin(tiempo * 1.5 + i));
+    b.rotation.set(ROT[i].x * giro, ROT[i].y * giro, ROT[i].z * giro);
+  });
+}
+e.alCuadro((dt, tiempo) => {
+  pintar(tiempo);
+  llave.rotation.y = Math.sin(tiempo * 0.8) * 0.35;
+  matK.emissiveIntensity = claveActiva * (0.35 + 0.25 * Math.sin(tiempo * 4));
+  enlaces.forEach((en, j) => {
+    en.chispa.visible = claveActiva > 0.5;
+    en.c.getPoint(((tiempo * 0.45) + j * 0.5) % 1, en.chispa.position);
+  });
+});
+e.alTema(c => {
+  C = c;
+  bases.forEach(b => b.material.color.copy(C[b.userData.c]));
+  matT.color.copy(C.muted); matOnda.color.copy(C.muted);
+  matK.color.copy(C.key); matK.emissive.copy(C.key); matL.color.copy(C.key);
+  pintar();
+});
+pintar();
+enlaces.forEach(en => (en.chispa.visible = false));
+
+/* ---------- Cámara por paso ---------- */
+const CAM = {
+  general: [[0.6, 4.6, 14.5], [0.6, 0.7, 0]],
+  texto:   [[-4.6, 3.2, 8.5], [-3.4, 0.7, 0]],
+  comp:    [[-3.4, 2.4, 6], [-2.2, 0.6, 0]],
+  cif:     [[0.9, 3.2, 7], [1.2, 1.2, 0]],
+  aud:     [[4.6, 3.0, 7.8], [4.4, 0.8, 0]],
+  clave:   [[2.4, 4.4, 9.5], [2.6, 1.4, 0]],
+};
+let cancelarCam = () => {}, cancelarF = () => {};
+function mover([p, t], ms = 1100) {
+  cancelarCam();
+  const p0 = e.camera.position.clone(), t0 = e.controls.target.clone();
+  const p1 = new THREE.Vector3(...p), t1 = new THREE.Vector3(...t);
+  cancelarCam = animar(ms, u => { e.camera.position.lerpVectors(p0, p1, u); e.controls.target.lerpVectors(t0, t1, u); });
+}
+function irF(destino, ms) {
+  cancelarF();
+  const f0 = f;
+  if (f0 === destino) return;
+  cancelarF = animar(ms ?? Math.max(600, Math.abs(destino - f0) * 1500), u => { f = f0 + (destino - f0) * u; if (sinMovimiento()) pintar(); });
+}
+
+const tablero = [...document.querySelectorAll("#ini-tablero li")];
+const narra = document.getElementById("ini-narra"), sentido = document.getElementById("ini-sentido");
+const PASOS = [
+  { cam: "general", f: 0, on: [0], k: 0, txt: "El poema (928 bytes) espera al inicio de la línea, a la izquierda. A la derecha están las tres estaciones del emisor y la onda del audio que lo va a esconder." },
+  { cam: "comp", f: 1, on: [1], k: 0, txt: "El bloque del texto se encoge y se vuelve morado: la red neuronal y el codificador lo dejan en 175 bytes, incluidos los 2 de longitud." },
+  { cam: "cif", f: 2, on: [2], k: 1, txt: "Los bloques se revuelven y se vuelven verdes: el contenido se mezcla con el flujo de bits que fabrica la clave K (en azul). El tamaño no cambia." },
+  { cam: "aud", f: 3, on: [3], k: 1, txt: "Cada bloque, ahora naranja, cae en la punta de una muestra de la onda gris, elegida con la clave. Proporción no a escala: en el caso real se usa el 0.006 % de las muestras." },
+  { cam: "clave", f: 3, on: [2, 3], k: 1, txt: "La llave azul se conecta solo al cifrado y a la inserción. La red neuronal y el programa son públicos; sin K no se sabe qué muestras leer ni cómo descifrarlas." },
+  { cam: "general", f: 0, on: [3, 2, 1, 0], k: 1, rec: true, txt: "Camino de vuelta: los puntos salen de la onda, se ordenan y descifran (verde), se descomprimen (morado) y el texto vuelve a su tamaño original." },
+  { cam: "general", f: 0, on: [0, 1, 2, 3], k: 0, txt: "La línea completa. Debajo, los tamaños del caso real en cada estación: 928 bytes de texto, 175 bytes comprimidos y cifrados, 1400 bits dentro del audio." },
+  { cam: "general", f: 0, on: [], k: 0, txt: "Esta escena 3D se puede girar arrastrando y acercar con la rueda o pellizcando. Cada etapa tiene una escena así, sincronizada con sus pasos." },
+];
+let primera = true;
+recorrido(document.getElementById("recorrido"), (i, nombre, dir) => {
+  const p = PASOS[i];
+  narra.innerHTML = `<b>Qué estás viendo:</b> ${p.txt}`;
+  tablero.forEach((li, k) => li.classList.toggle("on", p.on.includes(k)));
+  claveActiva = p.k;
+  rEmisor.visible = !p.rec; rReceptor.visible = !!p.rec;
+  sentido.innerHTML = p.rec ? "<b>← Receptor</b> el mensaje vuelve de derecha a izquierda con la misma clave K" : "<b>Emisor →</b> el mensaje avanza de izquierda a derecha";
+  if (primera) {
+    // Al abrir la página (o un enlace #paso-N) se muestra el estado final del paso sin animar.
+    primera = false; f = p.f; pintar();
+    const [cp, ct] = CAM[p.cam]; e.camera.position.set(...cp); e.controls.target.set(...ct);
+  } else if (p.rec) {
+    // El receptor arranca con el mensaje dentro del audio y lo devuelve al texto.
+    cancelarF(); f = 3; pintar();
+    mover(CAM.aud, 500);
+    setTimeout(() => { if (rReceptor.visible) { irF(0, 4800); mover(CAM.general, 4200); } }, sinMovimiento() ? 0 : 650);
+  } else {
+    irF(p.f, dir < 0 ? 900 : undefined);
+    mover(CAM[p.cam]);
+  }
+  if (sinMovimiento()) { f = p.f; pintar(); }
+});
+</script>
+</body>
+</html>

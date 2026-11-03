@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inserción en el audio · Criptoestegoaudio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/base.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="assets/js/modelo.js"></script>
+<script type="module" src="assets/js/sitio.js"></script>
+<style>
+.ins-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; min-width: 0; }
+.ins-panel .kv { font-size: .95rem; }
+.ins-panel table.data { font-size: .88rem; }
+.ins-panel table.data td { white-space: nowrap; }
+.ins-panel tr.luz td { background: var(--pos-soft); }
+.ins-panel tr.pend td { color: var(--muted); }
+.ins-lsb { color: var(--pos); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.ins-lsb.mal { color: var(--bad); }
+.ins-cont { font: 700 var(--s3)/1 var(--f-display); color: var(--pos); font-variant-numeric: tabular-nums; }
+.ins-barras { display: flex; height: 1rem; border-radius: 4px; overflow: hidden; gap: 2px; }
+.ins-barras span { transition: width .8s; }
+.ins-leyenda { display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: var(--s-1); color: var(--muted); }
+.ins-leyenda i { display: inline-block; width: .8rem; height: .8rem; border-radius: 2px; vertical-align: -1px; margin-right: .3rem; }
+.ins-aviso { position: absolute; left: .5rem; top: .5rem; font-size: .75rem; color: var(--muted); background: var(--surface); padding: .2rem .45rem; border-radius: 6px; pointer-events: none; }
+.explora { margin-top: 2.5rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
+#ins-explora input[type="number"] { width: 12ch; }
+#ins-explora td { font-family: var(--f-mono); white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="barra" data-actual="insercion"></header>
+<main class="pagina" data-rol="pos">
+  <div class="cabeza">
+    <span class="eyebrow">Etapa 5 · Dónde se esconde cada bit</span>
+    <h1>Cada bit cifrado va a una muestra del audio elegida por la clave</h1>
+    <p>Los 1400 bits del mensaje cifrado se reparten por todo el audio. Cada uno reemplaza el último bit de una muestra, un cambio que el oído no puede percibir.</p>
+  </div>
+
+  <div class="recorrido" id="recorrido">
+    <div class="narracion">
+      <article class="paso" data-paso="muestras">
+        <span class="eyebrow">Paso 1</span>
+        <h2>Qué es un audio digital</h2>
+        <p>El sonido es una onda continua. Un archivo digital no la guarda entera: mide su altura muchas veces por segundo y guarda cada medida como un número entero. Cada medida se llama muestra.</p>
+        <p>En un audio de calidad CD se toman 44 100 muestras por segundo en cada canal, y cada muestra ocupa 16 bits.</p>
+        <p class="analogia">Es como una película: una sucesión de fotos tan rápida que el ojo ve movimiento continuo. Aquí las «fotos» son del sonido y el oído oye una onda continua.</p>
+        <details><summary>Detalle técnico</summary><p>Con 16 bits caben 2<sup>16</sup> = 65 536 valores posibles. La frecuencia de muestreo de 44 100 Hz permite representar sonidos hasta unos 22 kHz, por encima de lo que oye una persona.</p></details>
+      </article>
+      <article class="paso" data-paso="wav" hidden>
+        <span class="eyebrow">Paso 2</span>
+        <h2>WAV sin compresión, no MP3</h2>
+        <p>Un archivo WAV en formato PCM guarda cada muestra tal cual, sin compresión. Si se cambia un bit, el cambio queda guardado.</p>
+        <p>Un MP3 recalcula las muestras para ocupar menos espacio. Al hacerlo cambia sus últimos bits y destruiría el mensaje escondido.</p>
+        <p class="analogia">Es la diferencia entre guardar una carta en un sobre y dictarla por teléfono: en el sobre llega cada letra exacta; por teléfono llega la idea, pero no la letra.</p>
+        <details><summary>Detalle técnico</summary><p>PCM (modulación por código de pulsos) escribe cada muestra como un entero. MP3 es un formato con pérdida: descompone la señal en frecuencias, descarta lo que el oído percibe poco y reconstruye muestras distintas de las originales.</p></details>
+      </article>
+      <article class="paso" data-paso="caso" hidden>
+        <span class="eyebrow">Paso 3</span>
+        <h2>El audio del caso de estudio</h2>
+        <p>La pista es «Let it go» de Rewob, con licencia Creative Commons. Es estéreo y dura 4 min 45 s, es decir 12 571 776 tramas (una trama son las dos muestras de un mismo instante).</p>
+        <p>Las muestras se leen intercaladas, izquierda, derecha, izquierda, derecha…, y forman una sola lista de M = 25 143 552 números enteros entre −32 768 y 32 767.</p>
+        <details><summary>Detalle técnico</summary><p>El vector es de tipo int16 (entero con signo de 16 bits). La muestra de índice p pertenece a la trama ⌊p/2⌋; si p es par es del canal izquierdo y si es impar, del derecho.</p></details>
+      </article>
+      <article class="paso" data-paso="capacidad" hidden>
+        <span class="eyebrow">Paso 4</span>
+        <h2>¿Cuánto cabe?</h2>
+        <p>Cada muestra puede guardar un bit, así que en el audio caben M = 25 143 552 bits, unos 3.14 MB.</p>
+        <p>El límite real es menor: la longitud del mensaje viaja en 2 bytes, y el número más grande que cabe en 2 bytes es 65 535. Por eso el mensaje comprimido no puede superar 65 535 bytes.</p>
+        <p>El mensaje del caso usa 1400 bits: una muestra de cada 18 000, más o menos.</p>
+        <details><summary>Detalle técnico</summary><p>2 bytes = 16 bits, y 2<sup>16</sup> − 1 = 65 535. 1400 / 25 143 552 ≈ 0.0056 %.</p></details>
+      </article>
+      <article class="paso" data-paso="elegir" hidden>
+        <span class="eyebrow">Paso 5</span>
+        <h2>La tercera secuencia elige las posiciones</h2>
+        <p>Una tercera secuencia del mapa logístico, con sus propios valores x<sub>p</sub> y r<sub>p</sub> derivados de la clave, produce números entre 0 y 1. Primero se descartan sus N<sub>p</sub> = 7173 primeros valores (el transitorio).</p>
+        <p>Cada valor siguiente y se multiplica por M y se redondea hacia abajo: el resultado es el número de la muestra donde irá el siguiente bit.</p>
+        <p class="analogia">Es como abrir un libro de 25 millones de páginas en páginas que solo conoce quien tiene la clave.</p>
+        <details><summary>Detalle técnico</summary><p>p = min( max( ⌊y · M⌋, 0 ), M − 1 ). El mínimo y el máximo aseguran que p quede entre 0 y M − 1. N<sub>p</sub> = N + 1000 = 7173.</p></details>
+      </article>
+      <article class="paso" data-paso="todas" hidden>
+        <span class="eyebrow">Paso 6</span>
+        <h2>1400 posiciones, ninguna repetida</h2>
+        <p>Se repite hasta tener una posición por cada bit: 1400 posiciones.</p>
+        <p>Si la secuencia diera una posición ya usada, se descartaría y se tomaría el siguiente valor, para que dos bits nunca caigan en la misma muestra. Con la clave del caso bastaron 1400 iteraciones: no hubo ninguna repetición (colisión).</p>
+        <details><summary>Detalle técnico</summary><p>Las posiciones se guardan en un conjunto para comprobar en tiempo constante si ya se usaron. El cálculo de esta página se hace en tu navegador con la misma aritmética float64 del código del artículo.</p></details>
+      </article>
+      <article class="paso" data-paso="tiempos" hidden>
+        <span class="eyebrow">Paso 7</span>
+        <h2>Dónde caen las primeras ocho</h2>
+        <p>Cada posición corresponde a un instante y a un canal. Si p es par, la muestra es del canal izquierdo; si es impar, del derecho.</p>
+        <p>El instante en segundos es la trama ⌊p/2⌋ dividida entre 44 100. Las posiciones saltan de un extremo a otro del audio sin orden visible.</p>
+        <details><summary>Detalle técnico</summary><p>Tiempo = ⌊p/2⌋ / 44 100 s, escrito como minutos:segundos con dos decimales.</p></details>
+      </article>
+      <article class="paso" data-paso="lsb" hidden>
+        <span class="eyebrow">Paso 8</span>
+        <h2>El bit menos significativo</h2>
+        <p>Cada muestra son 16 bits. El último de la derecha, el bit menos significativo (LSB), es el que menos pesa: cambiarlo mueve el valor en 1 como mucho.</p>
+        <p>Para esconder el bit w se pone ese último bit en 0 y luego se escribe w. Si la muestra ya terminaba en w, no cambia.</p>
+        <p class="analogia">Es como cambiar el último centavo de una cuenta de 32 000 pesos: nadie lo nota.</p>
+        <details><summary>Detalle técnico</summary><p>s′ = (s ∧ ¬1) ∨ w, donde ∧ es el Y bit a bit, ¬1 una máscara con todos los bits en 1 salvo el último y ∨ el O bit a bit. Los negativos se guardan en complemento a dos de 16 bits. JavaScript opera en 32 bits, así que el resultado se devuelve a int16 con (v &lt;&lt; 16) &gt;&gt; 16. El cambio es de 1 nivel de 65 536.</p></details>
+      </article>
+      <article class="paso" data-paso="comparar" hidden>
+        <span class="eyebrow">Paso 9</span>
+        <h2>Original y estegoaudio, lado a lado</h2>
+        <p>El audio con el mensaje escondido se llama estegoaudio. Visto como onda es idéntico al original.</p>
+        <p>La diferencia entre los dos es cero en casi todas las muestras y vale ±1 en unas pocas. A esta escala no se puede ver ni oír.</p>
+        <details><summary>Detalle técnico</summary><p>Una diferencia de 1 nivel sobre un máximo de 32 767 es 0.003 % de la amplitud. En la escena, la cinta de diferencia está dibujada a la misma escala que el audio.</p></details>
+      </article>
+      <article class="paso" data-paso="metricas" hidden>
+        <span class="eyebrow">Paso 10</span>
+        <h2>Las cifras confirman que no se nota</h2>
+        <p>De las 1400 muestras elegidas, solo 695 cambiaron. Las otras 705 ya tenían el bit correcto.</p>
+        <p>El error es diminuto (MSE 2.76 × 10<sup>−5</sup>) y la PSNR es de 135.89 dB, muy por encima de los 80 dB a partir de los cuales se habla de transparencia acústica: el oído no distingue los dos audios.</p>
+        <p>La correlación entre muestras vecinas (0.9869) y la entropía casi no cambian.</p>
+        <details><summary>Detalle técnico</summary><p>MSE: promedio de (s′ − s)<sup>2</sup> sobre todas las muestras. PSNR = 10 log<sub>10</sub>(máx<sup>2</sup> / MSE) en decibelios. Entropía de las muestras: 14.8785 en el original y 14.8786 en el estegoaudio, en una escala cuyo máximo es 16 bits.</p></details>
+      </article>
+      <div class="mando"></div>
+    </div>
+    <div class="escena">
+      <div class="lienzo" id="ins-lienzo"><span class="ins-aviso" id="ins-aviso">forma de onda ilustrativa</span></div>
+      <div class="ins-panel" id="ins-panel" aria-live="polite"></div>
+      <p class="narra" id="ins-narra"><b>Qué estás viendo:</b> …</p>
+    </div>
+  </div>
+
+  <section class="explora" id="ins-explora">
+    <span class="eyebrow">Para explorar</span>
+    <h2>Busca cualquier posición y prueba el LSB</h2>
+    <div class="grid2">
+      <div class="card" style="display:grid;grid-template-columns:minmax(0,1fr);gap:.6rem">
+        <div class="controls"><label for="ins-i">Posición número i (1 a 1400)<input type="number" id="ins-i" min="1" max="1400" value="1"></label></div>
+        <dl class="kv" id="ins-pos"></dl>
+        <p class="note" style="margin:0">Calculado en tu navegador con la clave del caso.</p>
+      </div>
+      <div class="card" style="display:grid;grid-template-columns:minmax(0,1fr);gap:.6rem">
+        <div class="controls">
+          <label for="ins-s">Muestra s (−32 768 a 32 767)<input type="number" id="ins-s" min="-32768" max="32767" value="-877"></label>
+          <label for="ins-w">Bit w<select id="ins-w"><option>0</option><option selected>1</option></select></label>
+        </div>
+        <div class="scroll"><table class="data"><tbody id="ins-lsbx"></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="siguiente-etapa" aria-label="Etapas"></nav>
+</main>
+<footer class="pie"></footer>
+<script type="module">
+import { recorrido, animar, sinMovimiento } from "./assets/js/guia.js";
+import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
+const Mo = window.Modelo, C = Mo.CASO, M = C.M, L = 8 * C.n, FS = 44100, TRAMAS = M / 2;
+const $ = id => document.getElementById(id);
+const fmtN = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ").replace("-", "−");
+const fmtT = s => { const m = Math.floor(s / 60), r = s - 60 * m; return m + ":" + r.toFixed(2).padStart(5, "0"); };
+const b16 = v => (v & 0xffff).toString(2).padStart(16, "0");
+const toI16 = v => (v << 16) >> 16;
+const marca = (s, cls = "") => `${s.slice(0, 15)}<span class="ins-lsb ${cls}">${s[15]}</span>`;
+
+/* ---------- Datos reales ---------- */
+const d = await Mo.derivar(C.x0, C.r, C.N);
+const { P, iter } = Mo.posiciones(d, L, M);
+const Y = Mo.secuencia(d.xp, d.rp, d.Np, iter);
+
+/* ---------- Escena 3D ---------- */
+const e = escena3d($("ins-lienzo"), { camara: [0, 10, 25], fov: 45 });
+const { scene, camera, controls } = e;
+let col = e.colores();
+const temas = []; // [material, nombre de color]
+const mat = (nombre, extra = {}) => { const m = new THREE.MeshStandardMaterial({ color: col[nombre], roughness: .7, ...extra }); temas.push([m, nombre]); return m; };
+e.alTema(c => { col = c; temas.forEach(([m, n]) => m.color.copy(c[n])); columnas.forEach(pintarCol); });
+
+const LEN = 24, X0 = -LEN / 2, ZL = -0.75, ZR = 0.75, ANCHO = 1.0, NP = 1800;
+// Forma de onda sintética (ilustrativa): envolvente de canción y oscilaciones, determinista.
+let semilla = 7; const azar = () => ((semilla = (semilla * 16807) % 2147483647) / 2147483647);
+const ruido = [new Float32Array(NP + 1), new Float32Array(NP + 1)].map(a => a.map(() => azar() * 2 - 1));
+function onda(canal, u) {
+  const i = Math.min(NP, Math.round(u * NP));
+  let env = 0.3 + 0.5 * (0.5 + 0.5 * Math.sin(2 * Math.PI * u * 3.3 - 1.2)) * (0.7 + 0.3 * Math.sin(2 * Math.PI * u * 11));
+  env *= Math.min(1, u / 0.03) * Math.min(1, (1 - u) / 0.03);
+  return 0.85 * env * (0.55 * Math.sin(2 * Math.PI * u * 190 + canal) + 0.3 * Math.sin(2 * Math.PI * u * 471 + 2 * canal) + 0.15 * ruido[canal][i]);
+}
+function cinta(canal, z, nombreColor, escalaY = 1, y0 = 0) {
+  const pos = new Float32Array((NP + 1) * 2 * 3), idx = [];
+  for (let i = 0; i <= NP; i++) {
+    const u = i / NP, x = X0 + LEN * u, y = y0 + escalaY * onda(canal, u);
+    pos.set([x, y, z - ANCHO / 2, x, y, z + ANCHO / 2], i * 6);
+    if (i < NP) { const a = 2 * i; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return new THREE.Mesh(g, mat(nombreColor, { side: THREE.DoubleSide, transparent: true, opacity: .9 }));
+}
+const xDe = p => X0 + LEN * (Math.floor(p / 2) / TRAMAS);
+const zDe = p => (p % 2 ? ZR : ZL);
+const yDe = p => onda(p % 2, Math.floor(p / 2) / TRAMAS);
+
+// Grupo principal: las dos cintas, ejes y agujas.
+const gCinta = new THREE.Group(); scene.add(gCinta);
+const cIzq = cinta(0, ZL, "hash"), cDer = cinta(1, ZR, "hash");
+gCinta.add(cIzq, cDer);
+const rot = (t, x, y, z, o = {}) => { const s = etiqueta(t, o); s.position.set(x, y, z); return s; };
+[0, 60, 120, 180, 240, 285].forEach(s => gCinta.add(rot(s === 285 ? "4:45" : Math.floor(s / 60) + ":00", X0 + LEN * s / 285, -1.1, ZR + 1.3, { tam: .75, color: "muted" })));
+gCinta.add(rot("I", X0 - 0.7, 0, ZL, { tam: .7, color: "muted" }), rot("D", X0 - 0.7, 0, ZR, { tam: .7, color: "muted" }));
+const agujaG = new THREE.BoxGeometry(0.05, 1.4, 0.05), puntaG = new THREE.SphereGeometry(0.09, 10, 8);
+const agujas = new THREE.InstancedMesh(agujaG, mat("pos", { emissive: col.pos, emissiveIntensity: .35 }), L);
+const puntas = new THREE.InstancedMesh(puntaG, mat("pos", { emissive: col.pos, emissiveIntensity: .5 }), L);
+const m4 = new THREE.Matrix4();
+P.forEach((p, i) => {
+  const x = xDe(p), z = zDe(p), y = yDe(p);
+  agujas.setMatrixAt(i, m4.makeTranslation(x, y + 0.7, z));
+  puntas.setMatrixAt(i, m4.makeTranslation(x, y + 1.45, z));
+});
+agujas.count = puntas.count = 0;
+gCinta.add(agujas, puntas);
+// Las primeras 8 con esfera grande y rótulo.
+const gOcho = new THREE.Group(); gCinta.add(gOcho);
+const ocho = P.slice(0, 8).map((p, i) => {
+  const g = new THREE.Group();
+  const esf = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), mat("pos", { emissive: col.pos, emissiveIntensity: .6 }));
+  const alto = 1.45 + [0.4, 1.1, 1.8, 2.5][i % 4];
+  const palo = new THREE.Mesh(new THREE.BoxGeometry(0.03, alto - 1.45 + .01, 0.03), mat("ink"));
+  esf.position.set(xDe(p), yDe(p) + 1.45, zDe(p));
+  palo.position.set(xDe(p), yDe(p) + 1.45 + (alto - 1.45) / 2, zDe(p));
+  const r = etiqueta("p" + (i + 1), { tam: .6, color: "ink" }); r.position.set(xDe(p), yDe(p) + alto + .35, zDe(p));
+  const t = etiqueta(fmtT(Math.floor(p / 2) / FS) + (p % 2 ? " D" : " I"), { tam: .45, color: "muted" }); t.position.set(xDe(p), yDe(p) + alto + .8, zDe(p));
+  g.add(esf, palo, r, t); g.userData = { t }; g.visible = false; gOcho.add(g); return g;
+});
+
+// Copias para comparar original y estegoaudio (paso 9).
+const gComp = new THREE.Group(); scene.add(gComp);
+const DY = 4;
+const eIzq = cinta(0, ZL, "pos", 1, -DY), eDer = cinta(1, ZR, "pos", 1, -DY);
+// Diferencia: escala real, 1 nivel de 32 767 sobre una amplitud dibujada de ~0.85 unidades.
+const dif = (() => {
+  const g = new THREE.PlaneGeometry(LEN, ANCHO * 2.5); g.rotateX(-Math.PI / 2);
+  const m = new THREE.Mesh(g, mat("ciph", { side: THREE.DoubleSide, transparent: true, opacity: .8 })); m.position.set(0, -2 * DY, 0); return m;
+})();
+gComp.add(eIzq, eDer, dif,
+  rot("original", X0 + 2.5, 1.5, 0, { tam: .7 }), rot("estegoaudio", X0 + 3, -DY + 1.2, 0, { tam: .7, color: "pos" }),
+  rot("diferencia (misma escala)", X0 + 5, -2 * DY + 1.0, 0, { tam: .7, color: "ciph" }));
+gComp.visible = false;
+
+// Paso 1: una onda continua y sus muestras (fotos del sonido).
+const gMues = new THREE.Group(); scene.add(gMues);
+const curvaF = x => 1.3 * Math.sin(x * 0.9) + 0.5 * Math.sin(x * 2.3 + .6);
+{
+  const pts = []; for (let i = 0; i <= 300; i++) { const x = -6 + 12 * i / 300; pts.push(new THREE.Vector3(x, curvaF(x), 0)); }
+  const tubo = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 300, 0.035, 6), mat("muted"));
+  const base = new THREE.Mesh(new THREE.BoxGeometry(12.4, 0.02, 0.02), mat("line"));
+  gMues.add(tubo, base, rot("la onda del sonido (continua)", -2.5, 2.6, 0, { tam: .5, color: "muted" }), rot("cada punto es una muestra: un número entero", 1.5, -2.4, 0, { tam: .5, color: "pos" }));
+}
+const estacas = [];
+for (let k = 0; k < 25; k++) {
+  const x = -6 + 12 * k / 24, y = curvaF(x), g = new THREE.Group();
+  const palo = new THREE.Mesh(new THREE.BoxGeometry(0.05, Math.max(0.01, Math.abs(y)), 0.05), mat("pos"));
+  palo.position.set(x, y / 2, 0);
+  const pt = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), mat("pos", { emissive: col.pos, emissiveIntensity: .4 }));
+  pt.position.set(x, y, 0);
+  g.add(palo, pt); g.visible = false; gMues.add(g); estacas.push(g);
+}
+gMues.visible = false;
+
+// Columnas de 16 rodajas (bits): la de arriba es el LSB.
+const S = [1203, -877, 15, -32001, 4096, 2, -1, 777];        // valores de muestra de ejemplo
+const W = [0, 1, 0, 1, 1, 0, 1, 0];                            // bits w de ejemplo
+const MP3D = [3, -2, 5, -4, 1, -3, 2, -1];                     // alteración ilustrativa de un códec con pérdida
+const gCols = new THREE.Group(); scene.add(gCols);
+const rodajaG = new THREE.BoxGeometry(0.4, 0.085, 0.4);
+const columnas = [];
+function crearFila(z, nombre) {
+  const fila = new THREE.Group(); fila.position.z = z;
+  for (let c = 0; c < 8; c++) {
+    const g = new THREE.Group(); g.position.x = (c - 3.5) * 0.62;
+    const rod = [];
+    for (let k = 0; k < 16; k++) { const m = new THREE.Mesh(rodajaG, new THREE.MeshStandardMaterial({ roughness: .6 })); m.position.y = k * 0.1; g.add(m); rod.push(m); }
+    const r = etiqueta("w" + (c + 1), { tam: .3, color: "muted" }); r.position.set(0, -0.25, 0.3); g.add(r);
+    const obj = { g, rod, valor: S[c], lsb: "normal" }; columnas.push(obj); fila.add(g);
+  }
+  const t = etiqueta(nombre, { tam: .32, color: "ink" }); t.position.set(-2.9, 1.95, 0); fila.add(t); fila.userData.t = t;
+  gCols.add(fila); return fila;
+}
+function pintarCol(o) {
+  const bits = b16(o.valor);
+  o.rod.forEach((m, k) => { // k = 0 abajo (bit más significativo), 15 arriba (LSB)
+    const b = bits[k] === "1";
+    let c = b ? col.ink : col.line.clone().lerp(col.muted, .3);
+    if (k === 15 && o.lsb === "nuevo") c = b ? col.pos : col["pos"].clone().lerp(col.surface, .6);
+    if (k === 15 && o.lsb === "mal") c = col.bad ?? new THREE.Color("#b3261e");
+    m.material.color.copy(c);
+    m.material.emissive = k === 15 && o.lsb !== "normal" ? c.clone().multiplyScalar(.35) : new THREE.Color(0);
+    m.scale.setScalar(k === 15 ? 1.08 : 1);
+  });
+}
+col.bad = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue("--bad").trim());
+e.alTema(() => { col.bad = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue("--bad").trim()); columnas.forEach(pintarCol); });
+const filaA = crearFila(0, "WAV"), filaB = crearFila(-1.4, "MP3");
+const colA = columnas.slice(0, 8), colB = columnas.slice(8);
+gCols.visible = false;
+const RINCON = new THREE.Vector3(xDe(P[0]) - 3.6, yDe(P[0]) + 2.4, zDe(P[0]) + 1.4); // junto a p1
+
+/* ---------- Cámara ---------- */
+let cancelCam = () => {}, cancelAnim = () => {};
+function volar(pos, mira, ms = 1400) {
+  cancelCam();
+  const p0 = camera.position.clone(), t0 = controls.target.clone(), p1 = new THREE.Vector3(...pos), t1 = new THREE.Vector3(...mira);
+  cancelCam = animar(ms, t => { camera.position.lerpVectors(p0, p1, t); controls.target.lerpVectors(t0, t1, t); });
+}
+const GENERAL = [[0, 10, 25], [0, 0.3, 0]];
+
+/* ---------- Pasos ---------- */
+const panel = $("ins-panel"), narra = $("ins-narra"), aviso = $("ins-aviso");
+const decir = t => (narra.innerHTML = "<b>Qué estás viendo:</b> " + t);
+function mostrar({ cinta = true, comp = false, mues = false, cols = false, ochoV = false, n = 0, filaMP3 = false, enRincon = false }) {
+  gCinta.visible = cinta; gComp.visible = comp; gMues.visible = mues; gCols.visible = cols;
+  filaB.visible = filaMP3; filaA.userData.t.visible = filaMP3;
+  gCols.position.copy(enRincon ? RINCON : new THREE.Vector3(0, -0.8, 0.5));
+  gOcho.visible = ochoV; agujas.count = puntas.count = n;
+  aviso.hidden = !(cinta || comp);
+}
+const tablaOcho = (hasta, luz) => `<div class="scroll"><table class="data"><thead><tr><th class="r">i</th><th class="r">p<sub>i</sub></th><th class="r">trama ⌊p/2⌋</th><th>canal</th><th class="r">tiempo</th></tr></thead><tbody>${
+  P.slice(0, 8).map((p, i) => i < hasta ? `<tr${i === luz ? ' class="luz"' : ""}><td class="r">${i + 1}</td><td class="r">${fmtN(p)}</td><td class="r">${fmtN(Math.floor(p / 2))}</td><td>${p % 2 ? "derecho (impar)" : "izquierdo (par)"}</td><td class="r">${fmtT(Math.floor(p / 2) / FS)}</td></tr>`
+    : `<tr class="pend"><td class="r">${i + 1}</td><td class="r">…</td><td></td><td></td><td></td></tr>`).join("")}</tbody></table></div>`;
+
+const PASOS = {
+  muestras() {
+    mostrar({ cinta: false, mues: true });
+    volar([0, 1.2, 11], [0, 0, 0]);
+    estacas.forEach(g => (g.visible = false));
+    cancelAnim = animar(2500, t => estacas.forEach((g, k) => (g.visible = k < Math.round(t * 25))));
+    panel.innerHTML = `<dl class="kv"><dt>Muestras por segundo</dt><dd>44 100 en cada canal</dd><dt>Tamaño de cada muestra</dt><dd>16 bits</dd><dt>Valores posibles</dt><dd>2<sup>16</sup> = 65 536 (de −32 768 a 32 767)</dd></dl>`;
+    decir("la línea gris es la onda continua del sonido. Los puntos naranjas aparecen uno a uno: son las muestras, la altura de la onda medida a intervalos iguales. El archivo solo guarda esos números.");
+  },
+  wav() {
+    mostrar({ cinta: false, cols: true, filaMP3: true });
+    volar([1.2, 2.6, 6.2], [0, 0, -0.5]);
+    colA.forEach((o, c) => { o.valor = toI16((S[c] & ~1) | W[c]); o.lsb = "nuevo"; pintarCol(o); });
+    colB.forEach((o, c) => { o.valor = S[c]; o.lsb = "normal"; pintarCol(o); });
+    cancelAnim = animar(1800, t => { if (t >= 1) colB.forEach((o, c) => { o.valor = toI16(((S[c] & ~1) | W[c]) + MP3D[c]); o.lsb = "mal"; pintarCol(o); }); });
+    panel.innerHTML = `<p class="note" style="margin:0"><b>Valores de ejemplo.</b> Cada columna es una muestra de 16 bits apilados: abajo el más significativo, arriba el LSB. Rodaja del color del texto = 1, rodaja pálida = 0.</p>
+      <div class="scroll"><table class="data"><thead><tr><th class="r">w</th><th class="r">WAV guarda</th><th class="r">MP3 devuelve</th><th>¿el bit sigue?</th></tr></thead><tbody>${
+      S.map((s, c) => { const a = toI16((s & ~1) | W[c]), b = toI16(a + MP3D[c]); return `<tr><td class="r">${W[c]}</td><td class="r">${fmtN(a)}</td><td class="r">${fmtN(b)}</td><td>${(b & 1) === W[c] ? "sí, por casualidad" : "no"}</td></tr>`; }).join("")}</tbody></table></div>
+      <p class="note" style="margin:0">La alteración del MP3 es ilustrativa; un códec real cambia todas las muestras de formas distintas.</p>`;
+    decir("dos filas de 8 muestras de ejemplo. La de adelante (WAV) conserva en naranja el bit escondido en su rodaja superior. La de atrás (MP3) recalcula las muestras: sus rodajas cambian y el bit escondido, en rojo, ya no es confiable.");
+  },
+  caso() {
+    mostrar({});
+    volar(...GENERAL);
+    [cIzq, cDer].forEach(m => m.geometry.setDrawRange(0, 0));
+    cancelAnim = animar(2200, t => [cIzq, cDer].forEach(m => m.geometry.setDrawRange(0, Math.round(t * NP) * 6)), () => [cIzq, cDer].forEach(m => m.geometry.setDrawRange(0, Infinity)));
+    panel.innerHTML = `<dl class="kv"><dt>Pista</dt><dd>«Let it go», Rewob (Creative Commons)</dd><dt>Formato</dt><dd>WAV PCM, 16 bits, 44 100 Hz, estéreo</dd><dt>Duración</dt><dd>4 min 45 s = 12 571 776 tramas</dd><dt>Vector de muestras</dt><dd>M = 25 143 552 enteros int16</dd><dt>Rango</dt><dd>[−32 768, 32 767]</dd></dl>`;
+    decir("las dos cintas son los canales izquierdo (I, atrás) y derecho (D, adelante), dibujados de 0:00 a 4:45. Se forman de izquierda a derecha. La forma de onda es ilustrativa, porque el audio no viene con esta página; la duración y los canales son los reales.");
+  },
+  capacidad() {
+    mostrar({});
+    volar(...GENERAL);
+    const pct = 100 * L / M;
+    panel.innerHTML = `<dl class="kv"><dt>Capacidad</dt><dd>M = 25 143 552 bits ≈ 3.14 MB</dd><dt>Límite por la longitud</dt><dd>2 bytes → máximo 65 535 bytes</dd><dt>Mensaje del caso</dt><dd>175 bytes = 1400 bits</dd><dt>Fracción usada</dt><dd>${pct.toFixed(4)} % de las muestras</dd></dl>
+      <div><div class="ins-barras" role="img" aria-label="Fracción de muestras que se usan"><span style="background:var(--pos);width:max(3px, ${pct}%)"></span><span style="background:var(--line);flex:1"></span></div>
+      <p class="note" style="margin:.3rem 0 0">La parte naranja está ampliada a 3 píxeles para que se vea; a escala real sería invisible.</p></div>`;
+    decir(`todo el audio, sin marcas todavía. Caben 25 143 552 bits, pero el mensaje solo necesita 1400: el ${pct.toFixed(4)} % de las muestras.`);
+  },
+  elegir() {
+    mostrar({ ochoV: true });
+    volar(...GENERAL);
+    ocho.forEach(g => (g.visible = false));
+    const pintar = k => {
+      ocho.forEach((g, i) => (g.visible = i < k));
+      const i = Math.max(0, k - 1), y = Y[i];
+      panel.innerHTML = `<div class="formula">p = min( max( ⌊y · M⌋, 0 ), M − 1 )</div>
+        <dl class="kv"><dt>Transitorio</dt><dd>N<sub>p</sub> = ${fmtN(d.Np)} valores descartados</dd><dt>Iteración</dt><dd>${k ? k : "–"}</dd><dt>y</dt><dd class="mono">${k ? y.toFixed(10) : "–"}</dd><dt>y · M</dt><dd class="mono">${k ? (y * M).toFixed(2) : "–"}</dd><dt>p</dt><dd class="mono">${k ? fmtN(P[i]) : "–"}</dd></dl>`;
+    };
+    let ult = -1;
+    cancelAnim = animar(8 * 800, t => { const k = Math.max(1, Math.ceil(t * 8)); if (k !== ult) { ult = k; pintar(k); } });
+    decir("después del transitorio, cada valor de la tercera secuencia da una posición. Las primeras ocho aparecen una a una como agujas sobre la cinta, con su número p<sub>1</sub> … p<sub>8</sub>. El cuadro muestra el cálculo de la última.");
+  },
+  todas() {
+    mostrar({ ochoV: false });
+    volar([0, 12, 23], [0, 0, 0]);
+    panel.innerHTML = `<p style="margin:0"><span class="ins-cont" id="ins-cont">0</span> <span class="note">posiciones de 1400</span></p>
+      <dl class="kv"><dt>Iteraciones usadas</dt><dd>${fmtN(iter)}</dd><dt>Colisiones descartadas</dt><dd>${fmtN(iter - L)}</dd></dl>`;
+    cancelAnim = animar(3500, t => { const n = Math.round(t * L); agujas.count = puntas.count = n; $("ins-cont").textContent = fmtN(n); });
+    decir(`las agujas naranjas se encienden una a una hasta llegar a 1400. Quedan repartidas por todo el audio y por los dos canales, sin ningún patrón. Hicieron falta ${fmtN(iter)} iteraciones, así que hubo ${fmtN(iter - L)} colisiones.`);
+  },
+  tiempos() {
+    mostrar({ ochoV: true, n: L });
+    ocho.forEach(g => (g.visible = true));
+    volar([0, 8, 25], [0, 1.4, 0]);
+    panel.innerHTML = tablaOcho(8, -1);
+    decir("las ocho primeras posiciones destacadas con su tiempo y su canal (I = izquierdo, D = derecho). p<sub>1</sub> cae casi al final (${fmtT(Math.floor(P[0] / 2) / FS)}) y p<sub>2</sub> casi al principio (${fmtT(Math.floor(P[1] / 2) / FS)}): el orden de los bits no sigue el orden del audio.");
+  },
+  lsb() {
+    mostrar({ cols: true, ochoV: true, n: 0, enRincon: true });
+    ocho.forEach((g, i) => (g.visible = i === 0));
+    const c = RINCON;
+    volar([c.x + 0.2, c.y + 1.6, c.z + 6.4], [c.x + 0.4, c.y + 0.4, c.z], 1800);
+    colA.forEach((o, k) => { o.valor = S[k]; o.lsb = "normal"; pintarCol(o); });
+    const tabla = j => `<p class="note" style="margin:0"><b>Valores de muestra de ejemplo</b> y bits w de ejemplo, ampliados junto a p<sub>1</sub>. Negativos en complemento a dos.</p>
+      <div class="scroll"><table class="data"><thead><tr><th class="r">s</th><th>s en binario</th><th class="r">w</th><th>s′ en binario</th><th class="r">s′</th><th class="r">s′ − s</th></tr></thead><tbody>${
+      S.map((s, i) => { const n = toI16((s & ~1) | W[i]); return i < j ? `<tr${i === j - 1 ? ' class="luz"' : ""}><td class="r">${fmtN(s)}</td><td class="mono">${marca(b16(s))}</td><td class="r">${W[i]}</td><td class="mono">${marca(b16(n))}</td><td class="r">${fmtN(n)}</td><td class="r">${n - s > 0 ? "+1" : n - s < 0 ? "−1" : "0"}</td></tr>`
+        : `<tr class="pend"><td class="r">${fmtN(s)}</td><td class="mono">${marca(b16(s))}</td><td class="r">${W[i]}</td><td>…</td><td></td><td></td></tr>`; }).join("")}</tbody></table></div>`;
+    let ult = -1;
+    panel.innerHTML = tabla(0);
+    cancelAnim = animar(1500 + 8 * 700, t => {
+      const j = Math.max(0, Math.min(8, Math.floor((t * (1500 + 8 * 700) - 1500) / 700) + 1));
+      if (j === ult) return; ult = j;
+      colA.forEach((o, k) => { if (k < j) { o.valor = toI16((S[k] & ~1) | W[k]); o.lsb = "nuevo"; } pintarCol(o); });
+      panel.innerHTML = tabla(j);
+    });
+    const cambian = S.filter((s, i) => (s & 1) !== W[i]).length;
+    decir(`la cámara se acerca a la posición p<sub>1</sub>. Cada columna es una muestra de ejemplo con sus 16 bits apilados (rodaja del color del texto = 1, pálida = 0); la rodaja de arriba es el LSB. Una a una, esa rodaja pasa a naranja con el bit w. En este ejemplo ${cambian} de las 8 muestras cambian en ±1 y las otras ya tenían el bit correcto.`);
+  },
+  comparar() {
+    mostrar({ comp: true });
+    volar([0, 5, 28], [0, -DY, 0]);
+    panel.innerHTML = `<dl class="kv"><dt>Cambio máximo por muestra</dt><dd>1 nivel de 65 536</dd><dt>Muestras con diferencia ≠ 0</dt><dd>695 de 25 143 552</dd><dt>Altura de la diferencia en la escena</dt><dd>${(0.85 / 32767).toExponential(1)} unidades, menos de un píxel</dd></dl>`;
+    decir("arriba, el original (gris, sus dos canales); en el centro, el estegoaudio (naranja); abajo, la diferencia entre los dos dibujada a la misma escala. Las dos ondas coinciden y la diferencia es una lámina plana: el cambio es demasiado pequeño para verse.");
+  },
+  metricas() {
+    mostrar({ n: L });
+    volar(...GENERAL);
+    panel.innerHTML = `<div><div class="ins-barras" role="img" aria-label="695 muestras modificadas y 705 sin cambio"><span style="background:var(--pos);width:${100 * 695 / 1400}%"></span><span style="background:var(--line);flex:1"></span></div>
+      <div class="ins-leyenda" style="margin-top:.35rem"><span><i style="background:var(--pos)"></i>695 muestras modificadas</span><span><i style="background:var(--line)"></i>705 ya tenían el bit correcto</span></div></div>
+      <dl class="kv"><dt>MSE</dt><dd>2.76 × 10<sup>−5</sup></dd><dt>PSNR</dt><dd>135.89 dB (transparencia: &gt; 80 dB)</dd><dt>Correlación de muestras adyacentes</dt><dd>0.9869</dd><dt>Entropía</dt><dd>14.8785 original · 14.8786 estegoaudio (máximo 16)</dd></dl>`;
+    decir("las 1400 posiciones sobre el audio y, en el cuadro, las cifras medidas en el artículo. La barra divide las 1400 muestras elegidas entre las 695 que cambiaron y las 705 que no necesitaron cambio.");
+  },
+};
+recorrido($("recorrido"), (i, nombre) => {
+  cancelAnim();
+  PASOS[nombre]();
+  if (sinMovimiento()) { cancelCam(); }
+});
+
+/* ---------- Para explorar ---------- */
+function explorarPos() {
+  const i = Math.max(1, Math.min(L, Math.round(+$("ins-i").value || 1))), p = P[i - 1], tr = Math.floor(p / 2);
+  $("ins-pos").innerHTML = `<dt>y</dt><dd class="mono">${Y[i - 1].toFixed(12)}</dd><dt>p<sub>${i}</sub></dt><dd>${fmtN(p)}</dd><dt>Trama</dt><dd>${fmtN(tr)}</dd><dt>Canal</dt><dd>${p % 2 ? "derecho (impar)" : "izquierdo (par)"}</dd><dt>Tiempo</dt><dd>${fmtT(tr / FS)}</dd>`;
+}
+function explorarLsb() {
+  const s = Math.max(-32768, Math.min(32767, Math.round(+$("ins-s").value || 0))), w = +$("ins-w").value;
+  const z = toI16(s & ~1), n = toI16(z | w);
+  $("ins-lsbx").innerHTML = `<tr><td>s</td><td class="r">${fmtN(s)}</td><td>${marca(b16(s))}</td></tr><tr><td>s ∧ ¬1</td><td class="r">${fmtN(z)}</td><td>${marca(b16(z))}</td></tr>
+    <tr><td>(s ∧ ¬1) ∨ ${w}</td><td class="r">${fmtN(n)}</td><td>${marca(b16(n))}</td></tr><tr><td>s′ − s</td><td class="r">${n - s > 0 ? "+1" : n - s < 0 ? "−1" : "0"}</td><td></td></tr>`;
+}
+["ins-i"].forEach(id => $(id).addEventListener("input", explorarPos));
+["ins-s", "ins-w"].forEach(id => $(id).addEventListener("input", explorarLsb));
+explorarPos(); explorarLsb();
+</script>
+</body>
+</html>
