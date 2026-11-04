@@ -95,6 +95,24 @@
           <p>El producto es \(2^{112.95}\); con el 97.67 % de claves válidas (paso 10) quedan \(2^{112.91}\). Es una medida de seguridad computacional: da el costo de la búsqueda exhaustiva, en promedio \(2^{111.91}\) intentos, y supone que no existe un atajo mejor. No es una prueba de seguridad.</p>
           <p class="ref">IEEE 754-2019 (orden total de binary64); Goldberg (1991), «What every computer scientist should know about floating-point arithmetic», ACM Computing Surveys 23(1).</p>
         </section>
+        <section class="nivel" data-titulo="x0 bit a bit">
+          <p>x0 ocupa 64 bits: 1 de signo, 11 de exponente y 52 de fracción. Como x0 &gt; 0, el signo siempre es 0. Cada valor del exponente es un «piso» \([2^e, 2^{e+1})\) con exactamente \(2^{52}\) float64, separados por la ulp \(2^{e-52}\).</p>
+          <p>Entre 0.001 y 0.999 hay 10 pisos, de \(e=-10\) a \(e=-1\). Los 8 del medio están completos; los de los extremos casi, porque 0.001 y 0.999 caen dentro de ellos:</p>
+          \[\#x_0=(\underbrace{0.976}_{e=-10}+\underbrace{8}_{e=-9\ldots-2}+\underbrace{0.998}_{e=-1})\cdot2^{52}=9.974\cdot2^{52}\approx2^{55.32}.\]
+          <p>En bits: 0.001 = 3f50624dd2f1a9fc y 0.999 = 3feff7ced916872b comparten los 8 primeros bits, que nunca cambian. Los otros 56 sí cambian, pero no en todas sus combinaciones; por eso quedan 55.32 bits y no 56.</p>
+        </section>
+        <section class="nivel" data-titulo="r y N bit a bit">
+          <p>Todo r ∈ [3.99, 4) está en un solo piso, [2, 4): el signo y el exponente (12 bits) son fijos y la ulp es constante, \(2^{-51}\). Basta dividir el ancho del intervalo por la ulp:</p>
+          \[\#r=\frac{4-3.99}{2^{-51}}=0.01\cdot2^{51}=22\,517\,998\,136\,852\approx2^{44.36}.\]
+          <p>En bits: 3.99 = 400feb851eb851ec y el mayor float64 menor que 4, 400fffffffffffff, comparten los 19 primeros bits. De los 64 bits de r solo varían unos 44.36.</p>
+          <p>N es un entero sin signo de 16 bits, con 65 536 valores posibles. Solo se usan los 9901 de 100 a 10 000, es decir \(\log_2 9901\approx13.27\) bits. 100 = 0x0064 y 10 000 = 0x2710 comparten los 2 primeros bits.</p>
+        </section>
+        <section class="nivel" data-titulo="De 144 bits a las posibilidades">
+          <p>Los bits que el rango deja fijos no aportan secreto. Multiplicar conteos es sumar sus exponentes de 2, así que lo que queda se suma en bits:</p>
+          \[\underbrace{55.32}_{x_0}+\underbrace{44.36}_{r}+\underbrace{13.27}_{N}=112.95\ \text{bits}\quad(\text{de }144:\ \text{se pierden }8.68+19.64+2.73=31.05).\]
+          <p>El 2.33 % de las combinaciones no pasa la prueba de validez (paso 10): \(\log_2 0.9767=-0.034\), y quedan 112.91 bits.</p>
+          <p><b>Posibilidades: \(2^{112.91}\approx9.78\cdot10^{33}\) claves</b>, unos 9780 quintillones. Probando mil millones de claves por segundo, recorrer la mitad tomaría unos \(1.6\cdot10^{17}\) años.</p>
+        </section>
       </article>
       <article class="paso" data-paso="memoria" hidden>
         <span class="eyebrow">Paso 2</span>

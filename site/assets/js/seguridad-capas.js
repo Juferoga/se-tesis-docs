@@ -154,7 +154,7 @@ export function capasSeguridad() {
       });
       [["40 %", 0.4], ["50 %", 0.5], ["60 %", 0.6]].forEach(([s, f]) => txt(svg, X(f), 250, s, "t-m", { "text-anchor": "middle", "font-size": 11 }));
       txt(svg, a, 272, "banda: ±2σ de dos cadenas al azar", "t-m", { "font-size": 11.5 });
-      txt(svg, gx, 270, "clave del caso; promedios en 300 claves:", "t-m", { "font-size": 12 });
+      txt(svg, gx, 270, "clave del caso; promedios en 200 claves:", "t-m", { "font-size": 12 });
       txt(svg, gx, 290, "49.93 %, 50.05 % y 50.11 %", "", { "font-size": 13 });
       return { ms: 3400, cuadro(u) {
         const k = Math.max(1, Math.round(n * tramo(u, 0.02, 0.9)));

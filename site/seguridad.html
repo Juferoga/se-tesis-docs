@@ -38,7 +38,47 @@
 .seg-ber .v { text-align: right; font: 400 .8rem/1 var(--f-mono); color: var(--muted); white-space: nowrap; }
 .seg-ber .si { color: var(--key); font-weight: 600; }
 .seg-ber .g { grid-column: 1 / -1; font: 600 .7rem/1.2 var(--f-mono); color: var(--muted); margin-top: .35rem; text-transform: uppercase; letter-spacing: .06em; }
+.seg-ver { margin-top: .45rem; font-size: .78rem; padding: .3rem .7rem; }
+.seg-dlg { width: min(76rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); padding: 1rem 1.2rem; }
+.seg-dlg[open] { display: flex; flex-direction: column; gap: .7rem; }
+.seg-dlg::backdrop { background: rgb(0 0 0 / .35); }
+.seg-dlg-cab { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+.seg-dlg-cab h2 { margin: .1rem 0 .2rem; font: 700 1.3rem/1.2 var(--f-display); }
+.seg-dlg-cab .note { margin: 0; font-size: .82rem; color: var(--muted); max-width: 60ch; }
+.seg-dlg-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 1rem; min-height: 0; flex: 1; }
+.seg-dlg-lista { overflow: auto; min-height: 0; max-height: calc(100vh - 12rem); border: 1px solid var(--line); border-radius: 8px; }
+.seg-tab-lista { margin: 0; } .seg-tab-lista thead th { position: sticky; top: 0; background: var(--bg); }
+.seg-tab-lista tbody tr[data-j] { cursor: pointer; } .seg-tab-lista tbody tr[data-j]:hover { background: var(--soft); }
+.seg-tab-lista tr.sel { background: var(--soft); box-shadow: inset 3px 0 0 var(--key); }
+.seg-tab-lista tr.tot td { position: sticky; bottom: 0; background: var(--bg); border-top: 1px solid var(--muted); white-space: normal; }
+.seg-dlg-bits { display: flex; flex-direction: column; gap: .5rem; min-width: 0; overflow: auto; max-height: calc(100vh - 12rem); }
+.seg-dlg-sel { display: flex; gap: .4rem; flex-wrap: wrap; } .seg-dlg-sel button { font-size: .8rem; padding: .25rem .65rem; }
+.seg-dlg-sel button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.seg-dlg-claves { font-size: .78rem; line-height: 1.5; } .seg-dlg-claves .cam { color: var(--key); font-weight: 700; }
+.seg-reja-t { font-size: .72rem; color: var(--muted); }
+.seg-reja { display: grid; grid-template-columns: repeat(56, minmax(0, 1fr)); gap: 1px; }
+.seg-reja i { aspect-ratio: 1; border-radius: 1px; background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+.seg-reja i.u { background: var(--muted); box-shadow: none; }
+.seg-reja i.d { box-shadow: inset 0 0 0 1.5px var(--key); } .seg-reja i.u.d { background: var(--key); }
+.seg-dlg-res { margin: 0; font-size: .8rem; }
 @media (max-width: 900px) {
+  .seg-dlg { padding: .7rem; width: calc(100vw - 1rem); max-height: calc(100vh - 1rem); }
+  .seg-dlg-cuerpo { grid-template-columns: minmax(0, 1fr); overflow: auto; }
+  .seg-dlg-lista { max-height: 30vh; } .seg-dlg-bits { max-height: none; overflow: visible; }
+  .seg-reja { grid-template-columns: repeat(40, minmax(0, 1fr)); }
+  .seg-dlg-cab .note { font-size: .72rem; }
+}
+.seg-tabla { position: absolute; left: 4px; bottom: 4px; z-index: 2; width: min(34rem, calc(100% - 8px)); padding: .5rem .7rem .55rem; background: color-mix(in srgb, var(--bg) 88%, transparent); border: 1px solid var(--line); border-radius: 8px; }
+.seg-tabla[hidden] { display: none; }
+.seg-tab { border-collapse: collapse; width: 100%; margin-top: .45rem; font-size: .78rem; font-variant-numeric: tabular-nums; }
+.seg-tab caption { text-align: left; font-size: .72rem; color: var(--muted); padding-bottom: .2rem; }
+.seg-tab th { font-weight: 600; font-size: .7rem; color: var(--muted); line-height: 1.15; }
+.seg-tab th, .seg-tab td { padding: .16rem .4rem; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.seg-tab th:first-child, .seg-tab td:first-child { text-align: left; }
+.seg-tab-nota { margin: .3rem 0 0; font-size: .72rem; color: var(--muted); line-height: 1.3; }
+@media (max-width: 900px) {
+  .seg-tabla { padding: .25rem .35rem; } .seg-tab { font-size: .64rem; margin-top: 0; } .seg-tab th { font-size: .6rem; } .seg-tab th, .seg-tab td { padding: .05rem .2rem; }
+  .seg-tab caption, .seg-tab-nota { font-size: .6rem; }
   .seg-dato .v { font-size: 1.05rem; } .seg-dato .e { font-size: .7rem; }
   .escena .ayuda3d { display: none; }
   .seg-vista { gap: .45rem; padding: 0; line-height: 1.25; }
@@ -166,12 +206,12 @@
         <span class="eyebrow">Paso 8 · Resolución efectiva</span>
         <h2>Dos claves vecinas dan resultados distintos</h2>
         <p>Cambiar x0, r o N en la unidad más pequeña cambia cerca de la mitad de los bits del flujo de clave.</p>
-        <p>A 300 claves se les cambió x0 en 1 ulp, r en 1 ulp y N en 1. El flujo de clave cambió en promedio el 49.93 %, el 50.05 % y el 50.11 % de sus bits, como dos flujos sin relación.</p>
+        <p>A 200 claves válidas al azar se les cambió x0 en 1 ulp, r en 1 ulp y N en 1. El flujo de clave cambió en promedio el 49.93 %, el 50.05 % y el 50.11 % de sus bits, como dos flujos sin relación.</p>
         <p>Todas las claves son distinguibles: el espacio efectivo sigue en 2<sup>112.91</sup>.</p>
         <section class="nivel" data-titulo="Avalancha">
         <p>El criterio estricto de avalancha (SAC) pide que, al invertir un bit de la entrada, cada bit de la salida cambie con probabilidad 1/2. Aquí se midió la fracción de bits distintos entre los flujos de clave de dos claves vecinas:</p>
         \[ d(K,K')=\frac1n\sum_{j=1}^{n}k_j\oplus k'_j\;\approx\;\tfrac12 \]
-        <p>Promedios de 49.93 %, 50.05 % y 50.11 % en 300 claves son compatibles con 1/2: con n bits por flujo, el error estándar del promedio es \(1/(2\sqrt{300\,n})\), 0.077 % si n = 1400 (valor de ejemplo).</p>
+        <p>Promedios de 49.93 %, 50.05 % y 50.11 % en 200 claves son compatibles con 1/2: con n bits por flujo, el error estándar del promedio es \(1/(2\sqrt{200\,n})\), 0.094 % con n = 1400, que es el tamaño del flujo de clave del caso. Por clave, la desviación esperada es \(\sqrt{1400}/(2\cdot1400)\approx1.34\%\); los extremos observados (45.36 % a 54.71 %) quedan dentro de ±3.6σ, compatible con 600 comparaciones.</p>
         <p>La avalancha la produce SHA-512: claves vecinas dan entradas distintas y, bajo el supuesto de oráculo aleatorio, parámetros independientes. Es una condición necesaria, no suficiente: un generador predecible también puede cumplirla.</p>
         <p class="ref">A. F. Webster y S. E. Tavares, «On the design of S-boxes», CRYPTO ’85, LNCS 218, 1986.</p>
         </section>
@@ -242,6 +282,7 @@
     <div class="escena">
       <div class="lienzo" id="seg-lienzo" role="img" aria-label="Espacio de clave como una caja con ejes x0, r y N">
         <div class="seg-dato" id="seg-dato" aria-live="polite"></div>
+        <div class="seg-tabla" id="seg-tabla" hidden></div>
       </div>
       <div class="vista seg-vista" id="seg-vista" aria-live="polite" hidden></div>
       <p class="narra" id="seg-narra"><b>Qué estás viendo:</b> …</p>
@@ -381,8 +422,16 @@ cajaHit.userData.txt = () => pasoActual === 1 ? `<b>Fuera de rango</b><br>de las
   : `<b>Memoria: 144 bits</b><br>x0 · 64, r · 64, N · 16<br>2${sup(144)} combinaciones de bits`;
 pK.userData.txt = () => `<b>Clave del caso</b><br><span class="mono">(0.123456, 3.999952, 6173)</span>` + (pasoActual === 9 ? "<br>x0 + 10⁻¹⁵ ocupa el mismo punto" : "");
 const VECT = [["x0 + 1 ulp", 49.93], ["r + 1 ulp", 50.05], ["N + 1", 50.11]];
+// Resultados completos del experimento de claves vecinas (articulo/_scripts_correcciones/res/espacio_clave.json)
+const TABLA_VECINAS = `<table class="seg-tab"><caption>Resultados del experimento · 200 claves válidas al azar · flujo de 1400 bits</caption>
+<thead><tr><th>Cambio</th><th>Bits distintos<br>promedio</th><th>mínimo</th><th>máximo</th><th>Posiciones comunes<br>(de 256)</th></tr></thead><tbody>
+<tr><td>x0 + 1 ulp</td><td><b>49.93 %</b></td><td>45.57 %</td><td>54.71 %</td><td>0.00</td></tr>
+<tr><td>r + 1 ulp</td><td><b>50.05 %</b></td><td>46.14 %</td><td>53.50 %</td><td>0.01</td></tr>
+<tr><td>N + 1</td><td><b>50.11 %</b></td><td>45.36 %</td><td>54.64 %</td><td>0.00</td></tr></tbody></table>
+<p class="seg-tab-nota">Ideal: 50 % ± 1.34 % por clave. En el 100 % de los casos cambió más del 40 % de los bits y se compartió menos del 5 % de las posiciones, así que la resolución efectiva es 1 ulp en x0 y en r. Se descartaron 22 claves vecinas por no ser válidas. En total, solo 2 posiciones coincidieron en las 600 comparaciones.</p>
+<button type="button" class="ghost seg-ver" id="seg-ver-claves">Ver las 200 claves, bit a bit →</button>`;
 vec.forEach((v, k) => (v.userData.txt = () => pasoActual === 9 ? "<b>x0 + 10⁻¹⁵</b> (≈ 72 ulp)<br>47.64 % de bits extraídos distintos<br>similitud del texto: 8.91 %"
-  : `<b>${VECT[k][0]}</b><br>${VECT[k][1].toFixed(2)} % de bits del flujo distintos<br>promedio de 300 claves · distancia exagerada`));
+  : `<b>${VECT[k][0]}</b><br>${VECT[k][1].toFixed(2)} % de bits del flujo distintos<br>promedio de 200 claves · distancia exagerada`));
 cuboTodo.userData.txt = () => `<b>Todas las claves válidas</b><br>2${sup(ltot.toFixed(2))} ≈ ${fmtE(K)}<br>escala lineal: volumen = cantidad`;
 exploradoHit.userData.txt = () => `<b>Explorado</b><br>${fmtE(exploradoHit.userData.frac || 0)} del espacio<br>a 10¹² claves por segundo`;
 const seVe = o => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
@@ -449,7 +498,7 @@ const DATOS = [
     info: () => cifras([["97.67 %", "claves válidas"], [`${lv.toFixed(2)} bits`, "log₂(0.9767)"], [`2<sup>${ltot.toFixed(2)}</sup>`, `≈ ${fmtE(K)}`], ["2<sup>100</sup>", "mínimo recomendado"]]) },
   { v: "≈ 50 %", e: "bits que cambian entre claves vecinas",
     info: () => par([["1 ulp en x0", 49.93, 1], ["1 ulp en r", 50.05, 1], ["1 en N", 50.11, 1], ["Posiciones compartidas", "< 5 %"]])
-      + `<p>Bits del flujo de clave que cambian, promedio de 300 claves. 50 % es lo esperado entre dos flujos sin relación. En la escena la separación está exagerada: es de una ulp.</p>` },
+      + `<p>Bits del flujo de clave que cambian, promedio de 200 claves. 50 % es lo esperado entre dos flujos sin relación. En la escena la separación está exagerada: es de una ulp.</p>` },
   { v: "0", e: "explorado", anim: 1,
     info: () => `<p><b>A 10¹² claves por segundo</b></p>${reloj(1e12)}<p><b>A 10⁹ claves por segundo</b></p>${reloj(1e9)}
       <p>El cubo gris contiene todas las claves (escala lineal: volumen = cantidad). El cubito azul es lo que un atacante revisaría en toda la edad del universo, 1.38 × 10¹⁰ años; el marco solo indica dónde está. Cifras calculadas en tu navegador con 2<sup>${ltot.toFixed(2)}</sup> claves.</p>` },
@@ -593,6 +642,8 @@ function mostrar(i) {
   raiz.querySelector(".boton-i").addEventListener("click", infoEscena);
   raiz.classList.remove("entra"); void raiz.offsetWidth; if (!sinMovimiento() && !primera) raiz.classList.add("entra");
   narra.innerHTML = "<b>Qué estás viendo:</b> " + NARRA[i];
+  const tabla = $("seg-tabla"); tabla.hidden = i !== 7;
+  if (i === 7 && !tabla.innerHTML) { tabla.innerHTML = TABLA_VECINAS; $("seg-ver-claves").addEventListener("click", abrirVecinas); }
   if (i === 8) buscar();
   if (i === 10) { $("seg-bits").addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) { kBit = +b.dataset.k; demoBit(); } }); demoBit(); }
   if (i === 11) requestAnimationFrame(() => vistaEl.querySelectorAll(".seg-ber .b").forEach(b => (b.style.width = Math.max(.4, +b.dataset.w) + "%")));
@@ -602,6 +653,52 @@ function mostrar(i) {
 aplicar(est);
 recorrido($("recorrido"), i => mostrar(i), gestorCapas(capasSeguridad()));
 
+
+/* ---------- Las 200 claves vecinas, bit a bit (datos/claves_vecinas.json) ---------- */
+let dlgV = null, datosV = null;
+const bitsHex = h => [...h].flatMap(c => [...parseInt(c, 16).toString(2).padStart(4, "0")].map(Number));
+async function abrirVecinas() {
+  if (!dlgV) {
+    dlgV = document.createElement("dialog");
+    dlgV.className = "seg-dlg";
+    dlgV.innerHTML = `<div class="seg-dlg-cab"><div><span class="eyebrow">Experimento completo</span><h2>200 claves vecinas, bit a bit</h2>
+      <p class="note">Cada fila es una clave válida K elegida al azar (semilla 2026, <code>scripts/espacio_clave.py</code>). Se compara su flujo de clave de 1400 bits con el de K cambiada en una sola unidad. Elige una fila y un cambio.</p></div>
+      <button type="button" class="ghost" data-cerrar>Cerrar · Esc</button></div>
+      <div class="seg-dlg-cuerpo"><div class="seg-dlg-lista"><table class="seg-tab seg-tab-lista"><thead><tr><th>#</th><th>x0</th><th>r</th><th>N</th><th>x0 + 1 ulp</th><th>r + 1 ulp</th><th>N + 1</th></tr></thead><tbody></tbody></table></div>
+      <div class="seg-dlg-bits"><div class="seg-dlg-sel" role="group" aria-label="Cambio"></div><div class="seg-dlg-claves"></div><p class="seg-dlg-res"></p><div class="seg-dlg-rejas"></div></div></div>`;
+    document.body.append(dlgV);
+    dlgV.querySelector("[data-cerrar]").addEventListener("click", () => dlgV.close());
+    dlgV.addEventListener("click", e => { if (e.target === dlgV) dlgV.close(); });
+  }
+  dlgV.showModal();
+  if (!datosV) {
+    dlgV.querySelector("tbody").innerHTML = `<tr><td colspan="7">Cargando…</td></tr>`;
+    try { datosV = await (await fetch("datos/claves_vecinas.json")).json(); }
+    catch { dlgV.querySelector("tbody").innerHTML = `<tr><td colspan="7">No se pudieron cargar los datos.</td></tr>`; return; }
+    const pc = v => (v / 14).toFixed(2) + " %";
+    dlgV.querySelector("tbody").innerHTML = datosV.filas.map((f, j) => `<tr data-j="${j}" tabindex="0"><td>${j + 1}</td><td class="mono">${f[0].toFixed(6)}</td><td class="mono">${f[1].toFixed(6)}</td><td class="mono">${f[2]}</td><td>${pc(f[7])}</td><td>${pc(f[8])}</td><td>${pc(f[9])}</td></tr>`).join("")
+      + `<tr class="tot"><td colspan="4">Promedio (mín. – máx.)</td>${[7, 8, 9].map(c => { const v = datosV.filas.map(f => f[c] / 14); return `<td><b>${(v.reduce((a, b) => a + b, 0) / v.length).toFixed(2)} %</b><br><small>${Math.min(...v).toFixed(2)} – ${Math.max(...v).toFixed(2)}</small></td>`; }).join("")}</tr>`;
+    dlgV.querySelector("tbody").addEventListener("click", e => { const tr = e.target.closest("tr[data-j]"); if (tr) verV(+tr.dataset.j); });
+    dlgV.querySelector("tbody").addEventListener("keydown", e => { const tr = e.target.closest("tr[data-j]"); if (tr && e.key === "Enter") verV(+tr.dataset.j); });
+    dlgV.querySelector(".seg-dlg-sel").innerHTML = [["x0", "x0 + 1 ulp"], ["r", "r + 1 ulp"], ["N", "N + 1"]].map(([c, t]) => `<button type="button" class="ghost" data-c="${c}">${t}</button>`).join("");
+    dlgV.querySelector(".seg-dlg-sel").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { compV = b.dataset.c; verV(filaV); } });
+    verV(0);
+  }
+}
+let filaV = 0, compV = "x0";
+function verV(j) {
+  filaV = j;
+  const f = datosV.filas[j], ci = { x0: 0, r: 1, N: 2 }[compV];
+  dlgV.querySelectorAll("tbody tr[data-j]").forEach(tr => tr.classList.toggle("sel", +tr.dataset.j === j));
+  dlgV.querySelectorAll(".seg-dlg-sel button").forEach(b => b.setAttribute("aria-pressed", b.dataset.c === compV));
+  const k0 = bitsHex(f[3]), k1 = bitsHex(f[4 + ci]), dif = f[7 + ci], pos = f[10 + ci];
+  const otra = [f[0], f[1], f[2]]; if (ci === 0) otra[0] = f[13]; if (ci === 1) otra[1] = f[14]; if (ci === 2) otra[2] = f[2] + 1;
+  dlgV.querySelector(".seg-dlg-claves").innerHTML = `<div><b>K</b> = (<span class="mono">${f[0]}</span>, <span class="mono">${f[1]}</span>, <span class="mono">${f[2]}</span>)</div>
+    <div><b>K′</b> = (<span class="mono${ci === 0 ? " cam" : ""}">${otra[0]}</span>, <span class="mono${ci === 1 ? " cam" : ""}">${otra[1]}</span>, <span class="mono${ci === 2 ? " cam" : ""}">${otra[2]}</span>)</div>`;
+  const reja = (b, otro, t) => `<div class="seg-reja-t">${t}</div><div class="seg-reja">${b.map((v, i) => `<i class="${v ? "u" : ""}${v !== otro[i] ? " d" : ""}" title="bit ${i + 1}: K = ${k0[i]}, K′ = ${k1[i]}"></i>`).join("")}</div>`;
+  dlgV.querySelector(".seg-dlg-rejas").innerHTML = reja(k0, k1, "Flujo de K · 1400 bits") + reja(k1, k0, "Flujo de K′ · 1400 bits");
+  dlgV.querySelector(".seg-dlg-res").innerHTML = `Clave ${j + 1}: <b>${dif} de 1400 bits distintos (${(dif / 14).toFixed(2)} %)</b> · posiciones comunes: ${pos} de 256. Relleno = 1, vacío = 0; con borde de color, los bits que cambian.`;
+}
 /* ---------- Para explorar ---------- */
 function contar() {
   const a = parseFloat($("seg-a").value), b = parseFloat($("seg-b").value), out = $("seg-res");

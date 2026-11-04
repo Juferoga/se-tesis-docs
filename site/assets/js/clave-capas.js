@@ -90,8 +90,72 @@ function celdas(p, bits, x0, y, cw, { gap = () => 0, cls = () => null } = {}) {
   });
 }
 
+// Bits de un rango: filas de bits (mín., caso, máx.), con los bits iniciales comunes (fijos por el rango) sombreados
+const hexBits = h => [...h].flatMap(c => parseInt(c, 16).toString(2).padStart(4, "0").split("").map(Number));
+function bitsRango(grupos, { ms = 3400, total = null } = {}) {
+  return () => ({ ms, build(caja, { W, H, fs, chico }) {
+    const svg = svgDe(caja, W, H);
+    const lw = chico ? fs * 4.2 : fs * 7.5, nf = grupos.reduce((s, g) => s + g.filas.length, 0);
+    const huecoG = fs * (chico ? 1.5 : 2.6), extra = total ? fs * (chico ? 1.8 : 3.2) : 0;
+    let cw = Math.min(fs * 1.25, (W - lw - 12) / 64.6);
+    cw = Math.max(2.5, Math.min(cw, (H - grupos.length * huecoG - extra - fs) / (nf * 1.25)));
+    const rh = cw * 1.25, gap = i => (i >= 1 ? cw * 0.3 : 0) + (i >= 12 ? cw * 0.3 : 0);
+    let y = fs * (chico ? 1.2 : 1.6);
+    const anims = [];
+    grupos.forEach(g => {
+      const n = g.filas[0].bits.length, segs = n === 64 ? gap : () => 0, x0 = lw;
+      const xFin = x0 + n * cw + segs(n - 1), xCom = x0 + g.fijos * cw + segs(Math.max(0, g.fijos - 1));
+      T(svg, x0, y - fs * 0.15, g.titulo, "k b", "start", "auto");
+      y += fs * 0.35;
+      const yB = y, hB = g.filas.length * rh;
+      const bandaF = S("rect", { x: x0 - 2, y: yB - 2, width: Math.max(0, xCom - x0 + 2), height: hB + 2, rx: 3, class: "ca-fs" }, svg);
+      const bandaL = S("rect", { x: xCom + 1, y: yB - 2, width: Math.max(0, xFin - xCom), height: hB + 2, rx: 3, class: "ca-fa", opacity: 0.16 }, svg);
+      const filas = g.filas.map((f, j) => {
+        const yy = yB + j * rh;
+        T(svg, x0 - fs * 0.5, yy + cw * 0.42, f.rot, "m" + (f.caso ? " k" : ""), "end");
+        return celdas(svg, f.bits, x0, yy, cw, { gap: segs });
+      });
+      y = yB + hB + fs * 0.25;
+      const nota = T(svg, x0, y + fs * 0.75, g.nota, "a b", "start");
+      if (g.notaFija && !chico) T(svg, xFin, y + fs * 0.75, g.notaFija, "m", "end").classList.add("ca-nf");
+      y += huecoG;
+      anims.push({ filas, bandaF, bandaL, nota, n });
+    });
+    const fijas = [...svg.querySelectorAll(".ca-nf")];
+    const tTot = total ? T(svg, lw, Math.min(H - fs * 0.8, y + fs * 0.2), total, "a b", "start") : null;
+    return t => {
+      anims.forEach((a, k) => {
+        const ap = fase(t, k * 0.1, k * 0.1 + 0.35);
+        a.filas.forEach(rs => rs.forEach((r, i) => (r.style.opacity = ap * a.n > i ? 1 : 0)));
+        const b = fase(t, 0.5 + k * 0.06, 0.7 + k * 0.06);
+        a.bandaF.style.opacity = b; a.bandaL.style.opacity = b; a.nota.style.opacity = b;
+      });
+      fijas.forEach(n => (n.style.opacity = fase(t, 0.6, 0.8)));
+      if (tTot) tTot.style.opacity = fase(t, 0.85, 1);
+    };
+  } });
+}
+const fx = x => bitsF64(x);
+const u16 = n => n.toString(2).padStart(16, "0").split("").map(Number);
+
 // ---------- Las capas ----------
 const CAPAS = {
+  // Paso 1 · profundizar 2-4: el conteo bit a bit
+  "0-2": bitsRango([{ titulo: "x0: 64 bits · signo | exponente (11) | fracción (52)", fijos: 8,
+    filas: [{ rot: "0.001", bits: hexBits("3f50624dd2f1a9fc") }, { rot: "x0 caso", bits: fx(C.x0), caso: true }, { rot: "0.999", bits: hexBits("3feff7ced916872b") }],
+    nota: "8 bits fijos · los otros 56 varían → 9.974 · 2^52 ≈ 2^55.32 valores", notaFija: "10 pisos de exponente (2^−10 … 2^−1)" }]),
+  "0-3": bitsRango([
+    { titulo: "r: un solo piso de exponente, [2, 4)", fijos: 19,
+      filas: [{ rot: "3.99", bits: hexBits("400feb851eb851ec") }, { rot: "r caso", bits: fx(C.r), caso: true }, { rot: "4 − ulp", bits: hexBits("400fffffffffffff") }],
+      nota: "19 bits fijos → 0.01 · 2^51 ≈ 2^44.36 valores" },
+    { titulo: "N: entero de 16 bits", fijos: 2,
+      filas: [{ rot: "100", bits: u16(100) }, { rot: "N caso", bits: u16(C.N), caso: true }, { rot: "10 000", bits: u16(10000) }],
+      nota: "2 bits fijos → 9901 de 65 536 ≈ 2^13.27" }]),
+  "0-4": bitsRango([
+    { titulo: "x0 · 64 bits", fijos: 8, filas: [{ rot: "x0", bits: fx(C.x0), caso: true }], nota: "64 → 55.32 bits" },
+    { titulo: "r · 64 bits", fijos: 19, filas: [{ rot: "r", bits: fx(C.r), caso: true }], nota: "64 → 44.36 bits" },
+    { titulo: "N · 16 bits", fijos: 2, filas: [{ rot: "N", bits: u16(C.N), caso: true }], nota: "16 → 13.27 bits" }],
+    { ms: 3800, total: "144 bits → 112.95 → ×97.67 % = 2^112.91 ≈ 9.78 · 10^33 claves" }),
   // Paso 1 · conteo exacto: el producto de los tres conteos es la suma de sus exponentes
   "0-1": () => ({ ms: 3200, build(caja, { W, H, fs, chico }) {
     const svg = svgDe(caja, W, H);

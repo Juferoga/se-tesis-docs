@@ -54,6 +54,10 @@ body { grid-template-columns: minmax(0, 1fr); }
 .explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
 #ins-explora input[type="number"] { width: 12ch; }
 #ins-explora td { font-family: var(--f-mono); white-space: nowrap; }
+.ins-tab { border-collapse: collapse; font-size: .82rem; width: 100%; }
+.ins-tab th, .ins-tab td { padding: .2rem .45rem; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.ins-tab th:first-child, .ins-tab td:first-child { text-align: left; }
+dialog .ins-tab { display: block; overflow-x: auto; }
 
 @media (max-width: 900px) {
   .escena .ayuda3d { display: none; }
@@ -558,13 +562,14 @@ const PASOS = {
     mostrar({ ochoV: true });
     dato("", "");
     $("ins-abajo").innerHTML = `<div class="ins-dato"><b class="mono" id="ins-cifra"></b><span id="ins-etq"></span></div>`;
-    datosEscena("Cómo sale cada posición", [{ html: `<div class="formula">p = min( max( ⌊y · M⌋, 0 ), M − 1 )</div><p>y es el valor de la tercera secuencia y M = 25 143 552, el número de muestras. Antes se descartan N<sub>p</sub> = ${fmtN(d.Np)} valores (el transitorio).</p>` }]);
+    datosEscena("Cómo sale cada posición", [{ html: `<div class="formula">p = min( max( ⌊y · M⌋, 0 ), M − 1 )</div><p>y es el valor de la tercera secuencia y M = 25 143 552, el número de muestras. Antes se descartan N<sub>p</sub> = ${fmtN(d.Np)} valores (el transitorio).</p>` },
+      { titulo: "Las ocho primeras, con y completo", html: `<table class="ins-tab"><thead><tr><th>k</th><th>y (float64 completo)</th><th>y · M</th><th>p<sub>k</sub> = ⌊y · M⌋</th></tr></thead><tbody>${P.slice(0, 8).map((p, i) => `<tr><td>${i + 1}</td><td class="mono">${Y[i]}</td><td class="mono">${fmtN(Math.floor(Y[i] * M))}${((Y[i] * M) % 1).toFixed(2).slice(1)}</td><td class="mono"><b>${fmtN(p)}</b></td></tr>`).join("")}</tbody></table><p>El cálculo usa y con todos sus dígitos (float64, unos 16 significativos). Si se redondea y a 6 decimales, y · M se corre hasta unas 13 muestras, porque M ≈ 2.5·10⁷: por ejemplo, 0.620275 × M = 15 595 916.72 en vez de 15 595 907.17. Por eso emisor y receptor calculan en float64 de forma determinista.</p>` }]);
     tomar(TOMA.ocho);
     ocho.forEach(g => (g.visible = false));
     const pintar = k => {
       ocho.forEach((g, i) => (g.visible = i < k));
       const i = k - 1, y = Y[i];
-      ponDato(`y = ${y.toFixed(6)} → p<sub>${k}</sub> = ${fmtN(P[i])}`, `y · M = ${(y * M).toFixed(2)}, redondeado hacia abajo`);
+      ponDato(`p<sub>${k}</sub> = ⌊y · M⌋ = ${fmtN(P[i])}`, `y = <span class="mono">${y}</span> × M (25 143 552) = <span class="mono">${fmtN(Math.floor(y * M))}${((y * M) % 1).toFixed(2).slice(1)}</span>`);
     };
     let ult = -1;
     cancelAnim = animar(8 * 800, t => { const k = Math.max(1, Math.ceil(t * 8)); if (k !== ult) { ult = k; pintar(k); } });
@@ -641,7 +646,7 @@ const PASOS = {
 };
 /* ---------- Hover: cada pieza muestra su dato real o su rol ---------- */
 const enVista = o => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
-const posTxt = i => { const p = P[i]; return `<b>p<sub>${i + 1}</sub> = ${fmtN(p)}</b> · bit w<sub>${i + 1}</sub><br>y = ${Y[i].toFixed(6)} · ${fmtT(Math.floor(p / 2) / FS)} · canal ${p % 2 ? "derecho" : "izquierdo"}`; };
+const posTxt = i => { const p = P[i]; return `<b>p<sub>${i + 1}</sub> = ${fmtN(p)}</b> · bit w<sub>${i + 1}</sub><br>y = ${Y[i]} · y · M = ${fmtN(Math.floor(Y[i] * M))}${((Y[i] * M) % 1).toFixed(2).slice(1)}<br>${fmtT(Math.floor(p / 2) / FS)} · canal ${p % 2 ? "derecho" : "izquierdo"}`; };
 e.alPasar(() => ocho.filter(enVista), g => posTxt(ocho.indexOf(g)), { color: "pos" });
 e.alPasar(() => [agujas, puntas].filter(o => enVista(o) && o.count > 0), (o, q) => {
   let mejor = 0, dm = Infinity;
