@@ -46,6 +46,15 @@
 .pre-glos dd.donde { font-size: var(--s-1); }
 .pre-vacio { color: var(--muted); }
 .pre-refs { padding-left: 1.2rem; display: grid; gap: .4rem; margin: 0; overflow-wrap: anywhere; }
+/* Capas de detalle: en teléfono, letra algo menor para que cada capa quepa sin desplazarse */
+@media (max-width: 900px) {
+  .nivel { font-size: .84rem; line-height: 1.42; gap: .45rem !important; }
+  .nivel .katex { font-size: .98em; }
+  .nivel .katex-display { margin: 0; }
+  .nivel .ref { font-size: .68rem; line-height: 1.3; }
+  .nivel-cab h3 { font-size: 1.08rem; }
+  .nivel-pie button { padding: .3rem .7rem; font-size: .8rem; }
+}
 </style>
 </head>
 <body>
@@ -66,6 +75,13 @@
         <p>La autoatención combina la información de los tokens anteriores. La red prealimentada procesa cada token por separado. Así está hecha cada una de las 28 capas del Transformer.</p>
         <a class="ir" href="compresion.html#paso-1">Ver etapa 1 · Compresión →</a>
         <details><summary>Fuente</summary><p>Así la define el artículo original del Transformer (Vaswani et al., 2017, sección 3.3). Los tamaños están en la configuración oficial de Qwen2.5-1.5B.</p></details>
+        <section class="nivel" data-titulo="Respuesta formal">
+        <p>Cada capa transforma \(X\in\mathbb R^{t\times1536}\) con normalización previa (RMSNorm) y conexiones residuales:</p>
+        \[ H=X+\mathrm{Attn}(\mathrm{RMSNorm}(X)),\qquad Y=H+\mathrm{FFN}(\mathrm{RMSNorm}(H)) \]
+        \[ \mathrm{FFN}(h)=W_2\big(\mathrm{SiLU}(W_1h)\odot W_3h\big),\quad W_1,W_3\in\mathbb R^{8960\times1536} \]
+        <p>La atención usa 12 cabezas de consulta de dimensión 128 que comparten 2 cabezas de clave y valor (consultas agrupadas), \(\mathrm{softmax}(QK^\top/\sqrt{128}+\text{máscara causal})V\), con posiciones rotatorias (RoPE). Por capa hay 5 507 072 parámetros de atención, 41 287 680 de la red prealimentada y 3072 de normalización. Con 28 capas y la tabla de embeddings compartida con la salida suman 1 543 714 304 ≈ 1.54 × 10⁹.</p>
+        <p class="ref">Vaswani et al., 2017; Ainslie et al., «GQA», EMNLP 2023; Shazeer, «GLU variants improve Transformer», 2020; config.json de Qwen2.5-1.5B (tie_word_embeddings: true).</p>
+        </section>
       </article>
       <article class="paso" data-paso="proporcional">
         <span class="eyebrow">Pregunta 2 · Compresión</span>
@@ -73,6 +89,12 @@
         <p>La longitud de cada subintervalo, que es proporcional a la probabilidad del token.</p>
         <p>El intervalo actual se divide en un subintervalo por token posible, con longitud proporcional a la probabilidad que le da la red. Se conserva el del token del texto, así que la longitud se multiplica por p.</p>
         <a class="ir" href="compresion.html#paso-1">Ver la demostración en la etapa 1 →</a>
+        <section class="nivel" data-titulo="Respuesta formal">
+        <p>Si tras t − 1 tokens el intervalo es \([l_{t-1},\,l_{t-1}+W_{t-1})\) y \(C(v)=\sum_{u&lt;v}p(u\mid x_{&lt;t})\) es la probabilidad acumulada, el token \(x_t\) deja</p>
+        \[ l_t=l_{t-1}+W_{t-1}\,C(x_t),\qquad W_t=W_{t-1}\,p(x_t\mid x_{&lt;t}) \]
+        <p>Así \(W_T=\prod_t p(x_t\mid x_{&lt;t})=2^{-I}\), con I la información total en Sh. Dentro de un intervalo de longitud W cabe un intervalo diádico de longitud \(2^{-\ell}\) con \(\ell=\lceil-\log_2W\rceil+1\), de donde la longitud del mensaje cumple \(\ell&lt;I+2\).</p>
+        <p class="ref">T. M. Cover y J. A. Thomas, Elements of Information Theory, 2.ª ed., 2006, sec. 5.9 y 13.3.</p>
+        </section>
       </article>
       <article class="paso" data-paso="escribir">
         <span class="eyebrow">Pregunta 3 · Compresión</span>
@@ -81,6 +103,12 @@
         <p>Si los dos extremos del intervalo empiezan con los mismos bits, todo número de adentro también empieza así. Esos bits se escriben en el mensaje comprimido y el intervalo se amplía al doble por cada bit escrito.</p>
         <a class="ir" href="compresion.html#paso-1">Ver etapa 1 · Compresión →</a>
         <details><summary>Detalle técnico</summary><p>Gracias a eso el programa trabaja con enteros de 62 bits sin necesitar precisión infinita.</p></details>
+        <section class="nivel" data-titulo="Respuesta formal">
+        <p>Si en binario \(l=0.b_1\cdots b_k\ldots\) y \(h=0.b_1\cdots b_k\ldots\), todo \(c\in[l,h)\) empieza por \(b_1\cdots b_k\): esos bits ya no pueden cambiar y se escriben. Luego se renormaliza por cada bit b escrito:</p>
+        \[ l\leftarrow2l-b,\qquad h\leftarrow2h-b \]
+        <p>Si el intervalo queda angosto y a caballo de 1/2 (\(\tfrac14\le l&lt;\tfrac12\le h&lt;\tfrac34\)), todavía no hay bit común: se amplía alrededor de 1/2 y el bit queda pendiente. Con estas reglas, tras renormalizar la longitud supera un cuarto del rango. Si la implementación sigue este esquema con enteros de 62 bits, eso es más de \(2^{60}\), muy por encima del total \(2^{24}\) de frecuencias, y ningún token con \(f_v\ge1\) recibe un subintervalo vacío.</p>
+        <p class="ref">Witten, Neal y Cleary, Commun. ACM 30(6), 1987.</p>
+        </section>
       </article>
       <article class="paso" data-paso="frecuencias">
         <span class="eyebrow">Pregunta 4 · Compresión</span>
@@ -89,6 +117,12 @@
         <p>En f<sub>v</sub> = ⌊p<sub>v</sub>(2<sup>24</sup> − V)⌋ + 1, p<sub>v</sub> es la probabilidad del token v; 2<sup>24</sup> = 16 777 216 son las unidades que se reparten; V = 151 936 es el número de salidas de la red; ⌊ ⌋ redondea hacia abajo; el + 1 evita que un token quede con frecuencia 0, y f<sub>v</sub> es la frecuencia entera del token v.</p>
         <a class="ir" href="compresion.html#paso-1">Ver etapa 1 · Compresión →</a>
         <details><summary>Detalle técnico</summary><p>Se reparten 2<sup>24</sup> − V unidades y luego se suma 1 a cada uno de los V tokens, así la suma de frecuencias no pasa de 2<sup>24</sup>.</p></details>
+        <section class="nivel" data-titulo="Respuesta formal">
+        <p>Con \(T=2^{24}\), \(f_v=\lfloor p_v(T-V)\rfloor+1\) cumple \(f_v\ge1\) y, si \(\sum_vp_v\le1\), \(\sum_vf_v\le T\). Como \(f_v\ge p_v(T-V)\), la probabilidad que usa el codificador, \(q_v=f_v/F\) con \(F\le T\), cumple \(q_v\ge p_v(1-V/T)\), y el costo extra por token queda acotado:</p>
+        \[ \log_2\frac{p_v}{q_v}\le-\log_2\Big(1-\frac{V}{2^{24}}\Big)\approx0.0131\ \text{Sh} \]
+        <p>La divergencia \(D(p\Vert q)\), que es el exceso medio, cumple la misma cota. En los 294 símbolos del poema (293 tokens y el de fin) son a lo sumo unos 3.9 Sh, menos de 4 de los 1384 bits. El + 1 permite codificar incluso un token con \(p_v\) diminuto.</p>
+        <p class="ref">Cover y Thomas, 2006, teorema 5.4.3 (costo de codificar con q en vez de p).</p>
+        </section>
       </article>
       <article class="paso" data-paso="shannon">
         <span class="eyebrow">Pregunta 5 · Compresión</span>
@@ -97,6 +131,12 @@
         <p>La unidad shannon está definida en ISO/IEC 80000-13. El mensaje comprimido tiene 1384 bits.</p>
         <p class="analogia">Un dado: 2.585 Sh por tiro; 100 tiros, 259 bits.</p>
         <a class="ir" href="compresion.html#paso-1">Ver etapa 1 · Compresión →</a>
+        <section class="nivel" data-titulo="Respuesta formal">
+        <p>Un token aporta \(i(x_t)=-\log_2p(x_t\mid x_{&lt;t})\) Sh. Por el teorema de codificación de fuente, ningún código sin pérdida baja en promedio de la entropía; con la red como modelo, la longitud del mensaje es la suma de informaciones más una constante pequeña:</p>
+        \[ \ell\approx\sum_{t=1}^{Q+1}-\log_2p(x_t\mid x_{&lt;t})=(Q+1)\,\hat H \]
+        <p>\(\hat H\) es la entropía cruzada entre el texto y la red, en Sh por token. Para el poema, 1384/294 ≈ 4.71 Sh por token, una perplejidad \(2^{\hat H}\approx26\), y 1384/901 ≈ 1.54 bits por carácter. ℓ es entero porque cuenta bits del archivo; la información no tiene por qué serlo.</p>
+        <p class="ref">Shannon, 1948; Cover y Thomas, 2006, cap. 5; ISO/IEC 80000-13.</p>
+        </section>
       </article>
       <article class="paso" data-paso="otra">
         <span class="eyebrow">Pregunta 6 · Clave</span>
@@ -104,6 +144,13 @@
         <p>Ninguna usa directamente el x<sub>0</sub> y el r de la clave: las dos salen de la clave con SHA-512.</p>
         <p>Igual que la secuencia de posiciones. En la escena están los seis valores, calculados en tu navegador.</p>
         <a class="ir" href="clave.html#paso-1">Ver etapa 2 · Clave →</a>
+        <section class="nivel" data-titulo="Respuesta formal">
+        <p>Con \(H=\mathrm{SHA\text{-}512}(\mathrm{enc}(x_0,r,N))\) en bloques \(H_1,\dots,H_8\) de 64 bits y \(u_i=\lfloor H_i/2^{11}\rfloor/2^{53}\):</p>
+        \[ x^{(1)}=a(u_1),\ r^{(1)}=b(u_2),\ x^{(2)}=a(u_3),\ r^{(2)}=b(u_4),\ x_p=a(u_5),\ r_p=b'(u_6) \]
+        <p>con \(a(u)=0.001+0.998u\), \(b(u)=3.99+0.01u\) y \(b'(u)=3.99+0.0099u\); \(H_7\) y \(H_8\) no se usan. Ningún valor es x0 ni r.</p>
+        <p>Detalle de precisión: por el redondeo de float64, los 392 valores de u más cercanos a 1 dan \(b(u)=4.0\) exactamente, con probabilidad \(\approx2^{-44.4}\). r = 4 sigue siendo caótico.</p>
+        <p class="ref">NIST FIPS 180-4; conteo de los 392 valores hecho en float64 con node.</p>
+        </section>
       </article>
       <article class="paso" data-paso="antes">
         <span class="eyebrow">Pregunta 7 · Clave</span>
@@ -112,6 +159,12 @@
         <p>La clave la comparten emisor y receptor. De ella salen, con SHA-512, las condiciones iniciales y los parámetros.</p>
         <p class="analogia">Como una contraseña: se define una vez.</p>
         <a class="ir" href="clave.html#paso-1">Ver etapa 2 · Clave →</a>
+        <section class="nivel" data-titulo="Respuesta formal">
+        <p>El modelo es un cifrado simétrico con espacio de clave \(\mathcal K=X\times R\times\{100,\dots,10\,000\}\). K es la única entrada secreta; SHA-512, el mapa logístico y la red son públicos (principio de Kerckhoffs). El flujo de clave es la composición</p>
+        \[ G=\beta\circ\Phi\circ g\circ\mathrm{SHA\text{-}512}\circ\mathrm{enc}:\ \mathcal K\to\{0,1\}^{8n} \]
+        <p>donde enc empaqueta K en 18 bytes, g da los seis valores iniciales, Φ itera las dos secuencias de cifrado y β binariza y aplica XOR. Las condiciones iniciales son valores intermedios de G: se calculan, no se comparten.</p>
+        <p class="ref">A. Kerckhoffs, «La cryptographie militaire», 1883; J. Katz y Y. Lindell, Introduction to Modern Cryptography, 3.ª ed., 2020, cap. 3.</p>
+        </section>
       </article>
       <article class="paso" data-paso="produce">
         <span class="eyebrow">Pregunta 8 · Caos</span>
@@ -120,6 +173,12 @@
         <p>El mapa logístico se itera a partir de los valores que se toman de esa cadena.</p>
         <a class="ir" href="caos.html#paso-1">Ver etapa 3 · Caos →</a>
         <details><summary>Nombre técnico</summary><p>En sistemas dinámicos, a esa secuencia se le llama órbita; en este sitio se le dice secuencia.</p></details>
+        <section class="nivel" data-titulo="Respuesta formal">
+        <p>SHA-512 es una función \(\{0,1\}^{&lt;2^{128}}\to\{0,1\}^{512}\): una entrada, una salida fija. La secuencia es otra cosa, la sucesión</p>
+        \[ x_{n+1}=f_r(x_n)=r\,x_n(1-x_n),\qquad x_n=f_r^{\,n}(x_0) \]
+        <p>calculada en float64. Del resumen solo salen los valores iniciales. Como en [0, 1] hay un número finito de float64, \(\beta(1)+1\approx2^{62}\), toda secuencia calculada termina en un ciclo. En el caso de estudio, el algoritmo de Brent da ciclos de 9 213 816, 2 774 760 y 3 494 724 iteraciones para las secuencias de cifrado 1, cifrado 2 y posiciones, muy por encima de las menos de 9000 que se usan. No hay una cota inferior demostrada para otras claves.</p>
+        <p class="ref">R. P. Brent, «An improved Monte Carlo factorization algorithm», BIT 20, 1980. Periodos medidos con node en float64.</p>
+        </section>
       </article>
       <article class="paso" data-paso="binarizar">
         <span class="eyebrow">Pregunta 9 · Cifrado</span>
@@ -127,6 +186,12 @@
         <p>Para que quien reconstruyera una de las secuencias todavía necesitara la otra: el flujo de clave es la XOR de las dos.</p>
         <p>Con el umbral en 0.5 cada número se vuelve un bit: mayor que 0.5 da 1, menor o igual da 0. La XOR de las dos cadenas de bits es el flujo de clave.</p>
         <a class="ir" href="cifrado.html#paso-1">Ver etapa 4 · Cifrado →</a>
+        <section class="nivel" data-titulo="Respuesta formal">
+        <p>Binarizar es \(b_n=\mathbf 1[x_n&gt;0.5]\). Con r = 4 la densidad invariante \(\rho(x)=1/(\pi\sqrt{x(1-x)})\) es simétrica respecto de 1/2 y \(P(b_n=1)=1/2\). Con r &lt; 4 no lo es: empíricamente, en \(5\times10^7\) iteraciones, el cifrado 1 (r = 3.99178) da 52.78 % de unos y el cifrado 2 (r = 3.99848), 51.22 %. Si las fuentes fueran independientes con sesgos \(\varepsilon_1,\varepsilon_2\), el lema de acumulación da</p>
+        \[ P\big(b^{(1)}\oplus b^{(2)}=1\big)=\tfrac12-2\varepsilon_1\varepsilon_2=\tfrac12-0.00068 \]
+        <p>Se midió \(\tfrac12-0.00078\). La XOR baja el sesgo de 0.012 a 0.0008, pero no lo anula: un sesgo ε se detecta con del orden de \(1/\varepsilon^2\approx1.6\times10^6\) bits.</p>
+        <p class="ref">Ulam y von Neumann, 1947; M. Matsui, «Linear cryptanalysis method for DES cipher», EUROCRYPT ’93. Frecuencias medidas con node.</p>
+        </section>
       </article>
       <article class="paso" data-paso="adicionales">
         <span class="eyebrow">Pregunta 10 · Caos</span>
@@ -134,6 +199,13 @@
         <p>No: «adicionales» quiere decir después del transitorio, las N iteraciones iniciales que se descartan.</p>
         <p>Cada secuencia se itera N veces y esos valores se descartan (transitorio). Después se itera 8n veces más y esos sí se usan, uno por bit.</p>
         <a class="ir" href="caos.html#paso-1">Ver etapa 3 · Caos →</a>
+        <section class="nivel" data-titulo="Respuesta formal">
+        <p>La secuencia del cifrado i es \(x^{(i)}_n=f_{r^{(i)}}^{\,n}(x^{(i)})\). Las N primeras se descartan y se usan</p>
+        \[ x^{(i)}_{N+1},\dots,x^{(i)}_{N+8n},\qquad N+8n=6173+1400=7573 \]
+        <p>iteraciones por secuencia en el caso de estudio; la de posiciones descarta \(N_p=N+1000\). «Adicionales» indica que el índice empieza después del transitorio, no que exista otro bloque previo de 8n.</p>
+        <p>Con un exponente de Lyapunov λ ≈ 0.69, una diferencia de \(10^{-15}\) en el valor inicial crece hasta el orden de 1 en unas 50 iteraciones, menos que el transitorio mínimo N = 100.</p>
+        <p class="ref">Strogatz, Nonlinear Dynamics and Chaos, 2015, sec. 10.5.</p>
+        </section>
       </article>
       <article class="paso" data-paso="espacio">
         <span class="eyebrow">Pregunta 11 · Seguridad</span>
@@ -142,6 +214,12 @@
         <p>Son 55.32 bits para x<sub>0</sub>, 44.36 para r y 13.27 para N. Suman 112.95; con el 97.67 % de claves válidas quedan 2<sup>112.91</sup>, más que el mínimo de 2<sup>100</sup>.</p>
         <a class="ir" href="seguridad.html#paso-1">Ver etapa 7 · Seguridad →</a>
         <details><summary>Detalle técnico</summary><p>En memoria la clave ocupa 144 bits (64 de x<sub>0</sub>, 64 de r y 16 de N). x<sub>0</sub> puede tomar 4.49 × 10<sup>16</sup> valores, r 2.25 × 10<sup>13</sup> y N 9 901.</p></details>
+        <section class="nivel" data-titulo="Respuesta formal">
+        \[ \log_2|\mathcal K|=\log_2(\#X\,\#R\,\#N)+\log_2 0.9767 \]
+        \[ =55.3182+44.3561+13.2734-0.0340=112.9137 \]
+        <p>\(\#X=\beta(0.999)-\beta(0.001)+1\) y \(\#R=\beta(4)-\beta(3.99)\) se cuentan exactamente con la representación entera de IEEE 754, \(\#N=9901\), y 0.9767 es la fracción empírica de claves cuyas tres secuencias tienen exponente de Lyapunov positivo.</p>
+        <p>Es un cardinal. La seguridad real depende de cómo se elige K (con seis decimales quedan unos \(2^{46.49}\) valores) y de que no exista un ataque mejor que la fuerza bruta: ver las capas del paso 7 de Seguridad.</p>
+        </section>
       </article>
       <article class="paso" data-paso="nuevo">
         <span class="eyebrow">Pregunta 12 · Clave</span>
@@ -149,6 +227,12 @@
         <p>Se agregó en esta revisión porque, sin SHA-512, N solo desplazaba la misma secuencia.</p>
         <p>Al recalcular el espacio de clave, como pidió un evaluador, se vio que el espacio real era de unos 2<sup>89.7</sup>. Con SHA-512, cualquier cambio en K da secuencias distintas.</p>
         <a class="ir" href="clave.html#paso-1">Ver etapa 2 · Clave →</a>
+        <section class="nivel" data-titulo="Respuesta formal">
+        <p>Antes, la secuencia se iteraba directamente desde (x0, r) y N solo fijaba cuántos valores descartar. Entonces las claves (x0, r, N) y (x0, r, N + k) daban la misma secuencia desplazada:</p>
+        \[ s^{(N+k)}_j=x_{N+k+j}=s^{(N)}_{j+k} \]
+        <p>Quien probara un par (x0, r) generaba una sola secuencia larga y obtenía todos los N recorriéndola: N casi no multiplicaba el trabajo del atacante. Con SHA-512, N entra en el resumen y, bajo el supuesto de oráculo aleatorio, (x0, r, N) y (x0, r, N + k) dan parámetros independientes.</p>
+        <p class="ref">Bellare y Rogaway, ACM CCS 1993 (modelo de oráculo aleatorio).</p>
+        </section>
       </article>
       <div class="mando"></div>
     </div>

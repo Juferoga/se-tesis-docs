@@ -32,6 +32,24 @@ body { grid-template-columns: minmax(0, 1fr); }
 .ins-aviso { position: absolute; left: 8px; top: 8px; z-index: 1; font-size: .7rem; color: var(--muted); opacity: .7; pointer-events: none; }
 .info-sec .ins-lista { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; font: 400 .88rem/1.4 var(--f-mono); }
 .info-sec .ins-lista b { color: var(--pos); }
+/* Capas de detalle en teléfono: más espacio para el texto formal. */
+@media (max-width: 900px) {
+  .pagina:has(.recorrido.profundo) .cabeza { display: none; }
+  .recorrido.profundo { grid-template-rows: minmax(0, 24fr) minmax(0, 76fr); }
+  .recorrido.profundo .nivel { font-size: .87rem; line-height: 1.45; gap: .45rem; }
+  .recorrido.profundo .nivel-cab h3 { font-size: 1.12rem; }
+  .recorrido.profundo .nivel .ref { font-size: .72rem; line-height: 1.3; }
+  .recorrido.profundo .nivel .katex-display { margin: 0; }
+  .recorrido.profundo .nivel .katex { font-size: .98em; }
+}
+.ins-histo svg { display: block; width: 100%; height: auto; max-height: 150px; overflow: hidden; }
+@media (max-width: 900px) { .ins-histo svg { max-height: 104px; } }
+@media (max-height: 760px) and (min-width: 901px) { .ins-histo svg { max-height: 118px; } }
+.ins-histo .bo { fill: var(--pos); }
+.ins-histo .ex { stroke: var(--ink); stroke-width: 2; }
+.ins-histo .un { stroke: var(--muted); stroke-dasharray: 4 3; stroke-width: 1; }
+.ins-histo text { fill: var(--muted); font: 400 10px var(--f-mono); }
+.ins-histo .eje { stroke: var(--line); }
 .explora { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
 #ins-explora input[type="number"] { width: 12ch; }
@@ -88,6 +106,11 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>Caben M = 25 143 552 bits, unos 3.14 MB. El límite real es menor, porque la longitud viaja en 2 bytes y el mensaje comprimido no puede superar 65 535 bytes.</p>
         <p>El mensaje del caso usa 1400 bits: una muestra de cada 18 000, más o menos.</p>
         <details><summary>Detalle técnico</summary><p>2 bytes = 16 bits, y 2<sup>16</sup> − 1 = 65 535. 1400 / 25 143 552 ≈ 0.0056 %.</p></details>
+        <section class="nivel" data-titulo="Capacidad y tasa de inserción">
+          <p>Con un bit por muestra la capacidad es \(M\) bits, y la tasa de inserción del caso es</p>
+          \[ \alpha=\frac{L}{M}=\frac{1400}{25\,143\,552}\approx5.57\times10^{-5}\ \text{bits por muestra}\ (0.0056\,\%). \]
+          <p>El campo de longitud de 2 bytes limita el mensaje comprimido a 65 535 bytes: \(L_{\max}=8\,(65\,535+2)=524\,296\) bits, el 2.09 % de \(M\). La capacidad útil es algo menor, porque la tercera secuencia nunca elige las muestras más cercanas a los extremos (paso 5). Una tasa baja ayuda a la imperceptibilidad y dificulta el estegoanálisis, pero no hay una cota demostrada de indetectabilidad para este esquema.</p>
+        </section>
       </article>
       <article class="paso" data-paso="elegir" hidden>
         <span class="eyebrow">Paso 5</span>
@@ -96,6 +119,12 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>La secuencia da números y entre 0 y 1. Cada y se multiplica por M y se redondea hacia abajo: así sale la muestra que recibe el siguiente bit.</p>
         <p class="analogia">Como abrir un libro de 25 millones de páginas en páginas que solo conoce quien tiene la clave.</p>
         <details><summary>Detalle técnico</summary><p>La secuencia usa sus propios x<sub>p</sub> y r<sub>p</sub>, y antes se descartan sus N<sub>p</sub> = N + 1000 = 7173 primeros valores (el transitorio). p = min( max( ⌊y · M⌋, 0 ), M − 1 ): el mínimo y el máximo aseguran que p quede entre 0 y M − 1.</p></details>
+        <section class="nivel" data-titulo="La densidad de y no es uniforme">
+          <p>Con \(r=4\) el mapa logístico es conjugado del mapa tienda, y su densidad invariante es la arcoseno, con distribución acumulada \(F\):</p>
+          \[ \rho(y)=\frac{1}{\pi\sqrt{y(1-y)}},\qquad F(y)=\tfrac{2}{\pi}\arcsin\sqrt{y}. \]
+          <p>Aquí \(r_p=3.99602\). Tras el transitorio, \(y\) queda en el intervalo invariante \([f(r_p/4),\,r_p/4]=[0.00397,\ 0.99901]\), así que las muestras \(p&lt;99\,838\) (primeros 1.13 s) y \(p&gt;25\,118\,542\) (últimos 0.28 s) nunca se eligen. Dentro del intervalo la densidad no tiene fórmula cerrada: se estimó con \(2\times10^{7}\) iteraciones y se parece a la arcoseno, con picos en los dos extremos. Como \(p=\lfloor yM\rfloor\), las posiciones heredan esa forma.</p>
+          <p class="ref">Ulam y von Neumann (1947), <i>Bull. Amer. Math. Soc.</i> 53; Lasota y Mackey (1994), <i>Chaos, Fractals, and Noise</i>.</p>
+        </section>
       </article>
       <article class="paso" data-paso="todas" hidden>
         <span class="eyebrow">Paso 6</span>
@@ -103,6 +132,21 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>Se repite hasta tener una posición por cada bit: 1400 posiciones, sin repetir ninguna.</p>
         <p>Si saliera una posición ya usada, se descartaría y se tomaría el valor siguiente, para que dos bits nunca caigan en la misma muestra. Con la clave del caso bastaron 1400 iteraciones: no hubo ninguna repetición (colisión).</p>
         <details><summary>Detalle técnico</summary><p>Las posiciones se guardan en un conjunto para comprobar en tiempo constante si ya se usaron. El cálculo de esta página se hace en tu navegador con la misma aritmética float64 del código del artículo.</p></details>
+        <section class="nivel" data-titulo="Hallazgo: más bits en los extremos">
+          <p>Las 1400 posiciones reales (<code>Modelo.posiciones</code>) en 20 tramos de 14.25 s. Marcas: densidad del mapa con \(r_p\); punteada: uniforme.</p>
+          <div class="ins-histo" data-histo></div>
+          <ul>
+            <li>Primer y último 5 % del audio: 326 posiciones (23.3 %); uniforme, 10 %; densidad con \(r_p\), 24.5 %.</li>
+            <li>\(\chi^2\) con 19 grados de libertad (crítico al 5 %: 30.1): 15.5 frente a la densidad con \(r_p\) y 376.7 frente a la uniforme.</li>
+          </ul>
+          <p><b>Limitación.</b> En los últimos 5 s caen 109 bits: tasa local de 0.025 %, 4.4 veces la global. Quien conozca el algoritmo (principio de Kerckhoffs) puede concentrar el estegoanálisis allí. Una corrección posible, ajena al artículo, es usar \(\lfloor F(y)\,M\rfloor\), que es uniforme si \(r=4\).</p>
+        </section>
+        <section class="nivel" data-titulo="Colisiones esperadas">
+          <p>Si las posiciones fueran independientes, con probabilidad \(q_j\) para la muestra \(j\), el número esperado de pares repetidos sería</p>
+          \[ \mathbb E[\text{colisiones}]\approx\binom{L}{2}\sum_{j=0}^{M-1}q_j^{2}. \]
+          <p>Uniforme (\(q_j=1/M\)): \(\binom{1400}{2}/M\approx0.039\). Con la densidad arcoseno, \(\sum_j q_j^2\approx4.26/M\) y el valor sube a 0.17: la concentración en los extremos multiplica por más de 4 la probabilidad de repetir, que sigue siendo baja. Con la clave del caso hubo 0 colisiones (1400 iteraciones). Los valores sucesivos de \(y\) no son independientes, porque \(y_{k+1}=f(y_k)\), así que la fórmula es una aproximación.</p>
+          <p class="ref">Aproximación del problema del cumpleaños; cálculo propio.</p>
+        </section>
       </article>
       <article class="paso" data-paso="tiempos" hidden>
         <span class="eyebrow">Paso 7</span>
@@ -119,6 +163,11 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>Para esconder w, ese bit se pone en 0 y se escribe w. Si ya valía w, la muestra no cambia.</p>
         <p class="analogia">Como cambiar el último centavo de 32 000 pesos.</p>
         <details><summary>Detalle técnico</summary><p>s′ = (s ∧ ¬1) ∨ w, donde ∧ es el Y bit a bit, ¬1 una máscara con todos los bits en 1 salvo el último y ∨ el O bit a bit. Los negativos se guardan en complemento a dos de 16 bits. JavaScript opera en 32 bits, así que el resultado se devuelve a int16 con (v &lt;&lt; 16) &gt;&gt; 16. El cambio es de 1 nivel de 65 536.</p></details>
+        <section class="nivel" data-titulo="LSB por reemplazo">
+          \[ s'=2\left\lfloor s/2\right\rfloor+w,\qquad s'-s\in\{-1,\,0,\,+1\}. \]
+          <p>Si \(w\) es equiprobable e independiente del LSB original (se supone, por ser un bit cifrado), cada muestra cambia con probabilidad 1/2. Se esperan \(700\pm18.7\) cambios (binomial con \(n=1400\), \(p=1/2\)) y hubo 695. El reemplazo es asimétrico: un valor par solo puede subir y uno impar solo bajar, así que cada par de valores \((2k,\,2k+1)\) tiende a igualar sus frecuencias. Esa huella es la que explotan el ataque \(\chi^2\) y el análisis RS. La variante «LSB matching», que suma o resta 1 al azar, evita la asimetría; el artículo usa reemplazo.</p>
+          <p class="ref">Westfeld y Pfitzmann (2000), «Attacks on Steganographic Systems», LNCS 1768; Ker (2005), «Steganalysis of LSB matching in grayscale images», <i>IEEE Signal Processing Letters</i> 12(6).</p>
+        </section>
       </article>
       <article class="paso" data-paso="comparar" hidden>
         <span class="eyebrow">Paso 9</span>
@@ -126,6 +175,12 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>El audio con el mensaje escondido, el estegoaudio, se ve idéntico al original.</p>
         <p>La diferencia entre los dos es cero en casi todas las muestras y vale ±1 en unas pocas. A esta escala no se puede ver ni oír.</p>
         <details><summary>Detalle técnico</summary><p>Una diferencia de 1 nivel sobre un máximo de 32 767 es 0.003 % de la amplitud. En la escena, la cinta de diferencia está dibujada a la misma escala que el audio.</p></details>
+        <section class="nivel" data-titulo="Inaudible no es indetectable">
+          <p>La PSNR mide distorsión. La seguridad de un estegosistema se mide por cuánto se distinguen la distribución del audio portador \(P_C\) y la del estegoaudio \(P_S\); Cachin la define con la divergencia de Kullback–Leibler:</p>
+          \[ D(P_C\,\|\,P_S)=\sum_x P_C(x)\log_2\frac{P_C(x)}{P_S(x)}\le\varepsilon . \]
+          <p>Un \(\varepsilon\) pequeño acota la ventaja de cualquier detector. Para audio real \(P_C\) es desconocida y \(\varepsilon\) no se puede calcular; en la práctica se prueba con detectores concretos. El artículo reporta PSNR, correlación y entropía, que miden imperceptibilidad; no reporta la tasa de acierto de un detector.</p>
+          <p class="ref">Cachin (2004), «An information-theoretic model for steganography», <i>Information and Computation</i> 192(1).</p>
+        </section>
       </article>
       <article class="paso" data-paso="metricas" hidden>
         <span class="eyebrow">Paso 10</span>
@@ -133,6 +188,19 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>Solo 695 de las 1400 muestras elegidas cambiaron, y en apenas 1 nivel: el oído no distingue los dos audios.</p>
         <p>Las otras 705 ya tenían el bit correcto. La PSNR es de 135.89 dB, muy por encima de los 80 dB a partir de los cuales se habla de transparencia acústica: el oído no distingue los dos audios.</p>
         <details><summary>Detalle técnico</summary><p>MSE = 2.76 × 10<sup>−5</sup>: promedio de (s′ − s)<sup>2</sup> sobre todas las muestras. PSNR = 10 log<sub>10</sub>(máx<sup>2</sup> / MSE) en decibelios. La correlación entre muestras vecinas (0.9869) casi no cambia. Entropía de las muestras: 14.8785 en el original y 14.8786 en el estegoaudio, en una escala cuyo máximo es 16 bits.</p></details>
+        <section class="nivel" data-titulo="MSE y PSNR del caso">
+          \[ \mathrm{MSE}=\frac1M\sum_{i=1}^{M}(s'_i-s_i)^2=\frac{695}{25\,143\,552}=2.764\times10^{-5} \]
+          \[ \mathrm{PSNR}=10\log_{10}\frac{32\,767^{2}}{\mathrm{MSE}}=135.89\ \text{dB} \]
+          <p>Como cada cambio es de ±1, el MSE es el número de muestras modificadas dividido entre \(M\), y la cifra del artículo se reproduce exactamente. La PSNR promedia sobre todo el audio: depende de \(M\) (el mismo mensaje en un audio 10 veces más corto da 10 dB menos), no modela la percepción y no dice nada sobre detectabilidad. El umbral de 80 dB para la transparencia acústica es el criterio que adopta el artículo.</p>
+        </section>
+        <section class="nivel" data-titulo="Estegoanálisis: lo que no se evaluó">
+          <ul>
+            <li>Ataque \(\chi^2\) de Westfeld y Pfitzmann: compara las frecuencias de cada par \((2k,\,2k+1)\); es fuerte con inserción secuencial y débil con posiciones dispersas.</li>
+            <li>Análisis RS (Fridrich, Goljan y Du) y análisis de pares de muestras (Dumitrescu, Wu y Wang): estiman la fracción de LSB reemplazados.</li>
+          </ul>
+          <p>Ni el artículo ni este sitio aplican estos detectores al estegoaudio. Con \(5.6\times10^{-5}\) bits por muestra se espera que fallen, pero es una expectativa sin medir. Las posiciones se concentran en los extremos (paso 6), donde la tasa local es mayor: un análisis por ventanas sería el primer experimento. Tampoco hay robustez: recomprimir, remuestrear o recortar el audio destruye el mensaje, y no hay código corrector.</p>
+          <p class="ref">Fridrich, Goljan y Du (2001), ACM Workshop on Multimedia and Security; Dumitrescu, Wu y Wang (2003), <i>IEEE Trans. Signal Processing</i> 51(7).</p>
+        </section>
       </article>
       <div class="mando"></div>
     </div>
@@ -323,6 +391,39 @@ const colA = columnas.slice(0, 8), colB = columnas.slice(8);
 gCols.visible = false;
 const RINCON = new THREE.Vector3(xDe(P[0]) - 3.6, yDe(P[0]) + 2.4, zDe(P[0]) + 1.4); // junto a p1
 
+/* ---------- Histograma de posiciones (capa «Hallazgo», paso 6) ---------- */
+// Conteo real en 20 tramos y referencia: densidad invariante del mapa con r_p, estimada con 2 × 10^7 iteraciones
+// (frecuencia relativa por tramo × 1400). Uniforme: 70 por tramo.
+const NB = 20, DUR = TRAMAS / FS;
+const HOBS = new Array(NB).fill(0); P.forEach(p => HOBS[Math.min(NB - 1, Math.floor(p / M * NB))]++);
+const HREF = [139.4, 91.9, 65.3, 57.1, 58.2, 54.7, 49.5, 46.9, 45.5, 44.8, 45.5, 45.9, 50.9, 50.1, 60.6, 62.2, 66.2, 71.1, 90.6, 203.4];
+const tramo = k => `${fmtT(k * DUR / NB)}–${fmtT((k + 1) * DUR / NB)}`;
+document.querySelectorAll("[data-histo]").forEach(el => {
+  const W = 380, H = 128, b = 16, top = 6, esc = (H - b - top) / 210, bw = W / NB;
+  let g = `<line class="eje" x1="0" x2="${W}" y1="${H - b}" y2="${H - b}"/>`;
+  HOBS.forEach((n, k) => {
+    g += `<rect class="bo" x="${k * bw + 1.5}" y="${H - b - n * esc}" width="${bw - 3}" height="${n * esc}"><title>${tramo(k)}: ${n} posiciones (densidad con r_p: ${HREF[k]}; uniforme: 70)</title></rect>`;
+    g += `<line class="ex" x1="${k * bw + 3}" x2="${(k + 1) * bw - 3}" y1="${H - b - HREF[k] * esc}" y2="${H - b - HREF[k] * esc}"/>`;
+  });
+  g += `<line class="un" x1="0" x2="${W}" y1="${H - b - 70 * esc}" y2="${H - b - 70 * esc}"/>`;
+  g += `<text x="0" y="${H - 3}">0:00</text><text x="${W}" y="${H - 3}" text-anchor="end">4:45</text><text x="${W / 2}" y="${H - 3}" text-anchor="middle">posiciones por tramo de 14.25 s</text>`;
+  const tope = k => H - b - Math.max(HOBS[k], HREF[k]) * esc - 4;
+  g += `<text x="2" y="${tope(0)}">${HOBS[0]}</text><text x="${W - 2}" y="${tope(NB - 1)}" text-anchor="end">${HOBS[NB - 1]}</text>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Histograma de las 1400 posiciones: más altas en los extremos del audio">${g}</svg>`;
+});
+// Versión 3D detrás de las cintas: una barra por tramo y una marca con la referencia.
+const gHist = new THREE.Group(); scene.add(gHist); gHist.visible = false;
+const ZH = ZL - 2.2, EH = 4.6 / 210, barras = [];
+HOBS.forEach((n, k) => {
+  const x = X0 + LEN * (k + 0.5) / NB, w = LEN / NB * 0.78;
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(w, Math.max(0.02, n * EH), 0.6), mat("pos", { transparent: true, opacity: .8 }));
+  bar.position.set(x, -1.1 + n * EH / 2, ZH);
+  const ref = new THREE.Mesh(new THREE.BoxGeometry(w * 1.08, 0.05, 0.66), mat("ink"));
+  ref.position.set(x, -1.1 + HREF[k] * EH, ZH);
+  bar.userData = { k, n }; gHist.add(bar, ref); barras.push(bar);
+});
+{ const u = new THREE.Mesh(new THREE.BoxGeometry(LEN, 0.03, 0.03), mat("muted")); u.position.set(0, -1.1 + 70 * EH, ZH + 0.34); gHist.add(u); }
+
 /* ---------- Cámara: encuadre según el aspecto del lienzo, dejando libre lo que tapan las tarjetas ---------- */
 const lienzo = $("ins-lienzo");
 let cancelCam = () => {}, cancelAnim = () => {}, relojes = [], toma = null;
@@ -395,6 +496,7 @@ const TOMA = {
   agujas: { c: [0, 0.6, 0.4], dir: [0, 0.38, 1], ancho: 26.5, alto: 5.2, retrato: { dir: [0.8, 0.5, 1], caja: [[-13, -1.2, -1.3], [12.3, 2.4, 2.1]] } },
   ocho: { c: [0, 2.6, 0], dir: [0, 0.22, 1], ancho: 26.5, alto: 7.2, retrato: { dir: [0.8, 0.35, 1], caja: [[-13, -1.2, -1.3], [12.3, 6.2, 2.1]] } },
   muestras: { c: [0, 0.1, 0], dir: [0, 0.1, 1], ancho: 13.4, alto: 5.6 },
+  hist: { c: [0, 1.2, -1], dir: [0, 0.18, 1], ancho: 26.5, alto: 6.4, retrato: { dir: [0.55, 0.2, 1], caja: [[-13, -1.3, -3.5], [12.3, 3.6, 2.1]] } },
   wav: { c: [-0.45, 0.05, -0.2], dir: [0.25, 0.5, 1], ancho: 6.6, alto: 3.9 },
   comparar: { c: [-0.3, -4, 0], dir: [0, 0.3, 1], ancho: 29, alto: 11.5, retrato: { dir: [0.7, 0.3, 1], caja: [[-13, -9, -1.3], [12.3, 1.8, 2.1]] } },
 };
@@ -418,6 +520,7 @@ mas.addEventListener("click", () => masDatos && abrirInfo({ eyebrow: "Datos de l
 const kv = filas => `<dl class="kv">${filas.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`;
 
 function mostrar({ cinta = true, comp = false, mues = false, cols = false, ochoV = false, n = 0, filaMP3 = false, enRincon = false }) {
+  gHist.visible = false;
   gCinta.visible = cinta; gComp.visible = comp; gMues.visible = mues; gCols.visible = cols;
   filaB.visible = filaMP3; filaA.userData.t.visible = filaMP3;
   gCols.position.copy(enRincon ? RINCON : new THREE.Vector3(0, -0.8, 0.5));
@@ -485,7 +588,7 @@ const PASOS = {
     dato("0", "posiciones de 1400", { acento: true });
     tomar(TOMA.agujas);
     cancelAnim = animar(3500, t => { const n = Math.round(t * L); agujas.count = puntas.count = n; $("ins-cifra").textContent = fmtN(n); });
-    decir(`las agujas naranjas se encienden hasta llegar a 1400, repartidas por todo el audio y por los dos canales. Hicieron falta ${fmtN(iter)} iteraciones: ${fmtN(iter - L)} colisiones descartadas.`);
+    decir(`las agujas naranjas se encienden hasta llegar a 1400, repartidas por todo el audio y por los dos canales, más densas cerca del principio y del final. Hicieron falta ${fmtN(iter)} iteraciones: ${fmtN(iter - L)} colisiones descartadas.`);
   },
   tiempos() {
     mostrar({ ochoV: true, n: 0 });
@@ -549,11 +652,42 @@ const PASOS = {
     decir("la cámara recorre tres escalas. Primero, todo el audio con sus 1400 posiciones: la PSNR compara el estegoaudio con el original y da 135.89 dB, muy por encima del umbral de 80 dB. Después se acerca a p<sub>1</sub>: solo en 695 de las 1400 posiciones la muestra tuvo que cambiar; en las otras 705 el LSB ya coincidía. Por último, las muestras (valores de ejemplo) y su LSB en naranja: cambiar ese bit mueve el valor en 1 como mucho, y la correlación entre muestras vecinas (0.9869) y la entropía casi no cambian.");
   },
 };
+/* ---------- Hover: cada pieza muestra su dato real o su rol ---------- */
+const enVista = o => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
+const posTxt = i => { const p = P[i]; return `<b>p<sub>${i + 1}</sub> = ${fmtN(p)}</b> · bit w<sub>${i + 1}</sub><br>y = ${Y[i].toFixed(6)} · ${fmtT(Math.floor(p / 2) / FS)} · canal ${p % 2 ? "derecho" : "izquierdo"}`; };
+e.alPasar(() => ocho.filter(enVista), g => posTxt(ocho.indexOf(g)), { color: "pos" });
+e.alPasar(() => [agujas, puntas].filter(o => enVista(o) && o.count > 0), (o, q) => {
+  let mejor = 0, dm = Infinity;
+  for (let i = 0; i < o.count; i++) { const dx = xDe(P[i]) - q.x, dz = zDe(P[i]) - q.z, dd = dx * dx + dz * dz; if (dd < dm) { dm = dd; mejor = i; } }
+  return posTxt(mejor);
+}, { color: "pos" });
+e.alPasar(() => barras.filter(enVista), b => `<b>${tramo(b.userData.k)}</b> · ${b.userData.n} posiciones<br>densidad con r<sub>p</sub>: ${HREF[b.userData.k]} · uniforme: 70`, { color: "pos" });
+const NOMBRE_BIT = k => (k === 15 ? "LSB, peso 1" : k === 0 ? "bit de signo, peso −32 768" : `peso ${2 ** (15 - k)}`);
+e.alPasar(() => columnas.filter(o => enVista(o.g)).flatMap(o => o.rod), m => {
+  const o = columnas.find(c => c.rod.includes(m)), k = o.rod.indexOf(m), c = columnas.indexOf(o) % 8, mp3 = columnas.indexOf(o) >= 8;
+  return `<b>${mp3 ? "MP3" : "Muestra"} w${c + 1}</b> = ${fmtN(o.valor)} (valor de ejemplo)<br>bit ${16 - k} de 16 (${NOMBRE_BIT(k)}): ${b16(o.valor)[k]}`;
+}, { color: "pos" });
+e.alPasar(() => estacas.filter(enVista), g => { const k = estacas.indexOf(g), x = -6 + 12 * k / 24; return `<b>Muestra ${k + 1} de 25</b> (onda de ejemplo)<br>altura medida: ${curvaF(x).toFixed(2)}`; }, { color: "pos" });
+e.alPasar(() => [dif].filter(enVista), () => "<b>Diferencia s′ − s</b><br>0 en casi todas; ±1 en 695 de 25 143 552 muestras", { color: "muted" });
+e.alPasar(() => [cIzq, cDer, eIzq, eDer].filter(enVista), (o, q) => {
+  const u = Math.min(1, Math.max(0, (q.x - X0) / LEN)), izq = o === cIzq || o === eIzq, est = o === eIzq || o === eDer;
+  return `<b>${est ? "Estegoaudio" : "Audio"}, canal ${izq ? "izquierdo (p par)" : "derecho (p impar)"}</b><br>${fmtT(u * DUR)} · trama ≈ ${fmtN(Math.floor(u * TRAMAS))} · forma ilustrativa`;
+}, { color: "muted" });
+
 recorrido($("recorrido"), (i, nombre) => {
   cancelAnim(); cancelAnim = () => {};
   relojes.forEach(clearTimeout); relojes = [];
   datosEscena(null);
   PASOS[nombre]();
+}, (i, k, titulo) => {
+  // Capa «Hallazgo»: el histograma aparece en 3D detrás de las cintas, con todas las agujas encendidas.
+  const nombre = document.querySelectorAll("#recorrido .paso")[i]?.dataset.paso;
+  if (nombre !== "todas") return;
+  const ver = k === 1;
+  cancelAnim(); cancelAnim = () => {};
+  agujas.count = puntas.count = ver ? 0 : L; ponDato(fmtN(L), "posiciones de 1400");
+  gHist.visible = ver;
+  tomar(ver ? TOMA.hist : TOMA.agujas, 1300);
 });
 
 /* ---------- Para explorar ---------- */

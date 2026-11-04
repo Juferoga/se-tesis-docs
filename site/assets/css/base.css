@@ -288,3 +288,37 @@ dialog.info[open] { display: grid; grid-template-rows: auto minmax(0, 1fr); anim
 }
 .mando .puntos { flex-wrap: nowrap; align-items: center; }
 .mando .puntos button { flex: 0 0 auto; }
+
+/* ===== Capas de detalle (↓ ↑) ===== */
+.paso > .nivel { display: none; }
+.paso:not([data-nivel="0"])[data-nivel] > :not(.nivel) { display: none; }
+.paso > .nivel.activa { display: grid; gap: .7rem; align-content: start; }
+.recorrido { transition: grid-template-columns .45s cubic-bezier(.2, 0, 0, 1); }
+.recorrido.profundo { grid-template-columns: minmax(340px, 38rem) minmax(0, 1fr); }
+.recorrido.profundo .paso { align-self: stretch; overflow: auto; scrollbar-width: thin; padding-right: .4rem; }
+.nivel-cab h3 { font: 700 clamp(1.3rem, 2vw, 1.75rem)/1.15 var(--f-display); margin: .3rem 0 0; text-wrap: balance; }
+.nivel { font-size: .98rem; line-height: 1.6; }
+.nivel p { margin: 0; max-width: 62ch; }
+.nivel .katex-display { margin: .2rem 0; overflow-x: auto; overflow-y: hidden; padding: .15rem 0; }
+.nivel .katex { font-size: 1.04em; }
+.nivel ul, .nivel ol { margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; }
+.nivel .ref { font-size: var(--s-1); color: var(--muted); }
+.nivel .ref a { color: var(--muted); }
+.nivel-pie { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .3rem; }
+.nivel-pie button { border-radius: 999px; }
+.boton-bajar { margin-top: 1.1rem; display: inline-flex; align-items: baseline; gap: .45rem; background: transparent; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: .5rem .9rem; font-weight: 600; max-width: 100%; }
+.boton-bajar small { font-weight: 400; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 22ch; }
+.boton-bajar:hover { color: var(--ink); border-color: var(--ink); }
+.boton-bajar span { animation: rebote 2.4s ease-in-out infinite; display: inline-block; }
+@keyframes rebote { 0%, 70%, 100% { transform: none; } 80% { transform: translateY(3px); } }
+.paso.baja, .nivel.baja { animation: capa-baja .42s cubic-bezier(.2, 0, 0, 1) both; }
+.paso.sube, .nivel.sube { animation: capa-sube .42s cubic-bezier(.2, 0, 0, 1) both; }
+@keyframes capa-baja { from { opacity: 0; transform: translateY(26px); } }
+@keyframes capa-sube { from { opacity: 0; transform: translateY(-26px); } }
+@media (max-width: 900px) { .recorrido.profundo { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 30fr) minmax(0, 70fr); } }
+
+/* ===== Hover sobre el 3D ===== */
+.globo3d { position: absolute; z-index: 3; pointer-events: none; max-width: 260px; background: var(--ink); color: var(--surface); border-radius: 10px; padding: .45rem .65rem; font-size: .84rem; line-height: 1.4; box-shadow: 0 8px 28px rgb(0 0 0 / .25); opacity: 0; transform: translateY(4px); transition: opacity .15s, transform .15s; }
+.globo3d.ver { opacity: 1; transform: none; }
+.globo3d b { font-weight: 700; }
+.globo3d .mono { font-size: .8rem; opacity: .85; }

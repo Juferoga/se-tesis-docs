@@ -45,6 +45,19 @@
 .ini-tarjeta[data-c="ciph"] { border-top-color: var(--ciph); } .ini-tarjeta[data-c="ciph"] .n { background: var(--ciph-soft); color: var(--ciph); }
 .ini-tarjeta[data-c="pos"] { border-top-color: var(--pos); } .ini-tarjeta[data-c="pos"] .n { background: var(--pos-soft); color: var(--pos); }
 .ini-tarjeta[data-c="ink"] { border-top-color: var(--ink); }
+
+/* Capas de detalle: en teléfono el texto manda (la escena queda arriba, más baja) y la cabecera de la etapa se oculta. */
+@media (max-width: 900px) {
+  .recorrido.profundo { grid-template-rows: minmax(0, 24fr) minmax(0, 76fr); }
+  .recorrido.profundo .narracion > .cabeza { display: none; }
+  .paso > .nivel.activa { gap: .4rem; font-size: .84rem; line-height: 1.42; }
+  .nivel .katex { font-size: .98em; }
+  .nivel .katex-display { margin: 0; }
+  .nivel-cab h3 { font-size: 1.12rem; }
+  .nivel .ref { font-size: .7rem; line-height: 1.3; }
+  .nivel ul, .nivel ol { gap: .15rem; }
+  .nivel-pie button { padding: .35rem .7rem; font-size: .78rem; }
+}
 </style>
 </head>
 <body>
@@ -64,6 +77,14 @@
         <p>Queremos esconder un texto dentro de un audio. Quien lo escucha oye solo música; quien tiene la clave saca el texto idéntico al original.</p>
         <p>El emisor hace tres cosas en orden: <b>comprime</b>, <b>cifra</b> y <b>esconde</b>. El receptor las deshace.</p>
         <p class="analogia">Como una nota en clave, doblada y metida entre las páginas de un libro: el libro se ve igual.</p>
+      
+        <section class="nivel" data-titulo="Modelo de amenaza">
+          <p>Es el problema de los prisioneros: Alicia y Bruno se comunican por un canal que vigila una guardiana, Wendy. Se supone una guardiana <b>pasiva</b>: observa el estegoaudio, conoce todo el sistema salvo la clave K (principio de Kerckhoffs) y no modifica lo que transmite.</p>
+          <p>El modelo persigue tres objetivos: confidencialidad (sin K el mensaje no se lee), imperceptibilidad (el audio suena igual) y recuperación exacta. Un objetivo más fuerte es la indetectabilidad estadística, que exige que la distribución del estegoaudio \(P_S\) y la del audio limpio \(P_C\) sean casi iguales:</p>
+          \[ D\big(P_C\,\|\,P_S\big)\le\varepsilon . \]
+          <p>El artículo mide la distorsión con el PSNR, que no equivale a esa cota: la indetectabilidad frente a un estegoanálisis no está demostrada para este sistema.</p>
+          <p class="ref">Simmons (1984), «The prisoners' problem and the subliminal channel», CRYPTO '83; Kerckhoffs (1883), «La cryptographie militaire»; Cachin (2004), <i>Information and Computation</i> 192(1).</p>
+        </section>
       </article>
       <article class="paso" data-paso="comprimir" hidden>
         <span class="eyebrow">Paso 2 · Emisor</span>
@@ -106,6 +127,18 @@
         <details><summary>Detalle técnico</summary>
           <p>En el caso de estudio, K = (x<sub>0</sub> = 0.123456, r = 3.999952, N = 6173). Esos números no se iteran directamente: se pasan por SHA-512, que produce una cadena fija de 512 bits. De esa cadena se toman las condiciones iniciales y los parámetros de las tres secuencias. La clave ocupa 144 bits en memoria y hay 2<sup>112.91</sup> claves válidas. Ver <a href="clave.html">Etapa 2</a> y <a href="seguridad.html">Etapa 7</a>.</p>
         </details>
+      
+        <section class="nivel" data-titulo="Qué es secreto y qué es público">
+          <ul>
+            <li><b>Secreto:</b> solo K = (x<sub>0</sub>, r, N), 144 bits en memoria y \(2^{112.91}\) claves válidas.</li>
+            <li><b>Público:</b> la red Qwen2.5-1.5B y su tokenizador, el codificador aritmético, la derivación con SHA-512, el mapa logístico, la regla de posiciones, la inserción LSB y el formato de la cabecera de longitud.</li>
+            <li><b>Supuesto:</b> el adversario no tiene el audio original; si lo tuviera, al compararlos vería qué muestras cambiaron.</li>
+          </ul>
+          <p>La seguridad es computacional. El secreto perfecto de Shannon exige</p>
+          \[ H(K)\;\ge\;H(M), \]
+          <p>y con a lo sumo 112.91 Sh de clave frente a mensajes de 1400 bits casi incompresibles no se cumple. La protección se apoya en que el flujo caótico sea impredecible sin K: se supone, no está demostrado.</p>
+          <p class="ref">Shannon (1949), «Communication theory of secrecy systems», <i>Bell System Technical Journal</i> 28(4); Kerckhoffs (1883).</p>
+        </section>
       </article>
       <article class="paso" data-paso="receptor" hidden>
         <span class="eyebrow">Paso 6 · Receptor</span>
@@ -116,6 +149,18 @@
         <details><summary>Detalle técnico</summary>
           <p>XOR aplicado dos veces con el mismo flujo devuelve el dato original, por eso el descifrado es la misma operación. La red, con los mismos pesos y la misma configuración, recalcula las mismas probabilidades, y el decodificador aritmético reconstruye los tokens uno por uno hasta el token de fin. Ver <a href="recuperacion.html">Etapa 6</a>.</p>
         </details>
+      
+        <section class="nivel" data-titulo="Supuestos para que funcione">
+          <ol>
+            <li><b>Canal sin errores.</b> El estegoaudio llega bit a bit: sin recompresión con pérdida (MP3, AAC), remuestreo ni cambio de volumen. No hay código corrector, y un solo bit cambiado en el mensaje comprimido arruina el resto del texto.</li>
+            <li><b>Determinismo.</b> Emisor y receptor usan los mismos pesos, float32 y el mismo tipo de procesador; en GPU el poema dio 174 bytes en vez de 173.</li>
+            <li><b>Clave previa.</b> K se acuerda antes por un canal seguro; el modelo no incluye intercambio de claves.</li>
+            <li><b>Una clave por mensaje.</b> Con la misma K salen el mismo flujo y las mismas posiciones, y el XOR de dos cifrados revela el XOR de los mensajes:</li>
+          </ol>
+          \[ c_1\oplus c_2=(m_1\oplus k)\oplus(m_2\oplus k)=m_1\oplus m_2 . \]
+          <p>Tampoco hay autenticación: el receptor no puede distinguir un mensaje alterado de uno legítimo, salvo porque el texto sale sin sentido.</p>
+          <p class="ref">Menezes, van Oorschot y Vanstone (1996), <i>Handbook of Applied Cryptography</i>, cap. 6.</p>
+        </section>
       </article>
       <article class="paso" data-paso="cifras" hidden>
         <span class="eyebrow">Paso 7</span>
@@ -133,6 +178,14 @@
         <details><summary>Detalle técnico</summary>
           <p>El audio es un WAV de 16 bits, 44 100 Hz, estéreo y 4 min 45 s: M = 25 143 552 muestras. 1400 / 25 143 552 = 0.0056 %, que se redondea a 0.006 %. El PSNR compara el audio original con el que lleva el mensaje: mientras más alto, más parecidos; 135.89 dB indica una diferencia ínfima. SHA-256 calcula un resumen de 256 bits de cada texto: el del original y el del recuperado son iguales, así que los textos coinciden byte por byte.</p>
         </details>
+      
+        <section class="nivel" data-titulo="Las métricas, en fórmulas">
+          <p>Con \(x\) el audio original, \(y\) el estegoaudio, \(M=25\,143\,552\) muestras y el máximo de 16 bits con signo \(32\,767\):</p>
+          \[ \mathrm{MSE}=\frac{1}{M}\sum_{i=1}^{M}(x_i-y_i)^2,\qquad \mathrm{PSNR}=10\log_{10}\frac{32\,767^2}{\mathrm{MSE}} \]
+          <p>Cambiar el LSB mueve una muestra exactamente \(\pm1\), así que \(\mathrm{MSE}=k/M\) si cambian \(k\) muestras. Los 135.89 dB corresponden a \(k\approx696\): cerca de la mitad de los 1400 bits, lo esperado si cada bit cifrado coincide con el LSB original con probabilidad 1/2 (estimación propia; el artículo reporta solo el PSNR).</p>
+          <p>La carga útil es \(1400/M=5.57\times10^{-5}\) bits por muestra. Que los SHA-256 del texto original y del recuperado coincidan por azar teniendo textos distintos es despreciable.</p>
+          <p class="ref">NIST FIPS 180-4 (2015), SHA-256; cálculo de \(k\) propio, verificado numéricamente.</p>
+        </section>
       </article>
       <article class="paso" data-paso="uso" hidden>
         <span class="eyebrow">Paso 8</span>
@@ -214,7 +267,8 @@ const matT = new THREE.LineBasicMaterial({ color: C.muted, transparent: true, op
 e.scene.add(new THREE.LineSegments(gT, matT));
 const curva = new THREE.CatmullRomCurve3(tallos);
 const matOnda = new THREE.MeshStandardMaterial({ color: C.muted });
-e.scene.add(new THREE.Mesh(new THREE.TubeGeometry(curva, 400, 0.03, 6, false), matOnda));
+const ondaM = new THREE.Mesh(new THREE.TubeGeometry(curva, 400, 0.03, 6, false), matOnda);
+e.scene.add(ondaM);
 
 /* ---------- El mensaje: 27 bloques que viajan por la línea ---------- */
 const N = 27;
@@ -250,9 +304,10 @@ const matL = new THREE.MeshStandardMaterial({ color: C.muted, transparent: true,
 const matChispa = new THREE.MeshStandardMaterial({ color: C.key, emissive: C.key, emissiveIntensity: 0.5 });
 const enlaces = [new THREE.Vector3(X.cif, 1.35, 0), new THREE.Vector3(X.aud, 2.4, 0)].map(fin => {
   const c = new THREE.QuadraticBezierCurve3(PK.clone().add(new THREE.Vector3(0, -0.2, 0)), new THREE.Vector3((PK.x + fin.x) / 2, PK.y + 0.2, 0), fin);
-  e.scene.add(new THREE.Mesh(new THREE.TubeGeometry(c, 40, 0.02, 6, false), matL));
+  const tubo = new THREE.Mesh(new THREE.TubeGeometry(c, 40, 0.035, 6, false), matL);
+  e.scene.add(tubo);
   const chispa = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), matChispa); e.scene.add(chispa);
-  return { c, chispa };
+  return { c, chispa, tubo };
 });
 
 /* ---------- Rótulos: pequeños y apagados; el de la estación señalada pasa al color de su rol ---------- */
@@ -315,7 +370,7 @@ e.alCuadro((dt, tiempo) => {
   tonos(Math.min(1, dt * 4));
   pintar(tiempo);
   llave.rotation.y = Math.sin(tiempo * 0.8) * 0.3;
-  matK.emissiveIntensity = clave * 0.25;
+  matK.emissiveIntensity = hov === llave ? 0.55 : clave * 0.25;
   enlaces.forEach((en, j) => {
     en.chispa.visible = claveObj > 0.5;
     en.c.getPoint(((tiempo * 0.35) + j * 0.5) % 1, en.chispa.position);
@@ -329,6 +384,28 @@ e.alTema(c => {
 });
 tonos(1); pintar();
 enlaces.forEach(en => (en.chispa.visible = false));
+
+
+/* ---------- Hover: cada pieza dice su rol y su dato real ---------- */
+let hov = null, tocado = false;
+const ETAPA = ["el texto en UTF-8: 928 B", "comprimido: 173 B + 2 B de longitud = 175 B", "cifrado: 175 B = 1400 bits, parece ruido", "en el audio: cada bit va al LSB de una muestra"];
+function textoHover(o) {
+  if (o === bases.texto) return `<b>Texto</b><br>«Nocturno», de José Asunción Silva<br><span class="mono">901 caracteres · 928 bytes (UTF-8)</span>`;
+  if (o === bases.comp) return `<b>Compresión</b> (pública)<br>Qwen2.5-1.5B + codificador aritmético<br><span class="mono">928 B → 173 B</span>`;
+  if (o === bases.cif) return `<b>Cifrado</b><br>XOR con el flujo de clave: dos secuencias del mapa logístico<br><span class="mono">175 B → 175 B</span>`;
+  if (o === bases.aud) return `<b>Inserción en el audio</b><br>WAV de 16 bits, 44 100 Hz, estéreo<br><span class="mono">1400 de 25 143 552 muestras (0.006 %)</span>`;
+  if (o === llave) return `<b>Clave K = (x₀, r, N)</b><br>lo único secreto · 144 bits en memoria<br><span class="mono">2<sup>112.91</sup> claves válidas</span>`;
+  if (o === enlaces[0].tubo) return `<b>K → flujo de clave</b><br>SHA-512 da los parámetros de dos secuencias; sus bits, con XOR, cifran`;
+  if (o === enlaces[1].tubo) return `<b>K → posiciones</b><br>una tercera secuencia elige qué muestras se usan, sin repetir`;
+  if (o === ondaM) return `<b>Onda del audio</b> (dibujo)<br>cada tallo es una muestra: un entero de 16 bits`;
+  const b = bloques.indexOf(o);
+  if (b >= 0) return `<b>Bloque ${b + 1} de 27</b> (dibujo, no a escala)<br>el mensaje está ${ETAPA[Math.max(0, Math.min(3, Math.round(f)))]}`;
+  return null;
+}
+e.alPasar(() => [llave, ...bloques, ...enlaces.map(x => x.tubo), ondaM, bases.texto, bases.comp, bases.cif, bases.aud],
+  o => { const h = textoHover(o); if (h) { hov = o; tocado = true; } return h; }, { color: "key" });
+e.renderer.domElement.addEventListener("pointermove", () => { if (!tocado) hov = null; tocado = false; });
+e.renderer.domElement.addEventListener("pointerleave", () => (hov = null));
 
 /* ---------- Cámara: tomas encuadradas según el tamaño real del lienzo ----------
    Cada toma es un centro, el ancho y alto que deben caber y la dirección desde la que se mira.

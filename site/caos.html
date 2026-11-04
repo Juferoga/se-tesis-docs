@@ -39,6 +39,18 @@
 #caos-explora input[aria-invalid="true"] { border-color: var(--bad); }
 #caos-err { color: var(--bad); font-weight: 600; margin: 0; }
 #caos-x-cv { display: block; width: 100%; height: 180px; background: var(--soft); border-radius: 8px; }
+/* Capas de detalle en teléfono: más espacio para el texto y letra algo menor (la escena queda como referencia). */
+@media (max-width: 900px) {
+  .recorrido.profundo { grid-template-rows: minmax(0, 17fr) minmax(0, 83fr); }
+  .paso > .nivel.activa { gap: .42rem; font-size: .84rem; line-height: 1.42; }
+  .nivel .katex { font-size: .98em; }
+  .nivel .katex-display { margin: 0; }
+  .nivel-cab h3 { font-size: 1.1rem; }
+  .nivel-cab .eyebrow { font-size: .66rem; }
+  .nivel .ref { font-size: .7rem; line-height: 1.35; }
+  .nivel ul { gap: .1rem; }
+  .nivel-pie button { padding: .3rem .7rem; font-size: .8rem; }
+}
 </style>
 </head>
 <body>
@@ -59,6 +71,13 @@
         <p>La regla se aplica otra vez a cada resultado: la lista de resultados es la secuencia. En el modelo, r está entre 3.99 y 4.</p>
         <p class="analogia">Como amasar: cada pasada estira la masa y la dobla sobre sí misma.</p>
         <details><summary>Detalle técnico</summary><p>Cada paso cuesta dos multiplicaciones y una resta. En sistemas dinámicos el nombre técnico de esta lista de valores es «órbita»; aquí se dice secuencia.</p></details>
+      
+        <section class="nivel" data-titulo="Conjugación con la tienda en r = 4">
+          <p>Para 0 ≤ r ≤ 4, \(f_r(x)=rx(1-x)\) lleva [0, 1] en sí mismo. Es unimodal, con punto crítico 1/2 y máximo r/4. En r = 4, el cambio de variable \(h(y)=\sin^2(\pi y/2)\), un homeomorfismo de [0, 1], cumple</p>
+          \[f_4\circ h = h\circ T,\qquad T(y)=1-\lvert 1-2y\rvert .\]
+          <p>T es el mapa tienda: estira [0, 1] al doble y lo dobla, como la masa del paso. Al ser conjugados, f₄ y T tienen la misma dinámica topológica: ciclos de los mismos periodos, entropía topológica ln 2 y transitividad. Para r &lt; 4 no hay una fórmula así. Milnor y Thurston prueban que, si la entropía topológica h es positiva, \(f_r\) es semiconjugado a un mapa tienda de pendiente \(e^{h}\). La escena muestra T y f₄.</p>
+          <p class="ref">Devaney (1989), <i>An Introduction to Chaotic Dynamical Systems</i>; Milnor y Thurston (1988), «On iterated maps of the interval», LNM 1342.</p>
+        </section>
       </article>
       <article class="paso" data-paso="mano" hidden>
         <span class="eyebrow">Paso 2</span>
@@ -72,6 +91,14 @@
         <h2>El diagrama de telaraña</h2>
         <p>La telaraña dibuja la regla: se sube a la curva para obtener el siguiente valor y se pasa a la recta y = x para usarlo como nueva entrada.</p>
         <p>La curva en forma de arco es y = r·x·(1 − x) y la recta es y = x. Repetido muchas veces, el camino rebota por todo el cuadrado y nunca se repite.</p>
+      
+        <section class="nivel" data-titulo="Puntos fijos que repelen">
+          <p>Los puntos fijos de \(f_r\) son 0 y \(x^*=1-1/r\). Un punto fijo atrae si \(\lvert f_r'(x^*)\rvert&lt;1\) y repele si es mayor que 1. Con \(f_r'(x)=r(1-2x)\):</p>
+          \[f_r'(0)=r,\qquad f_r'(x^*)=2-r .\]
+          <p>Con r(1) = 3.991783 queda x* = 0.749485 y f′(x*) = −1.9918: la telaraña que pasa cerca de x* gira a su alrededor y se aleja. El ciclo de periodo 2 deja de atraer en \(r=1+\sqrt6\approx3.4495\).</p>
+          <p>Por el teorema de Singer, un mapa unimodal con derivada schwarziana negativa, como \(f_r\), tiene a lo sumo un ciclo atractor, y ese ciclo atrae al punto crítico 1/2. Para saber si un r cae en una ventana periódica basta seguir la secuencia que arranca en 1/2.</p>
+          <p class="ref">Singer (1978), SIAM J. Appl. Math. 35(2), 260–267.</p>
+        </section>
       </article>
       <article class="paso" data-paso="sensible" hidden>
         <span class="eyebrow">Paso 4</span>
@@ -79,6 +106,14 @@
         <p>Dos arranques casi iguales siguen juntos unas pocas iteraciones y luego se separan por completo.</p>
         <p>Aquí difieren en 10⁻¹⁰ (una diezmilmillonésima). Con x(1) y r(1) del caso, la diferencia pasa de 0.1 en la iteración 33. Por eso una clave casi igual a la correcta no sirve para nada.</p>
         <details><summary>Detalle técnico</summary><p>La diferencia crece como δ·e^(λn). Con λ ≈ 0.65, una diferencia de una ulp (≈ 10⁻¹⁷, el cambio más pequeño posible en float64) llega al tamaño de todo [0, 1] en unas 60 iteraciones.</p></details>
+      
+        <section class="nivel" data-titulo="Horizonte de predicción">
+          <p>En promedio, una diferencia inicial δ₀ crece como</p>
+          \[\delta_n\approx\delta_0\,e^{\lambda n}\quad\Longrightarrow\quad n^*\approx\frac{1}{\lambda}\ln\frac{\Delta}{\delta_0},\]
+          <p>donde n* es la iteración en que la diferencia llega a Δ. Con λ = 0.6483, δ₀ = 10⁻¹⁰ y Δ = 0.1 sale n* ≈ 32; la escena muestra la separación en la iteración 33. Con δ₀ igual a una ulp de x(1) (2⁻⁵⁴ ≈ 5.6·10⁻¹⁷) y Δ = 1 sale n* ≈ 58. El transitorio mínimo, N = 100, ya supera ese horizonte; el del caso, N = 6173, lo supera unas cien veces.</p>
+          <p>Es un comportamiento medio. El factor local \(\lvert f_r'(x_i)\rvert\) va de 0 a r, así que el crecimiento real fluctúa alrededor de la recta de la escena y se satura cuando la diferencia alcanza el tamaño del intervalo.</p>
+          <p class="ref">Ott (2002), <i>Chaos in Dynamical Systems</i>, 2.ª ed., Cambridge University Press.</p>
+        </section>
       </article>
       <article class="paso" data-paso="rango" hidden>
         <span class="eyebrow">Paso 5</span>
@@ -86,6 +121,23 @@
         <p>Entre 3.99 y 4 la secuencia es caótica y el umbral 0.5 reparte bien los unos y los ceros.</p>
         <p>Hay caos para 3.57 &lt; r ≤ 4, pero con ventanas donde la secuencia se repite, como la de periodo 3 cerca de r ≈ 3.83. Y el umbral 0.5 solo reparte bien los bits cerca de 4: con r entre 3.7 y 3.8 salió 72.7 % de unos.</p>
         <details><summary>Detalle técnico</summary><p>En el paisaje, los picos son repeticiones y la alfombra baja es caos. Hacia la derecha crece r, hacia el fondo crece x, y la altura dice cuánto tiempo pasa la secuencia en cada valor. Para cada r se calculan 3000 valores tras 500 de transitorio y se cuentan en 80 intervalos de x. Altura ∝ raíz cuadrada del conteo, recortada para que los picos no tapen el resto. La ventana de periodo 3 empieza en r = 1 + √8 ≈ 3.8284.</p></details>
+      
+        <section class="nivel" data-titulo="Sharkovskii y Li–Yorke">
+          <p>Sharkovskii (1964) ordena los naturales así:</p>
+          \[3\triangleright5\triangleright7\triangleright\cdots\triangleright2\cdot3\triangleright2\cdot5\triangleright\cdots\triangleright2^2\cdot3\triangleright\cdots\triangleright2^3\triangleright2^2\triangleright2\triangleright1\]
+          <p>Si una función continua de un intervalo en sí mismo tiene un ciclo de periodo p y p ▷ q, también tiene uno de periodo q. Li y Yorke (1975) prueban que periodo 3 implica ciclos de todos los periodos y un conjunto no numerable S donde, para x ≠ y, \(\limsup_n\lvert f^n x-f^n y\rvert&gt;0\) y \(\liminf_n\lvert f^n x-f^n y\rvert=0\).</p>
+          <p>En la familia logística el periodo 3 aparece en \(r=1+\sqrt8\approx3.8284\) y se conserva para r mayores (monotonía de Milnor y Thurston). Todo r ∈ [3.99, 4] es, entonces, caótico en el sentido de Li–Yorke. Limitación: S puede tener medida cero y convivir con un ciclo atractor, así que esto no garantiza que una secuencia típica sea caótica.</p>
+          <p class="ref">Sharkovskii (1964), Ukr. Mat. Zh. 16, 61–71; Li y Yorke (1975), Amer. Math. Monthly 82(10), 985–992.</p>
+        </section>
+        <section class="nivel" data-titulo="Ventanas periódicas densas">
+          <p>Dos teoremas describen el espacio de parámetros:</p>
+          <ul>
+            <li>Los r con un ciclo atractor forman un conjunto abierto y denso: cerca de cualquier r hay una ventana periódica (Graczyk y Świątek; Lyubich, 1997).</li>
+            <li>Los r con medida invariante absolutamente continua y λ &gt; 0 tienen medida de Lebesgue positiva, y r = 4 es punto de densidad de ese conjunto (Jakobson, 1981).</li>
+          </ul>
+          <p>El caos del modelo es típico en medida pero no robusto: un cambio pequeño de r puede caer en una ventana. En una rejilla de 4·10⁵ valores de r ∈ [3.99, 4), el 0.74 % dio λ &lt; 0 (cálculo propio, 5000 + 5000 iteraciones). Un ejemplo: una ventana de periodo 5 cerca de r ≈ 3.99027, de ancho ≈ 6·10⁻⁵. Las ventanas más finas que la rejilla no se ven. Por eso la clave se valida con λ (etapa 2, paso 10).</p>
+          <p class="ref">Jakobson (1981), Comm. Math. Phys. 81, 39–88; Graczyk y Świątek (1997), Ann. of Math. 146, 1–52; Lyubich (1997), Acta Math. 178, 185–297.</p>
+        </section>
       </article>
       <article class="paso" data-paso="lyapunov" hidden>
         <span class="eyebrow">Paso 6</span>
@@ -94,6 +146,24 @@
         <p>Si es negativo, la secuencia cae en un ciclo.</p>
         <p>Con la clave del caso, λ vale 0.6483 para r(1), 0.6748 para r(2) y 0.6576 para rp. El máximo, en r = 4, es ln 2 ≈ 0.6931.</p>
         <details><summary>Detalle técnico</summary><p>Con λ &gt; 0 la separación crece de forma exponencial, como e^(λn). λ = promedio de ln|r·(1 − 2x_i)| a lo largo de la secuencia, que es el logaritmo del factor de estiramiento en cada paso.</p></details>
+      
+        <section class="nivel" data-titulo="Definición y λ = ln 2 en r = 4">
+          \[\lambda(x_0)=\lim_{n\to\infty}\frac1n\sum_{i=0}^{n-1}\ln\lvert f_r'(x_i)\rvert,\qquad f_r'(x)=r(1-2x)\]
+          <p>Es la tasa media de estiramiento por paso. Si \(f_r\) tiene una medida invariante ergódica μ, el teorema ergódico de Birkhoff da el mismo valor para μ-casi todo x₀:</p>
+          \[\lambda=\int_0^1\ln\lvert f_r'(x)\rvert\,d\mu(x).\]
+          <p>En r = 4, con la densidad del paso 8, la integral vale exactamente ln 2 ≈ 0.693147; también se obtiene de la conjugación con la tienda, de pendiente ±2. La integral numérica da 0.6931475 y 10⁷ iteraciones dan 0.6931471. El punto crítico x = 1/2, donde ln|f′| = −∞, tiene medida cero. En la escena, la línea discontinua es ln 2.</p>
+          <p class="ref">Ott (2002), <i>Chaos in Dynamical Systems</i>, caps. 2 y 3.</p>
+        </section>
+        <section class="nivel" data-titulo="Qué tan fiable es la estimación">
+          <p>El sitio estima λ desde x = 0.3 con 4000 términos tras 20 000 de transitorio. Es un promedio finito de una serie correlacionada. Su error se midió con 200 arranques distintos y se comparó con 10⁷ términos de las secuencias del caso:</p>
+          <ul>
+            <li>r(1): \(\hat\lambda\) = 0.6483; con 10⁷ términos, 0.6433; desviación típica de \(\hat\lambda\): 0.0038.</li>
+            <li>r(2): 0.6748; 0.6734; 0.0026.</li>
+            <li>rp: 0.6576; 0.6615; 0.0031.</li>
+          </ul>
+          <p>Las diferencias caben en unas 1.3 desviaciones. El signo es seguro para estos r: λ ≈ 0.65 está a más de cien desviaciones de 0. El cuarto decimal no lo es. Otra limitación: en una ventana de periodo largo, el transitorio puede parecer caótico y dar \(\hat\lambda&gt;0\) aunque λ &lt; 0. Y en float64 toda secuencia acaba en un ciclo (paso 7).</p>
+          <p class="ref">Cálculo propio con modelo.js.</p>
+        </section>
       </article>
       <article class="paso" data-paso="transitorio" hidden>
         <span class="eyebrow">Paso 7</span>
@@ -102,12 +172,45 @@
         <p>Todo va en float64 (IEEE 754): emisor y receptor obtienen la misma secuencia.</p>
         <p class="analogia">Como barajar mucho antes de repartir.</p>
         <details><summary>Detalle técnico</summary><p>float64 = IEEE 754 binary64, 53 bits de precisión. Como el caos amplifica cualquier diferencia, ambos lados deben usar exactamente la misma aritmética y el mismo orden de operaciones. La secuencia de posiciones descarta Np = N + 1000 = 7173.</p></details>
+      
+        <section class="nivel" data-titulo="Precisión finita: ciclos inevitables">
+          <p>En [0, 1] hay exactamente 4 607 182 418 800 017 409 ≈ 2⁶² valores float64. La regla calculada \(F(x)=\mathrm{fl}\big(\mathrm{fl}(rx)\cdot\mathrm{fl}(1-x)\big)\) va de ese conjunto finito en sí mismo; por el principio del palomar, toda secuencia es finalmente periódica:</p>
+          \[\exists\,\mu,\,L\ge1:\qquad x_{\mu+L}=x_\mu .\]
+          <p>Medido con el algoritmo de Brent, desde el arranque de cada secuencia:</p>
+          <ul>
+            <li>Secuencia 1: entra al ciclo tras 12 015 279 iteraciones; periodo 9 213 816.</li>
+            <li>Secuencia 2: tras 21 158 433; periodo 2 774 760.</li>
+            <li>Posiciones: tras 27 443 276; periodo 3 494 724.</li>
+          </ul>
+          <p>El modelo usa menos de 10⁴ iteraciones por secuencia, más de mil veces antes del ciclo. Las longitudes cambian con cada clave y se miden: no hay fórmula.</p>
+          <p class="ref">Brent (1980), BIT 20, 176–184; cálculo propio en C (IEEE 754, sin FMA), comprobado en JavaScript.</p>
+        </section>
+        <section class="nivel" data-titulo="Reproducibilidad y secuencias exactas">
+          <p>IEEE 754 exige que suma, resta y multiplicación se redondeen correctamente:</p>
+          \[\mathrm{fl}(a\circ b)=(a\circ b)(1+\delta),\qquad\lvert\delta\rvert\le2^{-53}.\]
+          <p>Así, la misma expresión en el mismo orden da los mismos bits en JavaScript y en NumPy. Se rompe si cambia la expresión: una FMA que introduzca un compilador, la precisión extendida de x87 o escribir r·x − r·x². Unas 58 iteraciones después ya no se comparte ningún dígito.</p>
+          <p>La secuencia calculada tampoco es la exacta de \(f_r\). Para r = 3.8, Hammel, Yorke y Grebogi mostraron que una secuencia calculada de 10⁷ pasos queda a menos de 10⁻⁸ de una secuencia exacta (sombra). Para los r del modelo no está probado. Al cifrado le basta que emisor y receptor calculen la misma secuencia aproximada.</p>
+          <p class="ref">IEEE 754-2019; Hammel, Yorke y Grebogi (1987), J. Complexity 3(2), 136–145.</p>
+        </section>
       </article>
       <article class="paso" data-paso="binario" hidden>
         <span class="eyebrow">Paso 8</span>
         <h2>De números a bits</h2>
         <p>Cada valor se convierte en un bit con el umbral 0.5: si es mayor que 0.5 el bit es 1; si es menor o igual que 0.5, el bit es 0.</p>
         <p>Tras el transitorio, la secuencia 1 empieza con 0.936779, 0.236410, 0.720597… y la secuencia 2 con 0.830802, 0.562066, 0.984217…</p>
+      
+        <section class="nivel" data-titulo="Densidad invariante y P(x &gt; 0.5)">
+          <p>En r = 4, la densidad invariante es la del arcoseno (Ulam y von Neumann, 1947):</p>
+          \[\rho(x)=\frac{1}{\pi\sqrt{x(1-x)}},\qquad\int_{1/2}^{1}\rho(x)\,dx=\frac12 .\]
+          <p>Es la imagen de la uniforme por la h del paso 1. Su simetría, ρ(x) = ρ(1 − x), da P(x &gt; 0.5) = 1/2 exacto. Para r &lt; 4 la secuencia vive en \([f_r(r/4),\,r/4]\), que para r(1) es [0.0082, 0.9979]; la densidad, cuando existe, no tiene fórmula ni simetría. Con 10⁷ iteraciones salen 52.77 % de unos para r(1), 51.22 % para r(2) y 53.34 % para rp. En los 1400 bits del caso: 52.57 % y 52.79 %, con desviación típica por azar de ±1.34 %. La escena compara el histograma de la secuencia 1 con ρ.</p>
+          <p class="ref">Ulam y von Neumann (1947), Bull. Amer. Math. Soc. 53, 1120; cálculo propio.</p>
+        </section>
+        <section class="nivel" data-titulo="En r = 4, una moneda justa">
+          <p>Con \(x=\sin^2(\pi\theta)\), el mapa f₄ actúa como \(\theta\mapsto2\theta\bmod1\). Si θ = 0.d₁d₂d₃… en binario, x &gt; 1/2 equivale a θ ∈ (1/4, 3/4), es decir, a d₁ ≠ d₂. Así,</p>
+          \[b_n=d_{n+1}\oplus d_{n+2}.\]
+          <p>Si x₀ tiene densidad ρ, θ es uniforme y sus dígitos son monedas justas independientes; entonces los \(b_n\) también lo son. Eso está demostrado. En el modelo no se cumple ninguna hipótesis: r &lt; 4, x₀ sale del hash y la aritmética es finita. Empíricamente, para r(1) los bits vecinos están correlacionados: \(P(b_n=b_{n+1}=1)=0.2663\) frente a \(p^2=0.2786\). En r = 4 se mide 0.2504 frente a 0.2502.</p>
+          <p class="ref">Dinámica simbólica del mapa de duplicación: Devaney (1989); cálculo propio con 2·10⁶ iteraciones.</p>
+        </section>
       </article>
       <article class="paso" data-paso="xor" hidden>
         <span class="eyebrow">Paso 9</span>
@@ -116,6 +219,14 @@
         <p>XOR da 1 cuando los dos bits son distintos y 0 cuando son iguales.</p>
         <p>Para los 175 bytes del caso, el flujo tiene 1400 bits y el 51.21 % son unos: casi mitad y mitad, como se espera de bits impredecibles.</p>
         <details><summary>Detalle técnico</summary><p>Los bits se agrupan de 8 en 8 (el primero es el más significativo) y forman los bytes k_j que cifran el mensaje en la etapa 4. Si alguien reconstruyera una sola secuencia, le faltaría la otra para obtener el flujo.</p></details>
+      
+        <section class="nivel" data-titulo="Sesgo del XOR">
+          <p>Si dos bits son independientes y \(P(b_i=1)=\tfrac12+\varepsilon_i\), el lema de acumulación da</p>
+          \[P(b_1\oplus b_2=1)=\tfrac12-2\,\varepsilon_1\varepsilon_2 .\]
+          <p>Con los sesgos medidos en 10⁷ iteraciones, ε₁ = 0.0277 y ε₂ = 0.0122, el lema predice 0.49933 y se mide 0.49929. El XOR baja el sesgo de casi 3 % a 0.07 %, y la coincidencia es compatible con que las dos secuencias sean independientes. La independencia es un supuesto: salen de bloques distintos del hash, pero no está demostrada. El XOR también reduce la covarianza entre bits vecinos, P(11) − p², de −0.012 a +0.0005, sin anularla.</p>
+          <p>Pasar pruebas estadísticas no es seguridad. Los generadores caóticos tienen ataques conocidos que no se ven en la frecuencia de unos.</p>
+          <p class="ref">Matsui (1993), EUROCRYPT ’93, LNCS 765; Alvarez y Li (2006), Int. J. Bifurcation and Chaos 16(8), 2129–2151.</p>
+        </section>
       </article>
       <article class="paso" data-paso="ochon" hidden>
         <span class="eyebrow">Paso 10</span>
@@ -368,6 +479,52 @@ const DIBUJO = [
   },
 ];
 
+/* ---------- Dibujos de las capas de detalle (↓) ---------- */
+const LN2 = Math.LN2;
+const hist = (() => { const s = M.secuencia(x1, r1, d.N, 200000), B = 50, h = new Float64Array(B); for (const v of s) h[Math.min(B - 1, Math.floor(v * B))]++; return Array.from(h, c => c / s.length * B); })();
+const rho = x => 1 / (Math.PI * Math.sqrt(x * (1 - x)));
+const CAPA = {
+  // paso 1 · conjugación: la tienda T y f4, unidas por h
+  0: (g, w, h, t) => {
+    const lado = w > 1.3 * h, S = Math.max(60, Math.min(lado ? (w - 140) / 2 : w - 70, lado ? h - 60 : (h - 110) / 2));
+    const cajas = lado ? [[(w - 2 * S - 100) / 2 + 20, (h - S) / 2 - 12], [(w + 100) / 2 + 10, (h - S) / 2 - 12]] : [[(w - S) / 2 + 10, 10], [(w - S) / 2 + 10, 10 + S + 80]];
+    [[y => 1 - Math.abs(1 - 2 * y), "T(y) = 1 − |1 − 2y|"], [x => 4 * x * (1 - x), "f₄(x) = 4x(1 − x)"]].forEach(([f, nom], k) => {
+      const [x0, y0] = cajas[k], X = v => x0 + v * S, Y = v => y0 + (1 - v) * S;
+      ejes(g, x0, y0, S, S, { ys: [0, 1] });
+      g.strokeStyle = K("line"); g.beginPath(); g.moveTo(X(0), Y(0)); g.lineTo(X(1), Y(1)); g.stroke();
+      g.strokeStyle = k ? K("ciph") : K("hash"); g.lineWidth = 2; g.beginPath();
+      const n = Math.max(2, Math.round(200 * t));
+      for (let i = 0; i <= n; i++) { const v = i / 200; i ? g.lineTo(X(v), Y(f(v))) : g.moveTo(X(v), Y(f(v))); } g.stroke(); g.lineWidth = 1;
+      texto(g, nom, X(0.5), y0 + S + 8, K("muted"), "center", "top");
+    });
+    const [a, b] = cajas;
+    if (lado) { texto(g, "h →", (a[0] + S + b[0]) / 2, a[1] + S / 2 - 9, K("ink"), "center"); texto(g, "sin²(πy/2)", (a[0] + S + b[0]) / 2, a[1] + S / 2 + 9, K("muted"), "center"); }
+    else texto(g, "↓ h(y) = sin²(πy/2)", a[0] + S / 2, a[1] + S + 52, K("ink"), "center");
+  },
+  // paso 6 · λ(r) con la referencia ln 2
+  5: (g, w, h, t) => {
+    DIBUJO[5](g, w, h, 1);
+    const l = 46, tp = 14, ww = w - l - 14, hh = h - tp - 36, Y = v => tp + (0.9 - v) / 2.1 * hh;
+    g.setLineDash([6, 4]); g.strokeStyle = K("ink"); g.globalAlpha = t; g.beginPath(); g.moveTo(l, Y(LN2)); g.lineTo(l + ww * t, Y(LN2)); g.stroke(); g.setLineDash([]);
+    texto(g, "ln 2 ≈ 0.6931", l + 8, Y(LN2) - 10, K("ink")); g.globalAlpha = 1;
+  },
+  // paso 8 · histograma de la secuencia 1 frente a la densidad del arcoseno
+  7: (g, w, h, t) => {
+    const l = 44, tp = 16, ww = w - l - 14, hh = h - tp - 40, top = 5, X = v => l + v * ww, Y = v => tp + (1 - Math.min(top, v) / top) * hh;
+    ejes(g, l, tp, ww, hh, { ys: [] });
+    for (const v of [0, 1, 2, 3, 4, 5]) texto(g, String(v), l - 5, Y(v), K("muted"), "right");
+    const B = hist.length, bw = ww / B;
+    for (let i = 0; i < B; i++) { const v = hist[i] * t; g.fillStyle = (i + 0.5) / B > 0.5 ? K("ciph") : K("line"); g.fillRect(X(i / B) + 1, Y(v), bw - 2, Y(0) - Y(v)); }
+    g.strokeStyle = K("ink"); g.lineWidth = 1.6; g.beginPath();
+    for (let i = 1; i < 400; i++) { const x = i / 400; i > 1 ? g.lineTo(X(x), Y(rho(x))) : g.moveTo(X(x), Y(rho(x))); } g.stroke(); g.lineWidth = 1;
+    g.setLineDash([5, 4]); g.strokeStyle = K("muted"); g.beginPath(); g.moveTo(X(0.5), tp); g.lineTo(X(0.5), tp + hh); g.stroke(); g.setLineDash([]);
+    for (const v of [0, 0.5, 1]) texto(g, String(v), X(v), tp + hh + 12, K("muted"), "center");
+    texto(g, "ρ(x), r = 4", X(0.5) + 8, Y(1.4) - 10, K("ink"));
+    texto(g, "secuencia 1", X(0.5) + 8, Y(1.4) + 8, K("muted"));
+  },
+};
+CAPA[7].mismo = true; // las dos capas del paso 8 muestran el mismo histograma
+
 /* ---------- Escena 3D: paisaje de bifurcación ---------- */
 const l3 = $("caos-l3");
 const FOV = 45, RAD = Math.PI / 180;
@@ -375,12 +532,12 @@ const e = escena3d(l3, { camara: [0.2, 6.2, 7.6], mirar: [-0.2, 0.1, 0.2], fov: 
 let col = e.colores();
 const RC = 180, XB = 80, ANCHO = 6, FONDO = 4;
 const rX = r => ((r - 3.5) / 0.5) * ANCHO - ANCHO / 2, xZ = x => (0.5 - x) * FONDO;
-const alt = new Float32Array(RC * XB);
+const alt = new Float32Array(RC * XB), cuenta = new Float32Array(RC * XB);
 for (let i = 0; i < RC; i++) {
   const r = 3.5 + 0.5 * i / (RC - 1), cnt = new Float32Array(XB);
   let x = 0.3; for (let n = 0; n < 500; n++) x = lg(x, r);
   for (let n = 0; n < 3000; n++) { x = lg(x, r); cnt[Math.min(XB - 1, Math.floor(x * XB))]++; }
-  for (let b = 0; b < XB; b++) alt[b * RC + i] = Math.min(1.3, Math.sqrt(cnt[b] / (3000 / XB)) * 0.32);
+  for (let b = 0; b < XB; b++) { cuenta[b * RC + i] = cnt[b]; alt[b * RC + i] = Math.min(1.3, Math.sqrt(cnt[b] / (3000 / XB)) * 0.32); }
 }
 const pg = new THREE.PlaneGeometry(ANCHO, FONDO, RC - 1, XB - 1);
 pg.rotateX(-Math.PI / 2);
@@ -404,9 +561,11 @@ const franja = new THREE.Mesh(new THREE.BoxGeometry(rX(4) - rX(3.99), 1.5, FONDO
 franja.position.set((rX(4) + rX(3.99)) / 2, 0.75, 0);
 const umbral = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-ANCHO / 2, 0.01, 0), new THREE.Vector3(ANCHO / 2, 0.01, 0)]), new THREE.LineDashedMaterial({ color: col.muted, dashSize: 0.1, gapSize: 0.08 }));
 umbral.computeLineDistances();
-const marcas = [[d.r1, "ciph"], [d.r2, "ciph"], [d.rp, "ciph"]].map(([r, c]) => {
-  const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(rX(r), 0, FONDO / 2), new THREE.Vector3(rX(r), 1.7, FONDO / 2)]), new THREE.LineBasicMaterial({ color: col[c] }));
-  ln.userData.c = c; return ln;
+const geoMarca = new THREE.CylinderGeometry(0.022, 0.022, 1.7, 8);
+const marcas = [[d.r1, "r(1)", "secuencia 1 del cifrado", 0], [d.r2, "r(2)", "secuencia 2 del cifrado", 1], [d.rp, "rp", "secuencia de posiciones", 2]].map(([r, n, rol, j]) => {
+  const m = new THREE.Mesh(geoMarca, new THREE.MeshStandardMaterial({ color: col.ciph, roughness: 0.5 }));
+  m.position.set(rX(r), 0.85, FONDO / 2);
+  m.userData = { c: "ciph", r, n, rol, j }; return m;
 });
 const grupo = new THREE.Group();
 grupo.add(paisaje, franja, umbral, ...marcas);
@@ -415,7 +574,23 @@ for (const r of [3.5, 4]) rot(r.toFixed(1), rX(r), 0.05, FONDO / 2 + 0.3, "muted
 rot("periodo 3", rX(3.835), 1.55, 0, "muted", 0.2);
 rot("[3.99, 4)", rX(3.995), 1.9, FONDO / 2, "ciph", 0.22);
 e.scene.add(grupo);
-e.alTema(c => { col = c; teñir(); franja.material.color.copy(c.ciph); umbral.material.color.copy(c.muted); marcas.forEach(m => m.material.color.copy(c[m.userData.c])); });
+// Hover: cada marca dice su parámetro; el paisaje, el r, el intervalo de x y cuánto tiempo pasa ahí la secuencia.
+const lamCol = new Map();
+const lamDe = i => { if (!lamCol.has(i)) lamCol.set(i, M.lyapunov(3.5 + 0.5 * i / (RC - 1), 0.3, 3000, 3000)); return lamCol.get(i); };
+e.alPasar(() => marcas, m => { const u = m.userData; return `<b>${u.n} = ${f6(u.r)}</b><br>${u.rol} · λ = ${lam[u.j].toFixed(4)}`; }, { color: "ciph" });
+const cursor = new THREE.Mesh(new THREE.SphereGeometry(0.05, 14, 10), new THREE.MeshBasicMaterial({ color: col.ink }));
+cursor.visible = false; e.scene.add(cursor);
+let tocado = false;
+e.alPasar(() => [paisaje], (o, pt) => {
+  const c = Math.max(0, Math.min(RC - 1, Math.round((pt.x + ANCHO / 2) / ANCHO * (RC - 1))));
+  const xv = Math.max(0, Math.min(0.9999, 0.5 - pt.z / FONDO)), b = Math.floor(xv * XB), r = 3.5 + 0.5 * c / (RC - 1);
+  const frac = cuenta[b * RC + c] / 3000, lm = lamDe(c);
+  cursor.position.copy(pt); cursor.visible = tocado = true;
+  return `<b>r = ${r.toFixed(4)}</b>, x ∈ [${(b / XB).toFixed(4)}, ${((b + 1) / XB).toFixed(4)})<br>la secuencia pasa aquí el ${(frac * 100).toFixed(2)} % del tiempo (uniforme: 1.25 %)<br>λ(r) ≈ ${lm.toFixed(3)} · ${lm > 0 ? "caos" : "ciclo"}${r >= 3.99 ? " · zona del modelo" : ""}`;
+}, { color: "soft" });
+e.renderer.domElement.addEventListener("pointermove", () => { if (!tocado) cursor.visible = false; tocado = false; });
+e.renderer.domElement.addEventListener("pointerleave", () => { cursor.visible = false; });
+e.alTema(c => { col = c; teñir(); franja.material.color.copy(c.ciph); umbral.material.color.copy(c.muted); marcas.forEach(m => m.material.color.copy(c[m.userData.c])); cursor.material.color.copy(c.ink); });
 
 /* ---------- Cámara del paisaje: encuadre según el tamaño del lienzo y la tarjeta ---------- */
 // Caja que debe verse: x en [−3.6, 3.3] (con rótulos), z en [−2, 2.7], alturas hasta ~1.9
@@ -469,10 +644,10 @@ const NARRA = [
   "la barra completa a escala y, debajo, la ampliación de las primeras 24 iteraciones usadas: cada una da un bit (lleno = 1).",
 ];
 
-let paso = 0, prog = 1, cancelar = () => {}, infoAct = "";
+let paso = 0, prog = 1, cancelar = () => {}, infoAct = "", capa = 0;
 tarjeta.querySelector(".boton-i").addEventListener("click", () => abrirInfo({ eyebrow: `Paso ${paso + 1} · datos de la escena`, titulo: TIT[paso], secciones: [{ html: `<div class="caos-info">${infoAct}</div>` }] }));
 function dibujar() {
-  const fn = DIBUJO[paso]; if (!fn) return;
+  const fn = (capa && CAPA[paso]) || DIBUJO[paso]; if (!fn) return;
   const { g, w, h } = prep(); fn(g, w, h, prog);
 }
 function mostrar(i) {
@@ -494,7 +669,13 @@ function mostrar(i) {
   }
   prog = 0; cancelar = animar(ms, t => { prog = t; dibujar(); }, () => { prog = 1; dibujar(); });
 }
-recorrido($("recorrido"), i => mostrar(i));
+recorrido($("recorrido"), i => { capa = 0; mostrar(i); }, (i, k) => {
+  if (i !== paso) return;
+  const antes = !!(capa && CAPA[i]); capa = k;
+  if (!CAPA[i] || DIBUJO[i] === null) return;
+  if (antes && k && CAPA[i].mismo) return;
+  cancelar(); prog = 0; cancelar = animar(1200, t => { prog = t; dibujar(); }, () => { prog = 1; dibujar(); });
+});
 new ResizeObserver(() => dibujar()).observe($("caos-lienzo"));
 alCambiarTema(() => { dibujar(); dibujarX(); });
 if (document.fonts?.ready) document.fonts.ready.then(() => { dibujar(); dibujarX(); });

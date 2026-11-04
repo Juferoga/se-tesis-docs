@@ -13,7 +13,7 @@
 //   import { recorrido } from "./assets/js/guia.js";
 //   recorrido(document.getElementById("recorrido"), (i, nombre, dir) => { /* actualizar la escena */ });
 //
-// Teclado: → ↓ espacio y AvPág avanzan; ← ↑ y RePág retroceden; Inicio y Fin. Al pasar del último paso se abre la
+// Teclado: → espacio y AvPág avanzan; ← y RePág retroceden; ↓ ↑ entran y salen de las capas de detalle; Inicio y Fin. Al pasar del último paso se abre la
 // etapa siguiente, y al retroceder desde el primero, el último paso de la etapa anterior: todo el sitio es una
 // sola secuencia. El paso actual queda en el hash (#paso-3).
 import { ETAPAS } from "./etapas.js";
@@ -37,6 +37,23 @@ export function etapaVecina(delta) {
 export function irAEtapa(delta) {
   const e = etapaVecina(delta);
   if (e) location.href = e.url + (delta < 0 ? "#paso-fin" : "#paso-1");
+}
+
+// Matemáticas con KaTeX, cargado solo cuando un texto lo necesita. Delimitadores: \( … \) en línea y \[ … \] en bloque.
+let katexListo;
+const cargar = (tag, attrs) => new Promise((ok, mal) => { const n = Object.assign(document.createElement(tag), attrs); n.onload = ok; n.onerror = mal; document.head.append(n); });
+export function matematica(el) {
+  if (!el || !/\\\(|\\\[/.test(el.innerHTML)) return;
+  katexListo ??= (async () => {
+    const base = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/";
+    document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: base + "katex.min.css" }));
+    await cargar("script", { src: base + "katex.min.js" });
+    await cargar("script", { src: base + "contrib/auto-render.min.js" });
+  })();
+  katexListo.then(() => window.renderMathInElement?.(el, {
+    delimiters: [{ left: "\\[", right: "\\]", display: true }, { left: "\\(", right: "\\)", display: false }],
+    throwOnError: false,
+  })).catch(() => {});
 }
 
 // Ventana de información (botón «i» o tecla I). Cada paso deja a la vista solo su título y su primera frase;
@@ -72,6 +89,7 @@ export function abrirInfo({ eyebrow = "", titulo = "", tituloHtml = "", seccione
     sec.querySelectorAll("[id]").forEach(x => x.removeAttribute("id"));
     return sec;
   }));
+  matematica(cuerpo);
   v.showModal();
   v.querySelector(".info-cuerpo").scrollTop = 0;
 }
@@ -79,7 +97,7 @@ export function abrirInfo({ eyebrow = "", titulo = "", tituloHtml = "", seccione
 function prepararPaso(p, escena) {
   const titulo = p.querySelector("h2");
   const eyebrow = p.querySelector(".eyebrow");
-  const hijos = [...p.children].filter(n => n !== titulo && n !== eyebrow);
+  const hijos = [...p.children].filter(n => n !== titulo && n !== eyebrow && !n.matches(".nivel"));
   const primera = hijos.find(n => n.tagName === "P" && !n.classList.contains("analogia"));
   // Lo que la página actualiza por script (ids, controles) se queda a la vista.
   const vivo = n => n.id || n.matches("button, input, select, .mando") || n.querySelector("[id], button, input, select");
@@ -114,11 +132,60 @@ function prepararPaso(p, escena) {
   boton.addEventListener("click", p.abrirInfo);
 }
 
-export function recorrido(raiz, alCambiar) {
+// Capas de detalle: cada paso puede tener <section class="nivel" data-titulo="…"> … </section> (una o varias).
+// ↓ baja a la siguiente capa del paso actual y ↑ sube; ← → siguen cambiando de paso.
+function prepararNiveles(p, i, irNivel) {
+  const niveles = [...p.querySelectorAll(":scope > .nivel")];
+  niveles.forEach((n, k) => {
+    const cab = document.createElement("div");
+    cab.className = "nivel-cab";
+    cab.innerHTML = `<span class="eyebrow">Paso ${i + 1} · Profundizar ${k + 1} de ${niveles.length}</span><h3></h3>`;
+    cab.querySelector("h3").textContent = n.dataset.titulo || "Más detalle";
+    n.prepend(cab);
+    const pie = document.createElement("div");
+    pie.className = "nivel-pie";
+    pie.innerHTML = `<button type="button" class="ghost" data-dir="-1">↑ ${k ? "Capa anterior" : "Volver al paso"}</button>` +
+      (k < niveles.length - 1 ? `<button type="button" class="ghost" data-dir="1">↓ ${niveles[k + 1].dataset.titulo || "Más detalle"}</button>` : "");
+    pie.addEventListener("click", e => { const b = e.target.closest("button"); if (b) irNivel(k + 1 + +b.dataset.dir); });
+    n.append(pie);
+  });
+  if (niveles.length) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "boton-bajar";
+    b.innerHTML = `<span aria-hidden="true">↓</span> Profundizar <small>${niveles.map(n => n.dataset.titulo || "detalle").join(" · ")}</small>`;
+    b.title = "Más detalle formal (flecha abajo)";
+    b.addEventListener("click", () => irNivel(1));
+    const ultimo = [...p.children].filter(n => !n.matches(".nivel")).pop();
+    ultimo.after(b);
+  }
+  return niveles;
+}
+
+export function recorrido(raiz, alCambiar, alNivel) {
   const pasos = [...raiz.querySelectorAll(".paso")];
   const mando = raiz.querySelector(".mando");
   const escena = raiz.querySelector(".escena");
   pasos.forEach(p => prepararPaso(p, escena));
+  let nivel = 0;
+  const niveles = pasos.map((p, i) => prepararNiveles(p, i, k => irNivel(k)));
+  function irNivel(k, { desdeHash = false } = {}) {
+    const lista = niveles[actual] || [];
+    k = Math.max(0, Math.min(lista.length, k));
+    if (k === nivel && !desdeHash) return;
+    const dir = k > nivel ? 1 : -1;
+    nivel = k;
+    const p = pasos[actual];
+    p.dataset.nivel = k;
+    lista.forEach((n, j) => n.classList.toggle("activa", j === k - 1));
+    raiz.classList.toggle("profundo", k > 0);
+    const visible = k ? lista[k - 1] : p;
+    if (k) matematica(lista[k - 1]);
+    visible.classList.remove("baja", "sube");
+    if (!sinMovimiento() && !desdeHash) { void visible.offsetWidth; visible.classList.add(dir > 0 ? "baja" : "sube"); }
+    if (!desdeHash) history.replaceState(null, "", `#paso-${actual + 1}${k ? "-" + k : ""}`);
+    document.dispatchEvent(new CustomEvent("nivel-cambiado", { detail: { i: actual, nivel: k, total: lista.length } }));
+    try { alNivel?.(actual, k, lista[k - 1]?.dataset.titulo); } catch (e) { console.error(e); }
+  }
   const ant = Object.assign(document.createElement("button"), { className: "ghost", type: "button" });
   const sig = Object.assign(document.createElement("button"), { type: "button" });
   const puntos = Object.assign(document.createElement("div"), { className: "puntos" });
@@ -146,6 +213,7 @@ export function recorrido(raiz, alCambiar) {
     if (i > pasos.length - 1) return irAEtapa(1);
     if (i === actual) return;
     const dir = i > actual ? 1 : -1;
+    if (nivel && actual >= 0) irNivel(0, { desdeHash: true });
     actual = i;
     pasos.forEach((p, k) => {
       p.hidden = k !== i;
@@ -164,16 +232,18 @@ export function recorrido(raiz, alCambiar) {
   }
   ant.addEventListener("click", () => ir(actual - 1));
   sig.addEventListener("click", () => ir(actual + 1));
-  const control = { ir, get actual() { return actual; }, total: pasos.length, info: () => pasos[actual]?.abrirInfo?.() };
+  const control = { ir, irNivel, get actual() { return actual; }, get nivel() { return nivel; }, total: pasos.length, info: () => pasos[actual]?.abrirInfo?.() };
   window.__recorrido = control;
 
   const desdeHash = () => {
     if (location.hash === "#paso-fin") return pasos.length - 1;
-    const m = location.hash.match(/^#paso-(\d+)$/);
+    const m = location.hash.match(/^#paso-(\d+)(?:-(\d+))?$/);
     return m ? Math.min(pasos.length, Math.max(1, +m[1])) - 1 : 0;
   };
-  addEventListener("hashchange", () => ir(desdeHash(), { desdeHash: true }));
-  ir(desdeHash(), { desdeHash: true });
+  const nivelHash = () => +(location.hash.match(/^#paso-\d+-(\d+)$/)?.[1] || 0);
+  const aplicarHash = () => { const k = nivelHash(); ir(desdeHash(), { desdeHash: true }); irNivel(k, { desdeHash: true }); if (k) history.replaceState(null, "", `#paso-${actual + 1}-${k}`); };
+  addEventListener("hashchange", aplicarHash);
+  aplicarHash();
   return control;
 }
 
@@ -184,8 +254,9 @@ addEventListener("keydown", e => {
   if (document.querySelector("dialog[open]")) return;
   const r = window.__recorrido;
   if (e.key.toLowerCase() === "i" && r?.info) { e.preventDefault(); return r.info(); }
-  const adelante = ["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key);
-  const atras = ["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key);
+  if (r && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); return r.irNivel(r.nivel + (e.key === "ArrowDown" ? 1 : -1)); }
+  const adelante = ["ArrowRight", "PageDown", " "].includes(e.key);
+  const atras = ["ArrowLeft", "PageUp"].includes(e.key);
   if (!adelante && !atras && e.key !== "Home" && e.key !== "End") return;
   if (e.key === " " && e.target.closest?.("button, a, summary")) return;
   e.preventDefault();

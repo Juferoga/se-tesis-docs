@@ -50,6 +50,18 @@
 #clave-explora .g { display: inline-block; padding: .15rem .35rem; border-radius: 4px; margin: 0 .25rem .25rem 0; background: var(--key-soft); color: var(--key); overflow-wrap: anywhere; }
 #clave-explora .g b { color: var(--muted); font-weight: 600; margin-right: .35rem; }
 #clave-explora .note { margin: .4rem 0 0; }
+/* Capas de detalle en teléfono: más espacio para el texto y letra algo menor (la escena queda como referencia). */
+@media (max-width: 900px) {
+  .recorrido.profundo { grid-template-rows: minmax(0, 17fr) minmax(0, 83fr); }
+  .paso > .nivel.activa { gap: .42rem; font-size: .84rem; line-height: 1.42; }
+  .nivel .katex { font-size: .98em; }
+  .nivel .katex-display { margin: 0; }
+  .nivel-cab h3 { font-size: 1.1rem; }
+  .nivel-cab .eyebrow { font-size: .66rem; }
+  .nivel .ref { font-size: .7rem; line-height: 1.35; }
+  .nivel ul { gap: .1rem; }
+  .nivel-pie button { padding: .3rem .7rem; font-size: .8rem; }
+}
 </style>
 </head>
 <body>
@@ -71,6 +83,18 @@
         <p>En el caso de estudio: x0 = 0.123456, r = 3.999952 y N = 6173.</p>
         <p class="analogia">Como la contraseña de una cuenta: solo la conocen emisor y receptor.</p>
         <details><summary>Detalle técnico</summary><p>Rangos permitidos: x0 ∈ [0.001, 0.999], r ∈ [3.99, 4) y N entero en [100, 10 000]. Contando solo las combinaciones dentro de esos rangos hay 2^112.91 claves válidas.</p></details>
+      
+        <section class="nivel" data-titulo="Conteo exacto del espacio de claves">
+          <p>Para float64 positivos, el orden numérico coincide con el orden de su representación entera de 64 bits. Por eso la cantidad de valores representables en un intervalo es una resta:</p>
+          \[\#\,[a,b]=\operatorname{ent}(b)-\operatorname{ent}(a)+1 .\]
+          <ul>
+            <li>x0 ∈ [0.001, 0.999]: 44 918 902 683 393 330 ≈ \(2^{55.32}\) valores.</li>
+            <li>r ∈ [3.99, 4): 22 517 998 136 852 ≈ \(2^{44.36}\).</li>
+            <li>N ∈ [100, 10 000]: 9901 ≈ \(2^{13.27}\).</li>
+          </ul>
+          <p>El producto es \(2^{112.95}\); con el 97.67 % de claves válidas (paso 10) quedan \(2^{112.91}\). Es una medida de seguridad computacional: da el costo de la búsqueda exhaustiva, en promedio \(2^{111.91}\) intentos, y supone que no existe un atajo mejor. No es una prueba de seguridad.</p>
+          <p class="ref">IEEE 754-2019 (orden total de binary64); Goldberg (1991), «What every computer scientist should know about floating-point arithmetic», ACM Computing Surveys 23(1).</p>
+        </section>
       </article>
       <article class="paso" data-paso="memoria" hidden>
         <span class="eyebrow">Paso 2</span>
@@ -78,6 +102,14 @@
         <p>En memoria, la clave es una fila de 144 bits (ceros y unos): 64 para x0, 64 para r y 16 para N.</p>
         <p>Esos 144 bits forman 18 bytes (un byte son 8 bits). En la escena, cada cubito alto es un 1 y cada cubito bajo es un 0.</p>
         <details><summary>Detalle técnico</summary><p>x0 y r se guardan en float64 (IEEE 754 binary64: 1 bit de signo, 11 de exponente y 52 de fracción). N es un entero sin signo de 16 bits. Se empaquetan con el formato <code>&gt;ddH</code>: big-endian, es decir, el byte más significativo primero. Así N = 6173 = 0x181D queda como los bytes 18 y 1D. Son 8 + 8 + 2 = 18 bytes.</p></details>
+      
+        <section class="nivel" data-titulo="Campos de binary64 y ulp">
+          <p>Un float64 normal guarda un bit de signo s, 11 bits de exponente e y 52 bits de fracción f:</p>
+          \[x=(-1)^s\,2^{\,e-1023}\,(1.f)_2,\qquad\operatorname{ulp}(x)=2^{\,e-1023-52}.\]
+          <p>x0 = 0.123456 se guarda como 3fbf9acffa7eb6bf: s = 0, e − 1023 = −4, y su ulp es \(2^{-56}\approx1.39\cdot10^{-17}\). Todo r ∈ [3.99, 4) tiene e − 1023 = 1 y ulp \(2^{-51}\approx4.44\cdot10^{-16}\). Dentro de [0.001, 0.999] la ulp va de \(2^{-62}\) a \(2^{-53}\): hay más valores de x0 cerca de 0 que cerca de 1. N = 6173 es un entero sin signo de 16 bits, 0x181D.</p>
+          <p>En la escena se resaltan los 12 primeros bits de x0 y de r, que son el signo y el exponente; el resto es la fracción.</p>
+          <p class="ref">IEEE 754-2019, formato binary64.</p>
+        </section>
       </article>
       <article class="paso" data-paso="hash" hidden>
         <span class="eyebrow">Paso 3</span>
@@ -86,6 +118,14 @@
         <p>Una función hash da la misma salida para la misma entrada. SHA-512 produce una cadena fija, no una secuencia.</p>
         <p class="analogia">Como una licuadora: del jugo no se sacan las frutas.</p>
         <details><summary>Detalle técnico</summary><p>SHA-512 está publicada por el NIST en el estándar FIPS 180-4. Su salida tiene 512 bits, que son 64 bytes. Si cambia una sola fresa, el jugo sale distinto: eso es el efecto avalancha del paso 9.</p></details>
+      
+        <section class="nivel" data-titulo="SHA-512 y el oráculo aleatorio">
+          <p>SHA-512 es una función \(H:\{0,1\}^{*}\to\{0,1\}^{512}\). Contra una función ideal de 512 bits, los ataques genéricos cuestan del orden de \(2^{512}\) evaluaciones para hallar una preimagen y \(2^{256}\) para una colisión (paradoja del cumpleaños). No se conocen ataques prácticos contra SHA-512 completa.</p>
+          <p>El análisis del modelo supone que SHA-512 se comporta como un oráculo aleatorio: cada entrada recibe una salida uniforme e independiente. Con ese supuesto,</p>
+          \[H(K)=h_1\,\|\,h_2\,\|\cdots\|\,h_8,\qquad h_j\ \text{uniformes e independientes en}\ \{0,1\}^{64}.\]
+          <p>Es un supuesto heurístico: hay esquemas seguros con un oráculo aleatorio que dejan de serlo con cualquier función concreta (Canetti, Goldreich y Halevi). Además, el hash no agrega entropía: hay a lo sumo tantas salidas como claves, \(2^{112.91}\).</p>
+          <p class="ref">NIST FIPS 180-4 (2015); Bellare y Rogaway (1993), ACM CCS; Canetti, Goldreich y Halevi (2004), J. ACM 51(4).</p>
+        </section>
       </article>
       <article class="paso" data-paso="salida" hidden>
         <span class="eyebrow">Paso 4</span>
@@ -106,6 +146,13 @@
         <p>Cada bloque se convierte en un número u_j entre 0 y 1: se le quitan los 11 bits del final y el resto se divide por 2^53.</p>
         <p>El bloque se lee como un número entero. Los 11 bits del final se apagan en la escena y quedan 53 bits. El resultado u_j puede ser 0, pero nunca llega a 1.</p>
         <details><summary>Detalle técnico</summary><p class="formula">u_j = (entero(h_j) ≫ 11) / 2^53 ∈ [0, 1)</p><p>El bloque se lee como entero sin signo de 64 bits en orden big-endian. El desplazamiento ≫ 11 deja 53 bits porque esa es la precisión de la mantisa de float64; así la división por 2^53 es exacta.</p></details>
+      
+        <section class="nivel" data-titulo="Uniforme exacta en una rejilla">
+          <p>Sea \(H_j\) el entero de 64 bits del bloque j. El mapeo es</p>
+          \[u_j=\frac{\lfloor H_j/2^{11}\rfloor}{2^{53}}\in\Big\{0,\ \tfrac{1}{2^{53}},\ \dots,\ 1-\tfrac{1}{2^{53}}\Big\}.\]
+          <p>Cada valor de la rejilla tiene exactamente \(2^{11}\) preimágenes. Si \(H_j\) es uniforme (supuesto del paso 3), \(u_j\) es uniforme en la rejilla y truncar no introduce sesgo. La división es exacta en float64: el numerador es menor que \(2^{53}\) y cabe en la mantisa, y dividir por una potencia de 2 solo cambia el exponente. Frente a la uniforme continua en [0, 1), la función de distribución difiere en menos de \(2^{-53}\). \(u_j\) puede valer 0 y nunca vale 1.</p>
+          <p class="ref">La misma construcción usa <code>genrand_res53</code>, de la implementación de referencia del Mersenne Twister (Matsumoto y Nishimura, 1998).</p>
+        </section>
       </article>
       <article class="paso" data-paso="escalado" hidden>
         <span class="eyebrow">Paso 7</span>
@@ -113,6 +160,21 @@
         <p>Cada u_j se estira al rango de su parámetro: los valores iniciales quedan en [0.001, 0.999] y los parámetros r cerca de 4, donde el mapa logístico es caótico.</p>
         <p>En la escena, cada bloque usado lleva el nombre de su parámetro. Np = N + 1000 = 7173 no sale del hash; u7 y u8 no se usan.</p>
         <details><summary>Detalle técnico</summary><p>Con la clave del caso: x(1) = 0.436400, r(1) = 3.991783, x(2) = 0.671569, r(2) = 3.998479, xp = 0.843506, rp = 3.996021.</p><p>x(1) = 0.001 + 0.998·u1, r(1) = 3.99 + 0.01·u2, x(2) = 0.001 + 0.998·u3, r(2) = 3.99 + 0.01·u4, xp = 0.001 + 0.998·u5, rp = 3.99 + 0.0099·u6. Np es el transitorio de la secuencia de posiciones.</p></details>
+      
+        <section class="nivel" data-titulo="Redondeo al escalar">
+          <p>El escalado se calcula en float64 y se redondea al valor representable más cercano, por ejemplo</p>
+          \[r^{(1)}=\operatorname{fl}\big(3.99+0.01\,u_2\big).\]
+          <p>En [3.99, 4) solo hay ≈ \(2^{44.36}\) float64, separados por \(2^{-51}\). Los \(2^{53}\) valores posibles de u₂ se agrupan: cada r(1) recibe 399, 400 o 401 de ellos (comprobado en 2·10⁶ valores consecutivos), una falta de uniformidad relativa de a lo sumo ≈ 1/400. Para rp, de ancho 0.0099, son 403 a 405.</p>
+          <p>Para x(1) = fl(0.001 + 0.998·u₁) el mapeo resultó inyectivo por debajo de 0.5. Por encima, la ulp es \(2^{-53}\), mayor que el paso 0.998·2⁻⁵³, y algunos valores vecinos coinciden. En total x(1) toma ≈ \(2^{53}\) valores distintos.</p>
+          <p class="ref">Cálculo propio con modelo.js.</p>
+        </section>
+        <section class="nivel" data-titulo="Colisiones entre claves">
+          <p>La secuencia 1 queda fijada por (x(1), r(1), N). Con N fijo hay ≈ \(2^{99.64}\) claves válidas, pero solo ≈ \(2^{53}\cdot2^{44.36}=2^{97.36}\) pares (x(1), r(1)). Por el principio del palomar, en promedio unas 5 claves comparten la secuencia 1.</p>
+          <p>El flujo de clave depende además de la secuencia 2. Los cuatro parámetros juntos admiten ≈ \(2^{194.7}\) combinaciones. Si SHA-512 se comporta como oráculo aleatorio, dos claves dadas con el mismo N coinciden en los cuatro con probabilidad</p>
+          \[P\approx2^{-194.7}.\]
+          <p>Por la paradoja del cumpleaños, entre todas las claves se esperan unas \(2^{16.8}\) parejas así, que afectan a una fracción ≈ \(2^{-95}\) de las claves: un efecto despreciable.</p>
+          <p class="ref">Cálculo propio bajo el supuesto de oráculo aleatorio.</p>
+        </section>
       </article>
       <article class="paso" data-paso="porque" hidden>
         <span class="eyebrow">Paso 8</span>
@@ -120,6 +182,14 @@
         <p>Con SHA-512, un cambio mínimo en la clave cambia las tres secuencias, y el espacio de claves pasa de ≈ 2^89.7 a 2^112.91.</p>
         <p>Antes, los tres números se usaban directamente: N solo desplazaba el arranque de la misma secuencia y el espacio de claves real era ≈ 2^89.7, menor que el mínimo de 2^100.</p>
         <p class="analogia">Antes, cambiar N era leer el mismo libro desde otra página; ahora cada clave da otro libro.</p>
+      
+        <section class="nivel" data-titulo="Por qué N solo desplazaba la secuencia">
+          <p>En la versión anterior se iteraba desde x0 con r y N era el transitorio. Como la iteración es una composición,</p>
+          \[f_r^{\,N}(x_0)=f_r^{\,N-m}\big(f_r^{\,m}(x_0)\big),\]
+          <p>las claves (x0, r, N) y \((f_r^{\,m}(x_0),\,r,\,N-m)\) daban el mismo flujo siempre que \(f_r^{\,m}(x_0)\) cayera en [0.001, 0.999] y N − m siguiera en rango. Muchas claves eran la misma secuencia leída desde otra página. El recálculo del artículo dejó el espacio real en ≈ \(2^{89.7}\).</p>
+          <p>Ahora x(1), r(1), x(2), … salen de H(x0, r, N), y cambiar N cambia todos los parámetros. Para que dos claves compartieran una secuencia desplazada, el hash tendría que caer justo en un valor de la otra secuencia y en el mismo r: con oráculo aleatorio, probabilidad ≈ \(2^{-97}\) por pareja de claves y desplazamiento, solo para la secuencia 1. N sigue fijando la longitud del transitorio.</p>
+          <p class="ref">Cálculo propio; el valor 2^89.7 es el del artículo.</p>
+        </section>
       </article>
       <article class="paso" data-paso="avalancha" hidden>
         <span class="eyebrow">Paso 9</span>
@@ -127,6 +197,14 @@
         <p>Un cambio diminuto en x0 cambia casi la mitad de los bits del hash, como al azar. Pulsa el botón de la escena para verlo.</p>
         <p>El botón cambia x0 en 10⁻¹⁵, unos 72 números representables (ulp), y giran los cubitos del hash que cambian. Cambian 243 de los 512 bits del hash (47.46 %) y el 48.71 % del flujo de clave: cerca del 50 %.</p>
         <details><summary>Detalle técnico</summary><p>Una ulp (<em>unit in the last place</em>) es la distancia entre un float64 y el siguiente número representable. Cerca de 0.123456 vale 2^−56 ≈ 1.39·10⁻¹⁷. El flujo de clave son los 1400 bits que cifran los 175 bytes del mensaje (etapa 4).</p></details>
+      
+        <section class="nivel" data-titulo="Criterio de avalancha estricto">
+          <p>Webster y Tavares piden que, al invertir cualquier bit de entrada, cada bit de salida cambie con probabilidad 1/2. Si SHA-512 se comporta como oráculo aleatorio, el número D de bits del hash que cambian sigue</p>
+          \[D\sim\operatorname{Bin}\big(512,\tfrac12\big),\qquad\mathbb{E}[D]=256,\qquad\sigma=\sqrt{128}\approx11.3 .\]
+          <p>Aquí x0 + 10⁻¹⁵ cambia 5 de los 144 bits de entrada (72 ulp). Se observó D = 243, con z ≈ −1.15 y \(P(\lvert D-256\rvert\ge13)\approx0.27\). En el flujo cambiaron 682 de 1400 bits, frente a 700 ± 18.7 esperados (P ≈ 0.35). Ambos valores son compatibles con el comportamiento ideal.</p>
+          <p>Un solo experimento no prueba el criterio: es una comprobación de cordura. Para SHA-512 el criterio está respaldado por análisis empíricos, no por una demostración.</p>
+          <p class="ref">Webster y Tavares (1985), «On the design of S-boxes», CRYPTO ’85, LNCS 218.</p>
+        </section>
       </article>
       <article class="paso" data-paso="validez" hidden>
         <span class="eyebrow">Paso 10</span>
@@ -134,6 +212,14 @@
         <p>La clave es válida solo si las tres secuencias son caóticas, es decir, si sus exponentes de Lyapunov son positivos.</p>
         <p>El exponente de Lyapunov mide qué tan rápido se separan dos arranques casi iguales. Se calcula para r(1), r(2) y rp. Con el caso valen 0.6483, 0.6748 y 0.6576. El máximo, en r = 4, es ln 2 ≈ 0.6931.</p>
         <details><summary>Detalle técnico</summary><p>λ = promedio de ln|r·(1 − 2x_i)| a lo largo de una secuencia larga (aquí 4000 valores tras 20 000 de transitorio). La etapa 3 lo explica con más detalle.</p></details>
+      
+        <section class="nivel" data-titulo="Qué garantiza la prueba de validez">
+          <p>La prueba arranca en x = 0.3 (no en el valor de la clave), descarta 20 000 iteraciones y promedia 4000:</p>
+          \[\hat\lambda=\frac{1}{4000}\sum_{i=1}^{4000}\ln\big\lvert r\,(1-2x_i)\big\rvert .\]
+          <p>Con 200 arranques distintos, la desviación típica de \(\hat\lambda\) es de 0.003 a 0.004. Con 10⁷ iteraciones de las secuencias del caso salen 0.6433, 0.6734 y 0.6615. El signo es fiable; el cuarto decimal, no.</p>
+          <p>En [3.99, 4) hay ventanas periódicas, por ejemplo una de periodo 5 cerca de r ≈ 3.9903. En una rejilla de 4·10⁵ valores de r, el 0.74 % dio \(\hat\lambda&lt;0\). Si las tres r fueran independientes se rechazaría ≈ 2.2 % de las claves, cerca del 2.33 % que implica el 97.67 % de claves válidas. La prueba descarta esas r, pero no certifica caos (etapa 3).</p>
+          <p class="ref">Cálculo propio con modelo.js; Jakobson (1981), Comm. Math. Phys. 81, 39–88.</p>
+        </section>
       </article>
       <div class="mando"></div>
     </div>
@@ -212,6 +298,7 @@ const CASO = await calc(C.x0, C.r, C.N);
 let ref = CASO;          // clave elegida (caso o la de «Para explorar»)
 let eps = await calc(C.x0 + 1e-15, C.r, C.N);
 let conEps = false;      // avalancha aplicada
+let capa = 0;            // capa de detalle activa (0 = vista principal)
 const vis = () => (conEps ? eps : ref);
 
 /* ---------- Escena 3D ---------- */
@@ -282,8 +369,9 @@ const VISTAS = [
   { c: [0.6, -0.36], w: 5.3, d: 1.7, el: 56, az: 0 },  // 10 h2, h4, h6 y sus exponentes
 ];
 const R = Math.PI / 180;
+const VISTA_CAPA = { 1: { c: [-2.35, -0.1], w: 2.15, d: 1.3, el: 40, az: -6 } }; // capa de binary64: de cerca, signo y exponente
 function objetivo(p) {
-  const v = VISTAS[p], W = lz.clientWidth || 600, H = lz.clientHeight || 400;
+  const v = (capa && VISTA_CAPA[p]) || VISTAS[p], W = lz.clientWidth || 600, H = lz.clientHeight || 400;
   const res = tarjeta.offsetHeight ? Math.min(H * 0.3, tarjeta.offsetHeight + 10) : 0;
   const t = Math.tan(FOV * R / 2), tv = t * Math.max(60, H - res) / H, th = t * W / H, el = v.el * R;
   // la fila más cercana se ve más ancha: su distancia a la cámara es dist − d·cos(el)
@@ -321,7 +409,9 @@ function estado(p) {
   for (let i = 0; i < 144; i++) {
     const b = kb[i];
     s.kh.push(p === 0 ? 0.18 : b ? 0.32 : 0.05);
-    s.kc.push(p === 0 ? col.key.clone() : b ? col.key.clone() : mezcla("key", 0.65));
+    let c = p === 0 ? col.key.clone() : b ? col.key.clone() : mezcla("key", 0.65);
+    if (p === 1 && capa) { const campo = i < 128 && (i & 63) < 12; c = campo ? c : (b ? mezcla("hash", 0.25) : mezcla("hash", 0.75)); } // signo y exponente resaltados
+    s.kc.push(c);
   }
   const gris = b => (b ? col.hash.clone() : mezcla("hash", 0.72));
   for (let k = 0; k < 512; k++) {
@@ -399,7 +489,34 @@ function ir(p) {
   });
   act = a;
 }
-e.alTema(c => { col = c; caja.material.color.copy(c.hash); if (act) { act = estado(paso); pintar(act); } });
+/* ---------- Hover: cada fila (bloque o campo de la clave) se ilumina y el globo da el bit bajo el puntero ---------- */
+const PROXY = () => new THREE.MeshBasicMaterial({ color: col.key, transparent: true, opacity: 0, depthWrite: false });
+const ANCHO_F = gx(63) - gx(0) + 2 * LADO;
+const filasH = [...Array(8)].map((_, j) => { const m = new THREE.Mesh(new THREE.BoxGeometry(ANCHO_F, 0.36, 0.5), PROXY()); m.position.set(0, 0.18, zFila(j)); m.userData = { tipo: "h", j }; return m; });
+const filasK = [[0, 63, 0], [0, 63, 1], [24, 39, 2]].map(([a, b, j]) => { const w = gx(b) - gx(a) + 2 * LADO; const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.36, 0.5), PROXY()); m.position.set((gx(a) + gx(b)) / 2, 0.18, zClave(j)); m.userData = { tipo: "k", j }; return m; });
+e.scene.add(...filasH, ...filasK);
+const colDe = x => { let b = 0; for (let i = 1; i < 64; i++) if (Math.abs(gx(i) - x) < Math.abs(gx(b) - x)) b = i; return b; };
+const ROL = ["secuencia 1 del cifrado: x(1)", "secuencia 1 del cifrado: r(1)", "secuencia 2 del cifrado: x(2)", "secuencia 2 del cifrado: r(2)", "secuencia de posiciones: xp", "secuencia de posiciones: rp", "sin uso", "sin uso"];
+function globoBit(o, pt) {
+  const V = vis(), u = o.userData, i = colDe(pt.x);
+  if (u.tipo === "k") {
+    const nom = ["x0", "r", "N"][u.j], k = u.j < 2 ? i : Math.max(0, Math.min(15, i - 24)), n = u.j < 2 ? 64 * u.j + k : 128 + k, b = V.kb[n];
+    const campo = u.j === 2 ? "entero sin signo de 16 bits" : k === 0 ? "bit de signo" : k < 12 ? `exponente, bit ${k} de 11` : `fracción, bit ${k - 11} de 52`;
+    const byte = V.d.input[n >> 3];
+    return `<b>${nom} · bit ${k + 1} de ${u.j < 2 ? 64 : 16} = ${b}</b><br>${campo}<br><span class="mono">byte ${(n >> 3) + 1} de 18: ${byte.toString(16).padStart(2, "0")}</span>`;
+  }
+  const j = u.j, n = 64 * j + i, b = V.hb[n];
+  let l2 = `<span class="mono">bit ${n + 1} de 512 del hash</span>`;
+  if (paso === 4) l2 = ROL[j];
+  if (paso === 5) l2 = i >= 53 ? "se descarta al desplazar ≫ 11" : `parte de u${j + 1} = ${V.d.u[j].toFixed(10)}`;
+  if (paso === 6) l2 = j < 6 ? `${PAR[j]} = ${fmt(V.d, j)}` : "sin uso";
+  if (paso === 8) l2 = conEps ? (V.hb[n] !== ref.hb[n] ? "cambió con el nuevo x0" : "no cambió") : "pulsa el botón para cambiar x0";
+  if (paso === 9) l2 = j === 1 || j === 3 || j === 5 ? `${PAR[j]} = ${fmt(V.d, j)} · λ = ${M.lyapunov([V.d.r1, V.d.r2, V.d.rp][(j - 1) / 2]).toFixed(4)}` : ROL[j];
+  return `<b>h${j + 1} · bit ${i + 1} de 64 = ${b}</b><br>${l2}`;
+}
+e.alPasar(() => [caja, ...filasK, ...filasH], (o, pt) => o === caja ? "<b>SHA-512</b><br>entran 18 bytes (144 bits), salen 64 bytes (512 bits)" : globoBit(o, pt));
+function proxies(p) { filasK.forEach(m => (m.visible = p <= 1)); filasH.forEach(m => (m.visible = p >= 3 || p === 2)); }
+e.alTema(c => { col = c; caja.material.color.copy(c.hash); [...filasH, ...filasK].forEach(m => m.material.color.copy(c.key)); if (act) { act = estado(paso); pintar(act); } });
 e.alCuadro((dt, t) => { if (caja.visible) caja.rotation.y = Math.sin(t * 1.3) * 0.25; });
 
 /* ---------- Dato visible y ventana «i» de la escena ---------- */
@@ -471,11 +588,11 @@ tarjeta.addEventListener("click", ev => {
 
 let primero = true;
 recorrido($("recorrido"), i => {
-  paso = i;
+  paso = i; capa = 0;
   if (i !== 8 && conEps) { conEps = false; }
-  ir(i); panel(i);
+  ir(i); panel(i); proxies(i);
   if (primero) { primero = false; colocar(objetivo(i)); } else volar(i);
-});
+}, (i, k) => { if (i !== paso) return; const antes = capa; capa = k; if (i === 1 && !!antes !== !!k) { ir(i); volar(i); } });
 
 
 /* ---------- Para explorar ---------- */

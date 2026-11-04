@@ -60,10 +60,60 @@ export function escena3d(contenedor, { camara = [6, 4, 8], mirar = [0, 0, 0], fo
     renderer.render(scene, camera);
   });
 
+  // Hover (y toque en pantallas táctiles): resalta el objeto bajo el puntero y muestra un globo con su dato.
+  //   e.alPasar(() => listaDeObjetos, (obj, punto) => "html del globo" | null, { color: "key" })
+  // Cada objeto puede ser una malla o un grupo (se resalta todo el grupo). Devolver null = sin globo.
+  const globo = Object.assign(document.createElement("div"), { className: "globo3d", role: "status" });
+  contenedor.append(globo);
+  const rayo = new THREE.Raycaster(), puntero = new THREE.Vector2();
+  const pasadores = [];
+  let encima = null;
+  const resaltar = (obj, si, tono) => obj?.traverse?.(m => {
+    const mats = m.material ? (Array.isArray(m.material) ? m.material : [m.material]) : [];
+    mats.forEach(mt => {
+      if (!("emissive" in mt)) { if (si) { mt.userData.op ??= mt.opacity; mt.opacity = Math.min(1, (mt.opacity ?? 1) + .25); } else if (mt.userData.op != null) mt.opacity = mt.userData.op; return; }
+      if (si) { mt.userData.em ??= mt.emissive.getHex(); mt.userData.emi ??= mt.emissiveIntensity; mt.emissive.copy(tono); mt.emissiveIntensity = .55; }
+      else if (mt.userData.em != null) { mt.emissive.setHex(mt.userData.em); mt.emissiveIntensity = mt.userData.emi; }
+    });
+  });
+  function buscar(ev) {
+    const r = renderer.domElement.getBoundingClientRect();
+    puntero.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+    rayo.setFromCamera(puntero, camera);
+    for (const p of pasadores) {
+      const objs = (typeof p.objetos === "function" ? p.objetos() : p.objetos).filter(o => o?.visible !== false);
+      const hit = rayo.intersectObjects(objs, true).find(h => h.object.visible);
+      if (!hit) continue;
+      let o = hit.object;
+      while (o && !objs.includes(o)) o = o.parent;
+      const html = p.texto(o || hit.object, hit.point);
+      if (html) return { p, obj: o || hit.object, html, x: ev.clientX - r.left, y: ev.clientY - r.top };
+    }
+    return null;
+  }
+  function mover(ev) {
+    if (!pasadores.length) return;
+    const h = buscar(ev);
+    if (encima && encima.obj !== h?.obj) resaltar(encima.obj, false);
+    if (!h) { globo.classList.remove("ver"); renderer.domElement.style.cursor = ""; encima = null; return; }
+    if (encima?.obj !== h.obj) resaltar(h.obj, true, new THREE.Color(color(h.p.color || "key")));
+    encima = h;
+    globo.innerHTML = h.html;
+    const w = contenedor.clientWidth, gw = globo.offsetWidth, gh = globo.offsetHeight;
+    globo.style.left = `${Math.min(w - gw - 6, Math.max(6, h.x + 14))}px`;
+    globo.style.top = `${Math.max(6, h.y - gh - 12)}px`;
+    globo.classList.add("ver");
+    renderer.domElement.style.cursor = "pointer";
+  }
+  renderer.domElement.addEventListener("pointermove", mover);
+  renderer.domElement.addEventListener("pointerdown", ev => { if (ev.pointerType !== "mouse") mover(ev); });
+  renderer.domElement.addEventListener("pointerleave", () => { resaltar(encima?.obj, false); encima = null; globo.classList.remove("ver"); });
+
   return {
     THREE, scene, camera, renderer, controls, colores,
     alCuadro: f => porCuadro.push(f),
     alTema: f => deTema.push(f),
+    alPasar: (objetos, texto, { color: c = "key" } = {}) => pasadores.push({ objetos, texto, color: c }),
   };
 }
 

@@ -48,6 +48,16 @@ body { grid-template-columns: minmax(0, 1fr); }
 .info-sec .cif-lista { margin: 0; padding-left: 1.1rem; display: grid; gap: .35rem; }
 #cif-explora input[type="text"] { width: 100%; max-width: 46ch; font-family: var(--f-body); }
 #cif-explora table td { font-family: var(--f-mono); white-space: nowrap; }
+/* Capas de detalle en teléfono: más espacio para el texto formal. */
+@media (max-width: 900px) {
+  .pagina:has(.recorrido.profundo) .cabeza { display: none; }
+  .recorrido.profundo { grid-template-rows: minmax(0, 24fr) minmax(0, 76fr); }
+  .recorrido.profundo .nivel { font-size: .87rem; line-height: 1.45; gap: .45rem; }
+  .recorrido.profundo .nivel-cab h3 { font-size: 1.12rem; }
+  .recorrido.profundo .nivel .ref { font-size: .72rem; line-height: 1.3; }
+  .recorrido.profundo .nivel .katex-display { margin: 0; }
+  .recorrido.profundo .nivel .katex { font-size: .98em; }
+}
 .explora { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
 
@@ -87,6 +97,18 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>La etapa anterior produjo una larga fila de bits, el flujo de clave. Cada grupo de 8 forma un byte k<sub>1</sub>, k<sub>2</sub>, k<sub>3</sub>… El primer bit del grupo vale 128 y el último vale 1.</p>
         <p class="analogia">Como al leer un número: la primera cifra es la que más pesa.</p>
         <details><summary>Detalle técnico</summary><p>k<sub>j</sub> = Σ<sub>t=0..7</sub> b<sub>8(j−1)+t+1</sub> · 2<sup>7−t</sup>, donde b es el flujo de clave (XOR de las secuencias 1 y 2 binarizadas con el umbral 0.5: &gt; 0.5 → 1, ≤ 0.5 → 0).</p></details>
+        <section class="nivel" data-titulo="Cifrado de flujo síncrono">
+          <p>Un generador \(G\) expande la clave \(K\) en un flujo \(k = G(K)\) y cada byte se cifra por separado:</p>
+          \[ c_j = m_j \oplus k_j,\qquad b_i = [\,x^{(1)}_i &gt; 0.5\,] \oplus [\,x^{(2)}_i &gt; 0.5\,],\qquad k_j=\sum_{t=0}^{7} b_{8(j-1)+t+1}\,2^{7-t}. \]
+          <p>Es <b>síncrono</b>: \(k\) no depende de \(m\) ni de \(c\). Un bit erróneo en \(c\) altera solo ese bit de \(m\), porque el XOR no propaga errores (la decodificación aritmética posterior sí los propaga). Perder o insertar un bit desincroniza todo lo que sigue. Emisor y receptor deben generar exactamente la misma secuencia en float64.</p>
+          <p class="ref">Menezes, van Oorschot y Vanstone (1996), <i>Handbook of Applied Cryptography</i>, cap. 6.</p>
+        </section>
+        <section class="nivel" data-titulo="Sesgo del flujo">
+          <p>Con \(r &lt; 4\) los bits de cada secuencia no son equiprobables. En \(5\times10^{7}\) iteraciones con la clave del caso: \(P(b^{(1)}=1)=0.5278\) y \(P(b^{(2)}=1)=0.5122\), es decir \(\varepsilon_1=0.0278\) y \(\varepsilon_2=0.0122\). Si las dos secuencias son independientes (se supone), el lema de acumulación da</p>
+          \[ P(b=1)=\tfrac12-2\,\varepsilon_1\varepsilon_2\approx 0.5-6.8\times10^{-4}. \]
+          <p>Se observa 0.49922, con desviación típica de \(7\times10^{-5}\): coincide. Con \(\varepsilon=6.8\times10^{-4}\), detectarlo exige del orden de \(1/\varepsilon^{2}\approx 2\times10^{6}\) bits del flujo, y el caso usa 1400. No compromete este mensaje, pero el flujo es distinguible de uno uniforme con suficientes datos.</p>
+          <p class="ref">Matsui (1993), lema de acumulación (<i>piling-up lemma</i>), EUROCRYPT ’93. Cifras: cálculo propio con modelo.js.</p>
+        </section>
       </article>
       <article class="paso" data-paso="cifrar" hidden>
         <span class="eyebrow">Paso 3</span>
@@ -95,6 +117,12 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>Los dos primeros bytes del mensaje guardan su longitud, 173 bytes: m<sub>1</sub> = 00000000 y m<sub>2</sub> = 10101101.</p>
         <p>Cada columna se cifra por separado. Donde la clave tiene un 1, la ficha del mensaje gira y su bit se invierte.</p>
         <details><summary>Detalle técnico</summary><p>173 = 0x00AD, escrito en 2 bytes con el byte más significativo primero (big-endian). c<sub>j</sub> = m<sub>j</sub> ⊕ k<sub>j</sub>. Los bytes k<sub>1</sub> y k<sub>2</sub> de la escena se calculan en tu navegador con la clave del caso (x0 = 0.123456, r = 3.999952, N = 6173).</p></details>
+        <section class="nivel" data-titulo="Texto claro conocido">
+          <p>Quien tenga \(c\) sabe que mide \(n = 175\) bytes, así que conoce la longitud \(n-2=173\) y con ella \(m_1m_2=\texttt{00 AD}\). Entonces</p>
+          \[ k_1k_2 = c_1c_2 \oplus m_1m_2 = \texttt{5A EB}\oplus\texttt{00 AD} = \texttt{5A 46}. \]
+          <p>Quedan expuestos 16 bits del flujo; en todo mensaje de menos de 256 bytes \(m_1=0\) y \(c_1=k_1\). Esto <b>no</b> revela \(K\) si el generador es seguro, supuesto que no está demostrado. Sirve como filtro en una búsqueda exhaustiva: de cada \(2^{16}\) claves candidatas, en promedio una pasa, y el espacio sigue siendo de \(2^{112.91}\). En el canal esteganográfico, obtener \(c\) ya exige conocer las posiciones, que dependen de \(K\).</p>
+          <p class="ref">Katz y Lindell (2020), <i>Introduction to Modern Cryptography</i>, 3.ª ed., cap. 3.</p>
+        </section>
       </article>
       <article class="paso" data-paso="descifrar" hidden>
         <span class="eyebrow">Paso 4</span>
@@ -103,6 +131,12 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>El receptor tiene la misma clave y produce el mismo flujo k. Al aplicar XOR al cifrado obtiene el mensaje original.</p>
         <p class="analogia">Si accionas el mismo interruptor dos veces, la luz vuelve a su estado inicial.</p>
         <details><summary>Detalle técnico</summary><p>(m ⊕ k) ⊕ k = m ⊕ (k ⊕ k) = m ⊕ 0 = m, por la asociatividad de XOR y porque k ⊕ k = 0.</p></details>
+        <section class="nivel" data-titulo="Maleabilidad">
+          <p>XOR no protege la integridad. Para cualquier diferencia \(\Delta\):</p>
+          \[ \mathrm{Dec}_K(c\oplus\Delta)=(c\oplus\Delta)\oplus k=m\oplus\Delta . \]
+          <p>Quien invierta bits de \(c\) invierte los mismos bits de \(m\) sin conocer \(k\), y el receptor no lo detecta: el modelo no tiene código de autenticación (MAC). Por ejemplo, alterar \(c_2\) cambia la longitud declarada. En el canal esteganográfico una alteración dirigida exige conocer las posiciones; una alteración ciega de un LSB cae en el mensaje con probabilidad \(L/M\approx5.6\times10^{-5}\), y si cae, la decodificación aritmética suele corromper lo que sigue. La solución estándar, ajena al artículo, es cifrar y luego autenticar (por ejemplo con HMAC-SHA-256).</p>
+          <p class="ref">Bellare y Namprempre (2000), «Authenticated Encryption», ASIACRYPT 2000.</p>
+        </section>
       </article>
       <article class="paso" data-paso="porque" hidden>
         <span class="eyebrow">Paso 5</span>
@@ -111,6 +145,18 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>XOR no agranda el mensaje y su costo crece en proporción a la longitud.</p>
         <p>Si el flujo está equilibrado y no se puede predecir, el cifrado no conserva la estadística del texto. Es un cifrado de flujo del tipo de Vernam.</p>
         <details><summary>Detalle técnico</summary><p>XOR es involutivo: aplicarlo dos veces con la misma clave devuelve el original. El costo es O(n) operaciones de bytes: 175 bytes, 175 XOR. El cifrado de Vernam combina el mensaje con una clave tan larga como él; aquí esa clave larga la genera el mapa logístico a partir de la clave corta K.</p></details>
+        <section class="nivel" data-titulo="Vernam y secreto perfecto">
+          <p>Shannon definió el secreto perfecto como \(P(M=m\mid C=c)=P(M=m)\) para todo \(m\) y \(c\), y probó que exige al menos tantas claves como mensajes posibles. El cifrado de Vernam lo logra con una clave uniforme, tan larga como el mensaje y usada una sola vez.</p>
+          \[ |\mathcal K| = 2^{112.91} \;\ll\; 2^{1400} = \bigl|\{0,1\}^{1400}\bigr| . \]
+          <p>Aquí el flujo de 1400 bits sale de una clave de 112.91 bits. Cada \(c\) es compatible con a lo más \(2^{112.91}\) mensajes, así que un atacante con cómputo ilimitado aprende algo de \(m\). <b>No hay secreto perfecto</b>: el esquema imita a Vernam con un flujo pseudoaleatorio, y su seguridad solo puede ser computacional.</p>
+          <p class="ref">Shannon (1949), «Communication Theory of Secrecy Systems», <i>Bell System Technical Journal</i> 28(4).</p>
+        </section>
+        <section class="nivel" data-titulo="Seguridad computacional, sin demostrar">
+          <p>\(G\) es un generador pseudoaleatorio si ningún algoritmo eficiente \(D\) distingue \(G(K)\) de bits uniformes \(U\) con ventaja apreciable:</p>
+          \[ \bigl|\,P[D(G(K))=1]-P[D(U)=1]\,\bigr|\le \epsilon . \]
+          <p>Si \(G\) lo cumple, el cifrado resiste a atacantes eficientes que solo ven \(c\). Para generadores basados en el mapa logístico no hay demostración ni reducción a un problema difícil conocido, y varios cifrados caóticos publicados se han roto. La seguridad del modelo es un supuesto respaldado por pruebas empíricas. El sesgo de \(6.8\times10^{-4}\) del paso 2 ya es un distinguidor, aunque necesita millones de bits.</p>
+          <p class="ref">Katz y Lindell (2020), cap. 3; Álvarez y Li (2006), «Some basic cryptographic requirements for chaos-based cryptosystems», <i>Int. J. Bifurcation and Chaos</i> 16(8).</p>
+        </section>
       </article>
       <article class="paso" data-paso="histograma" hidden>
         <span class="eyebrow">Paso 6</span>
@@ -119,6 +165,18 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>Un texto en español usa pocos valores de byte: letras, espacios y algunos acentos, y su histograma tiene picos. Tras el XOR los bytes se reparten de 0 a 255 y los picos desaparecen.</p>
         <p class="note">En el modelo real se cifra el mensaje ya comprimido; aquí se cifra un verso sin comprimir para que se vea el efecto.</p>
         <details><summary>Detalle técnico</summary><p>El verso se codifica en UTF-8 (la «ñ» y las vocales con tilde ocupan 2 bytes) y se cifra con los primeros bytes del flujo real de la clave del caso.</p></details>
+        <section class="nivel" data-titulo="Un histograma plano no prueba seguridad">
+          <p>Para 98 bytes uniformes e independientes, el número esperado de valores distintos es</p>
+          \[ \mathbb E[D_{98}]=256\left(1-\left(\tfrac{255}{256}\right)^{98}\right)\approx 81.6 , \]
+          <p>y el verso cifrado tiene 84: compatible con azar. La prueba es débil. Con 98 muestras la entropía empírica no puede pasar de \(\log_2 98\approx6.61\) Sh por byte (el cifrado da 6.33 y el texto 4.17), y un flujo predecible para quien conozca su estructura también aplana el histograma. La uniformidad es necesaria pero no suficiente; las baterías estadísticas (por ejemplo NIST SP 800-22) miden más propiedades y tampoco demuestran seguridad.</p>
+          <p class="ref">Cifras: cálculo propio con el verso y el flujo del caso.</p>
+        </section>
+        <section class="nivel" data-titulo="Comprimir antes de cifrar">
+          <p>Shannon llamó distancia de unicidad a la longitud de cifrado a partir de la cual, en promedio, solo una clave produce un texto con sentido:</p>
+          \[ U\approx\frac{H(K)}{D},\qquad D=\log_2|\Sigma|-H_r , \]
+          <p>donde \(D\) es la redundancia por símbolo y \(H_r\) la tasa de entropía de la fuente. Con \(H(K)\le112.91\) bits y un texto sin comprimir con \(D\approx6\) bits por byte (valor ilustrativo), \(U\approx19\) bytes. Comprimir antes acerca \(D\) a 0 y alarga \(U\), lo que dificulta reconocer la clave correcta en una búsqueda exhaustiva. El formato deja algo de redundancia (la longitud, el final del código aritmético), y comprimir no sustituye a un generador seguro.</p>
+          <p class="ref">Shannon (1949), «Communication Theory of Secrecy Systems».</p>
+        </section>
       </article>
       <article class="paso" data-paso="dos" hidden>
         <span class="eyebrow">Paso 7</span>
@@ -127,6 +185,18 @@ body { grid-template-columns: minmax(0, 1fr); }
         <p>El flujo de clave es el XOR de dos secuencias del mapa logístico, cada una con su valor inicial y su parámetro. Quien reconstruyera una sola seguiría sin conocer el flujo.</p>
         <p class="analogia">Es como una caja fuerte con dos cerraduras: abrir una no basta.</p>
         <details><summary>Detalle técnico</summary><p>Juntas tienen un estado interno de 4 × 64 = 256 bits: (x, r) de cada secuencia, 4 valores float64. Es más que los 144 bits que ocupa la clave K = (x0, r, N) en memoria, que admite 2<sup>112.91</sup> claves válidas.</p></details>
+        <section class="nivel" data-titulo="Estado interno frente a espacio de claves">
+          <p>Las dos secuencias guardan 256 bits de estado, \((x_1,r_1,x_2,r_2)\), pero todo se deriva de \(K\) con funciones deterministas:</p>
+          \[ H(x_1,r_1,x_2,r_2)\le H(K)\le 112.91\ \text{bits}. \]
+          <p>La búsqueda exhaustiva queda acotada por \(K\); los 256 bits no añaden seguridad. Además, \(r_1\in[3.99,4)\) toma a lo más \(2^{44.4}\) valores float64 distintos. Un ataque de correlación (Siegenthaler) intentaría adivinar una secuencia por separado: \(b\) coincide con \(b^{(1)}\) con probabilidad 0.4878, una correlación pequeña pero no nula. Su costo frente a buscar \(K\) no se ha analizado para este modelo.</p>
+          <p class="ref">Siegenthaler (1985), «Decrypting a class of stream ciphers using ciphertext only», <i>IEEE Trans. Computers</i> C-34(1).</p>
+        </section>
+        <section class="nivel" data-titulo="Reutilizar la clave">
+          <p>El modelo no usa un número de un solo uso (<i>nonce</i>): la entrada de SHA-512 es solo \((x_0, r, N)\). Con la misma \(K\), dos mensajes reciben el mismo flujo y las mismas posiciones, y</p>
+          \[ c\oplus c'=(m\oplus k)\oplus(m'\oplus k)=m\oplus m' . \]
+          <p>El flujo se cancela y queda la suma de dos mensajes comprimidos, atacable con texto conocido o con su estructura (el caso histórico es el proyecto Venona). Si además se ocultan en el mismo audio, las muestras cuyo LSB difiere delatan cerca de la mitad de las posiciones. Por eso \(K\) debe usarse una sola vez, o añadirse un nonce público a la entrada de SHA-512 (propuesta ajena al artículo).</p>
+          <p class="ref">Katz y Lindell (2020), cap. 3.</p>
+        </section>
       </article>
       <article class="paso" data-paso="bits" hidden>
         <span class="eyebrow">Paso 8</span>
@@ -233,14 +303,19 @@ const lado = new THREE.MeshStandardMaterial({ color: e.colores().line, roughness
 const geoF = new THREE.BoxGeometry(1, 1, 0.16);
 const luzMat = new THREE.MeshBasicMaterial({ color: e.colores().ciph, transparent: true, opacity: .16, depthWrite: false });
 const sepMat = new THREE.MeshBasicMaterial({ color: e.colores().muted });
-const repintar = () => { caras.forEach(pintarCara); const c = e.colores(); lado.color.copy(c.line); luzMat.color.copy(c.ciph); sepMat.color.copy(c.muted); };
+// Cada ficha tiene su propio material lateral y un halo invisible, para que el hover resalte solo esa ficha.
+const propios = new Set(), halos = new Set(), geoH = new THREE.PlaneGeometry(1.22, 1.22);
+const repintar = () => { caras.forEach(pintarCara); const c = e.colores(); lado.color.copy(c.line); luzMat.color.copy(c.ciph); sepMat.color.copy(c.muted); propios.forEach(m => m.color.copy(c.line)); halos.forEach(m => m.color.copy(c.ciph)); };
 e.alTema(repintar);
 document.fonts?.ready.then(repintar);
 
-function ficha(rol, sym, x, y, s = 1) {
-  const m = new THREE.Mesh(geoF, [lado, lado, lado, lado, cara(rol, sym), cara(rol, sym)]);
+function ficha(rol, sym, x, y, s = 1, info = null) {
+  const ld = lado.clone(); propios.add(ld);
+  const hm = new THREE.MeshBasicMaterial({ color: e.colores().ciph, transparent: true, opacity: 0, depthWrite: false }); halos.add(hm);
+  const m = new THREE.Mesh(geoF, [ld, ld, ld, ld, cara(rol, sym), cara(rol, sym)]);
+  const halo = new THREE.Mesh(geoH, hm); halo.position.z = -0.12; m.add(halo);
   m.position.set(x, y, 0); m.scale.setScalar(s);
-  m.userData = { rol, sym, z0: 0, s0: s };
+  m.userData = { rol, sym, z0: 0, s0: s, info, mats: [ld, hm] };
   raiz.add(m); return m;
 }
 function ponCara(m, rol, sym) { m.material[4] = m.material[5] = cara(rol, sym); m.userData.rol = rol; m.userData.sym = sym; }
@@ -250,8 +325,11 @@ function rotulo(texto, x, y, { tam = .5, colorN = "muted", ancla = "c" } = {}) {
   raiz.add(s); return s;
 }
 function limpiar() {
-  [...raiz.children].forEach(o => { raiz.remove(o); if (o.isSprite) { o.material.map?.dispose(); o.material.dispose(); } });
+  [...raiz.children].forEach(o => { raiz.remove(o); if (o.isSprite) { o.material.map?.dispose(); o.material.dispose(); } o.userData.mats?.forEach(m => { m.dispose(); propios.delete(m); halos.delete(m); }); });
 }
+
+// Hover: cada ficha con significado muestra su dato real (o su rol) en una o dos líneas.
+e.alPasar(() => raiz.children.filter(o => o.isMesh && o.userData.info), o => (typeof o.userData.info === "function" ? o.userData.info(o) : o.userData.info), { color: "ciph" });
 
 // Animaciones por cuadro (con «sinMovimiento» se aplica el estado final directo).
 let tweens = [], relojes = [];
@@ -340,8 +418,8 @@ new ResizeObserver(() => {
 /* ---------- Construcción de filas de 8 bits ---------- */
 const P8 = 1.15;
 const tono = rol => (rol === "c" || rol === "a" ? "ciph" : "muted");
-function fila8(bits, rol, y, etq, valor = "", x0 = 0) {
-  const fs = bits.map((b, t) => ficha(rol, b == null ? "·" : String(b), x0 + t * P8, y));
+function fila8(bits, rol, y, etq, valor = "", x0 = 0, info = null) {
+  const fs = bits.map((b, t) => ficha(rol, b == null ? "·" : String(b), x0 + t * P8, y, 1, info ? info(t) : null));
   if (etq) rotulo(etq, x0 - 0.75, y, { tam: .46, colorN: tono(rol), ancla: "d" });
   const v = valor !== null ? rotulo(valor || " ", x0 + 7 * P8 + 0.75, y, { tam: .4, colorN: "muted", ancla: "i" }) : null;
   return { fs, v, y };
@@ -376,9 +454,9 @@ function vXor() {
   const CASOS = [[0, 0], [0, 1], [1, 0], [1, 1]], PX = 1.6;
   const fm = [], fk = [], fc = [];
   CASOS.forEach(([a, b], i) => {
-    fm.push(ficha("m", String(a), i * PX, 1.3));
-    fk.push(ficha("k", String(b), i * PX, 0));
-    fc.push(ficha("c", "·", i * PX, -1.65));
+    fm.push(ficha("m", String(a), i * PX, 1.3, 1, `<b>Caso ${i + 1}</b> · bit del mensaje m = ${a}`));
+    fk.push(ficha("k", String(b), i * PX, 0, 1, `<b>Caso ${i + 1}</b> · bit de la clave k = ${b}<br>${b ? "invierte el bit de m" : "deja igual el bit de m"}`));
+    fc.push(ficha("c", "·", i * PX, -1.65, 1, `<b>Caso ${i + 1}</b> · m ⊕ k = ${a} ⊕ ${b} = ${a ^ b}`));
   });
   rotulo("m", -0.85, 1.3, { tam: .5, ancla: "d" });
   rotulo("k", -0.85, 0, { tam: .5, ancla: "d" });
@@ -402,7 +480,8 @@ function vXor() {
 
 /* ---------- Paso 2: flujo en bytes ---------- */
 function vFlujo() {
-  const filas = Array.from({ length: 4 }, (_, g) => fila8(Array(8).fill(null), "a", 1.5 * P8 - g * P8, "k" + (g + 1), String(K[g])));
+  const filas = Array.from({ length: 4 }, (_, g) => fila8(Array(8).fill(null), "a", 1.5 * P8 - g * P8, "k" + (g + 1), String(K[g]), 0,
+    t => { const i = 8 * g + t; return `<b>k<sub>${g + 1}</sub>, bit ${t + 1}</b> (peso ${2 ** (7 - t)}) · b<sub>${i + 1}</sub> = ${F.bits[i]}<br>secuencias 1 ⊕ 2: ${F.b1[i]} ⊕ ${F.b2[i]} · k<sub>${g + 1}</sub> = ${K[g]}`; }));
   filas.forEach(f => (f.v.visible = false));
   [128, 64, 32, 16, 8, 4, 2, 1].forEach((p, t) => rotulo(String(p), t * P8, 1.5 * P8 + 0.9, { tam: .34 }));
   dato(`k<sub>1</sub> = ${K[0]}`, "primer byte del flujo", { acento: true });
@@ -421,16 +500,18 @@ function bloques(vuelta) {
   MSG.forEach((m, j) => {
     const y0 = -j * (alto + 1.0);
     rotulo(`Byte ${j + 1}`, -0.5, y0 + 0.9, { tam: .4, colorN: "muted", ancla: "i" });
-    const fm = fila8(bitsDe(m), "m", y0, "m" + (j + 1), hx(m));
-    const fk = fila8(bitsDe(K[j]), "k", y0 - P8, "⊕ k" + (j + 1), hx(K[j]));
+    const bm = t => (m >> (7 - t)) & 1, bk = t => (K[j] >> (7 - t)) & 1, bc = t => (CB[j] >> (7 - t)) & 1, pe = t => `bit ${t + 1}, peso ${2 ** (7 - t)}`;
+    const fm = fila8(bitsDe(m), "m", y0, "m" + (j + 1), hx(m), 0, t => `<b>m<sub>${j + 1}</sub></b> · ${pe(t)} · ${bm(t)}<br>${j ? "byte bajo" : "byte alto"} de la longitud 173 = 0x00AD`);
+    const fk = fila8(bitsDe(K[j]), "k", y0 - P8, "⊕ k" + (j + 1), hx(K[j]), 0, t => `<b>k<sub>${j + 1}</sub></b> · ${pe(t)} · ${bk(t)}<br>${bk(t) ? "invierte" : "deja igual"} el bit de la columna`);
     separador(-0.6, 7 * P8 + 0.6, y0 - 1.5 * P8 - 0.1);
     const yc = y0 - 2 * P8 - 0.2;
-    const fc = fila8(vuelta ? bitsDe(CB[j]) : Array(8).fill(null), vuelta ? "m" : "c", yc, "c" + (j + 1), vuelta ? hx(CB[j]) : "");
+    const fc = fila8(vuelta ? bitsDe(CB[j]) : Array(8).fill(null), vuelta ? "m" : "c", yc, "c" + (j + 1), vuelta ? hx(CB[j]) : "", 0,
+      t => `<b>c<sub>${j + 1}</sub></b> · ${pe(t)} · ${bm(t)} ⊕ ${bk(t)} = ${bc(t)}<br>c<sub>${j + 1}</sub> = ${hx(CB[j])}`);
     let fk2 = null, fr = null;
     if (vuelta) {
-      fk2 = fila8(bitsDe(K[j]), "k", yc - P8, "⊕ k" + (j + 1), hx(K[j]));
+      fk2 = fila8(bitsDe(K[j]), "k", yc - P8, "⊕ k" + (j + 1), hx(K[j]), 0, t => `<b>k<sub>${j + 1}</sub></b> · ${pe(t)} · ${bk(t)}<br>el mismo flujo que al cifrar`);
       separador(-0.6, 7 * P8 + 0.6, yc - 1.5 * P8 - 0.1);
-      fr = fila8(Array(8).fill(null), "c", yc - 2 * P8 - 0.2, "m" + (j + 1), "");
+      fr = fila8(Array(8).fill(null), "c", yc - 2 * P8 - 0.2, "m" + (j + 1), "", 0, t => `<b>m<sub>${j + 1}</sub> recuperado</b> · ${pe(t)}<br>${bc(t)} ⊕ ${bk(t)} = ${bm(t)}`);
     }
     const luz = marco(1.35, (vuelta ? 5 : 3) * P8 + 0.55);
     luz.position.y = vuelta ? y0 - 2 * P8 - 0.2 : y0 - P8 - 0.1;
@@ -545,30 +626,32 @@ alCambiarTema(redibujar);
 function vDos() {
   const b1 = [...F.b1.slice(0, 8)], b2 = [...F.b2.slice(0, 8)], fl = [...F.bits.slice(0, 8)];
   rotulo("con las dos secuencias", -0.5, 0.9, { tam: .4, ancla: "i" });
-  fila8(b1, "s", 0, "sec 1", null);
-  fila8(b2, "s", -P8, "⊕ sec 2", null);
+  const sx = (s, n, t) => `<b>Secuencia ${n}, valor ${t + 1}</b> tras el transitorio<br>x = ${s[t].toFixed(6)} ${s[t] > 0.5 ? "&gt;" : "≤"} 0.5 → ${s[t] > 0.5 ? 1 : 0}`;
+  fila8(b1, "s", 0, "sec 1", null, 0, t => sx(F.s1, 1, t));
+  fila8(b2, "s", -P8, "⊕ sec 2", null, 0, t => sx(F.s2, 2, t));
   separador(-0.6, 7 * P8 + 0.6, -1.5 * P8 - 0.1);
-  fila8(fl, "a", -2 * P8 - 0.2, "flujo", null);
+  fila8(fl, "a", -2 * P8 - 0.2, "flujo", null, 0, t => `<b>Flujo, bit ${t + 1}</b> · ${b1[t]} ⊕ ${b2[t]} = ${fl[t]}`);
   const y0 = -2 * P8 - 0.2 - 2.4;
   rotulo("con una sola", -0.5, y0 + 0.9, { tam: .4, ancla: "i" });
-  fila8(b1, "s", y0, "sec 1", null);
-  const f2 = fila8(Array(8).fill(null), "s", y0 - P8, "⊕ sec 2", null);
+  fila8(b1, "s", y0, "sec 1", null, 0, t => sx(F.s1, 1, t) + "<br>lo conoce el atacante (supuesto)");
+  const f2 = fila8(Array(8).fill(null), "s", y0 - P8, "⊕ sec 2", null, 0, () => "<b>Secuencia 2 desconocida</b><br>a largo plazo vale 1 el 51.2 % de las veces");
   separador(-0.6, 7 * P8 + 0.6, y0 - 1.5 * P8 - 0.1);
-  const f3 = fila8(Array(8).fill(null), "a", y0 - 2 * P8 - 0.2, "flujo", null);
+  const f3 = fila8(Array(8).fill(null), "a", y0 - 2 * P8 - 0.2, "flujo", null, 0, () => "<b>Bit del flujo: ?</b><br>se acierta con probabilidad 0.512 (casi una moneda)");
   dato("256 bits", "de estado interno entre las dos");
-  datosEscena("Cuánto estado guardan las dos secuencias", [{ html: `<p>Estado interno de las dos secuencias: <b>256 bits</b>, los valores (x, r) de cada una, 4 valores float64.</p><p>Clave K en memoria: <b>144 bits</b>, con 2<sup>112.91</sup> claves válidas.</p><p>Sin la secuencia 2, cada bit del flujo puede ser 0 o 1 con la misma probabilidad: el atacante no aprende nada.</p>` }]);
+  datosEscena("Cuánto estado guardan las dos secuencias", [{ html: `<p>Estado interno de las dos secuencias: <b>256 bits</b>, los valores (x, r) de cada una, 4 valores float64.</p><p>Clave K en memoria: <b>144 bits</b>, con 2<sup>112.91</sup> claves válidas.</p><p>Sin la secuencia 2, cada bit del flujo puede ser 0 o 1 casi con la misma probabilidad: la secuencia 2 vale 1 el 51.2 % de las veces a largo plazo, así que el atacante acierta cada bit con probabilidad 0.512.</p>` }]);
   encuadrar();
   f2.fs.forEach((m, t) => girar(m, "s", "?", 900 + t * 90));
   f3.fs.forEach((m, t) => girar(m, "a", "?", 1500 + t * 90));
-  decir(`arriba, con las dos secuencias: el flujo (verde) sale del XOR de la secuencia 1 y la secuencia 2 binarizadas, y su primer byte es ${hx(K[0])}. Abajo, si el atacante solo conoce la secuencia 1: sin la secuencia 2, los bits del flujo quedan como «?», cada uno puede ser 0 o 1 con la misma probabilidad.`);
+  decir(`arriba, con las dos secuencias: el flujo (verde) sale del XOR de la secuencia 1 y la secuencia 2 binarizadas, y su primer byte es ${hx(K[0])}. Abajo, si el atacante solo conoce la secuencia 1: sin la secuencia 2, los bits del flujo quedan como «?», cada uno puede ser 0 o 1 casi con la misma probabilidad.`);
 }
 
 /* ---------- Paso 8: de bytes a bits ---------- */
 function vBits() {
   const PB = 0.5, cols = 25;
-  const cuad = Array.from({ length: 175 }, (_, j) => ficha(j < 2 ? "c" : "g", "#", (j % cols) * PB, -Math.floor(j / cols) * PB, 0.42));
+  const cuad = Array.from({ length: 175 }, (_, j) => ficha(j < 2 ? "c" : "g", "#", (j % cols) * PB, -Math.floor(j / cols) * PB, 0.42,
+    `<b>c<sub>${j + 1}</sub></b>, byte ${j + 1} de 175 · bits w<sub>${8 * j + 1}</sub>…w<sub>${8 * j + 8}</sub><br>${j < 2 ? `longitud cifrada: ${hx(CB[j])}` : "mensaje comprimido cifrado"}`));
   const w = [...bitsDe(CB[0]), ...bitsDe(CB[1])], PW = 0.76, yW = -7 * PB - 1.6;
-  const fw = w.map((b, i) => ficha("c", "·", i * PW + (i >= 8 ? 0.3 : 0), yW, 0.68));
+  const fw = w.map((b, i) => ficha("c", "·", i * PW + (i >= 8 ? 0.3 : 0), yW, 0.68, `<b>w<sub>${i + 1}</sub> = ${b}</b><br>bit ${i % 8 + 1} de c<sub>${Math.floor(i / 8) + 1}</sub> = ${hx(CB[Math.floor(i / 8)])}`));
   [0, 15].forEach(i => rotulo("w" + (i + 1), i * PW + (i >= 8 ? 0.3 : 0), yW - 0.6, { tam: .3 }));
   dato("1400 bits", "8 × 175 bytes", { acento: true });
   encuadrar();

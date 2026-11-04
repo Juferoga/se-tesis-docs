@@ -123,6 +123,19 @@ tr.uno td:first-child { font-weight: 600; }
   .co-pie { font-size: .7rem; }
   #compresion-p { font-size: .85rem; padding: .25rem .4rem; }
 }
+
+/* Capas de detalle: en teléfono el texto manda (la escena queda arriba, más baja) y la cabecera de la etapa se oculta. */
+@media (max-width: 900px) {
+  .recorrido.profundo { grid-template-rows: minmax(0, 24fr) minmax(0, 76fr); }
+  .recorrido.profundo .narracion > .cabeza { display: none; }
+  .paso > .nivel.activa { gap: .4rem; font-size: .84rem; line-height: 1.42; }
+  .nivel .katex { font-size: .98em; }
+  .nivel .katex-display { margin: 0; }
+  .nivel-cab h3 { font-size: 1.12rem; }
+  .nivel .ref { font-size: .7rem; line-height: 1.3; }
+  .nivel ul, .nivel ol { gap: .15rem; }
+  .nivel-pie button { padding: .35rem .7rem; font-size: .78rem; }
+}
 </style>
 </head>
 <body>
@@ -146,6 +159,13 @@ tr.uno td:first-child { font-weight: 600; }
         <details><summary>Detalle técnico</summary>
           <p>El texto está en UTF-8, la forma normal de guardar texto: letras como «ñ» o «á» ocupan 2 bytes, por eso 901 caracteres ocupan 928 bytes. El botón «i» de la escena muestra las dos longitudes a escala: 173 bytes son el 18.6 % de 928.</p>
         </details>
+      
+                <section class="nivel" data-titulo="Comprimir es predecir">
+          <p>Sea \(P\) la distribución real de los textos y \(Q\) el modelo que comparten emisor y receptor. Un código sin prefijos con longitudes \(\ell(x)=\lceil -\log_2 Q(x)\rceil\) cumple la desigualdad de Kraft \(\sum_x 2^{-\ell(x)}\le 1\), y su longitud media queda acotada por</p>
+          \[ H(P)+D(P\|Q)\le\mathbb{E}_P[\ell(X)]&lt;H(P)+D(P\|Q)+1 \]
+          <p>\(H(P)\) es el mínimo alcanzable y \(D(P\|Q)\ge 0\) es el costo de predecir con \(Q\) en lugar de \(P\): mejor predicción, menos bits. La suma \(H(P)+D(P\|Q)\) es la entropía cruzada \(H(P,Q)\). Aquí \(x\) es el texto completo y la red define \(Q\) token a token. \(P\) es desconocida: en un texto concreto solo se puede medir \(-\log_2 Q(x)\).</p>
+          <p class="ref">Shannon (1948), «A mathematical theory of communication»; Cover y Thomas (2006), <i>Elements of Information Theory</i>, teorema 5.4.3.</p>
+        </section>
       </article>
       <article class="paso" data-paso="tokens" hidden>
         <span class="eyebrow">Paso 2</span>
@@ -156,6 +176,14 @@ tr.uno td:first-child { font-weight: 600; }
         <details><summary>Detalle técnico</summary>
           <p>Se usa BPE (codificación por pares de bytes) a nivel de byte: se parte de los bytes sueltos y se unen los pares más frecuentes en textos de entrenamiento. Como trabaja sobre bytes, es reversible para cualquier texto UTF-8. El vocabulario tiene 151 665 tokens. La capa de salida de la red tiene V = 151 936 salidas; las 271 restantes son de relleno y no corresponden a ningún token.</p>
         </details>
+      
+                <section class="nivel" data-titulo="Una tokenización reversible">
+          <p>El tokenizador es una función \(\tau\) de cadenas de bytes en secuencias de tokens. El BPE a nivel de byte parte de los 256 bytes y aplica las fusiones aprendidas en un orden fijo: \(\tau\) es determinista, y concatenar los bytes de cada token la invierte,</p>
+          \[ \tau^{-1}\big(\tau(x)\big)=x . \]
+          <p>Se codifica \(\tau(x)\) y el token de fin: \(\ell\approx -\log_2 Q\big(\tau(x),\langle\text{fin}\rangle\big)\).</p>
+          <p>Dos salvedades. El tokenizador de Qwen2 normaliza el texto a la forma Unicode NFC antes de partirlo: un texto en otra forma (por ejemplo «á» escrita como «a» más tilde combinante) no volvería byte por byte. El poema volvió idéntico (SHA-256). Además, la red da probabilidad a otras particiones de los mismos bytes que el tokenizador nunca produce; esa masa se pierde (no se midió).</p>
+          <p class="ref">Sennrich, Haddow y Birch (2016), ACL; Radford et al. (2019), GPT-2; <code>tokenization_qwen2.py</code> (Hugging Face transformers).</p>
+        </section>
       </article>
       <article class="paso" data-paso="neurona" hidden>
         <span class="eyebrow">Paso 3</span>
@@ -176,6 +204,25 @@ tr.uno td:first-child { font-weight: 600; }
         <details><summary>Detalle técnico</summary>
           <p>Es un Transformer de solo decodificador con dimensión 1536. Se ejecuta en float32 (números en coma flotante de 32 bits, IEEE 754) en CPU con 4 hilos. Los valores 28, 1536 y 8960 están en el <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B/blob/main/config.json">config.json oficial</a> del modelo.</p>
         </details>
+      
+                <section class="nivel" data-titulo="Las ecuaciones de un bloque">
+          <p>Cada capa \(k=1,\dots,28\) actualiza el vector \(h\in\mathbb{R}^{1536}\) de cada token con normalización previa y conexiones residuales:</p>
+          \[ \begin{gathered} u=h+\mathrm{Atn}\big(\mathrm{RMSNorm}(h)\big)\\ h'=u+\mathrm{FFN}\big(\mathrm{RMSNorm}(u)\big) \end{gathered} \]
+          \[ \mathrm{RMSNorm}(x)=\gamma\odot\frac{x}{\sqrt{\tfrac{1}{d}\sum_i x_i^2+\epsilon}},\qquad \epsilon=10^{-6} \]
+          <p>La entrada es la fila del token en la matriz de embeddings \(E\in\mathbb{R}^{V\times d}\). Arriba, tras un RMSNorm final, las puntuaciones son \(z=E\,\mathrm{RMSNorm}(h_{28})\): la misma \(E\) sirve de entrada y de salida (embeddings atados, <code>tie_word_embeddings</code> en config.json). \(\gamma\in\mathbb{R}^{1536}\) es un vector de pesos aprendidos.</p>
+          <p class="ref">Zhang y Sennrich (2019), «Root mean square layer normalization»; Qwen Team (2024), informe técnico de Qwen2.5; config.json del modelo.</p>
+        </section>
+        <section class="nivel" data-titulo="Conteo de parámetros">
+          <ul>
+            <li>Embeddings, compartidos con la salida: \(151\,936\times1536=233\,373\,696\).</li>
+            <li>Autoatención por capa: \(W_Q\) de \(1536\times1536\) con sesgo; \(W_K\) y \(W_V\) de \(1536\times256\) con sesgo; \(W_O\) de \(1536\times1536\). Total \(5\,507\,072\).</li>
+            <li>Red prealimentada por capa: \(3\times1536\times8960=41\,287\,680\).</li>
+            <li>RMSNorm: \(2\times1536\) por capa y \(1536\) al final.</li>
+          </ul>
+          \[ \begin{aligned} N&=233\,373\,696+28\times46\,797\,824+1536\\ &=1\,543\,714\,304\approx1.54\times10^{9} \end{aligned} \]
+          <p>Coincide con el valor publicado solo si la salida está atada; sin atar serían \(1.78\times10^{9}\). El 88 % de cada capa está en la red prealimentada. Una pasada cuesta del orden de \(2N\approx3.1\times10^{9}\) operaciones de coma flotante por token, sin contar la atención sobre el contexto.</p>
+          <p class="ref">Conteo propio a partir de config.json (verificado numéricamente); sesgo en Q, K, V: Yang et al. (2024), informe técnico de Qwen2; regla \(2N\): Kaplan et al. (2020).</p>
+        </section>
       </article>
       <article class="paso" data-paso="capa" hidden>
         <span class="eyebrow">Paso 5</span>
@@ -187,6 +234,23 @@ tr.uno td:first-child { font-weight: 600; }
         <details><summary>Detalle técnico</summary>
           <p>La autoatención usa 12 cabezas de consulta y 2 de clave/valor: cada par clave/valor lo comparten 6 cabezas de consulta. La red prealimentada usa la activación SwiGLU, construida con SiLU. Esta subcapa está definida en Vaswani et al. (2017), «Attention is all you need», sección 3.3.</p>
         </details>
+      
+                <section class="nivel" data-titulo="Atención con consultas agrupadas">
+          <p>Hay 12 cabezas de consulta de dimensión \(d_k=1536/12=128\). La cabeza \(j\) usa el par clave/valor \(g(j)=\lfloor j/6\rfloor\):</p>
+          \[ \mathrm{Atn}_j=\mathrm{softmax}\!\Big(\frac{Q_j K_{g(j)}^{\top}}{\sqrt{d_k}}+M\Big)V_{g(j)} \]
+          <p>\(M\) es la máscara causal: \(M_{ts}=-\infty\) si \(s&gt;t\). Cada token ve solo los anteriores, y por eso el receptor puede repetir cada predicción antes de conocer el token siguiente. Las 12 salidas se concatenan y se multiplican por \(W_O\).</p>
+          <p>Compartir \(K\) y \(V\) entre 6 cabezas reduce lo que se guarda del contexto a \(2\times28\times2\times128=14\,336\) números por token (56 KiB en float32), seis veces menos que con 12 pares.</p>
+          <p class="ref">Vaswani et al. (2017), «Attention is all you need»; Ainslie et al. (2023), «GQA», EMNLP.</p>
+        </section>
+        <section class="nivel" data-titulo="Posiciones (RoPE) y SwiGLU">
+          <p>La posición entra rotando pares de coordenadas de \(q\) y \(k\). En la posición \(m\), el par \(i=0,\dots,63\) gira un ángulo \(m\theta_i\), con \(\theta_i=b^{-2i/d_k}\) y \(b=10^{6}\) (<code>rope_theta</code>). Las rotaciones son ortogonales, así que</p>
+          \[ \langle R_m q,\;R_n k\rangle=\langle q,\;R_{n-m}k\rangle \]
+          <p>y la puntuación depende solo de la distancia \(n-m\).</p>
+          <p>La red prealimentada es SwiGLU, sin sesgos, con \(W_1,W_3\in\mathbb{R}^{8960\times1536}\) y \(W_2\in\mathbb{R}^{1536\times8960}\):</p>
+          \[ \begin{gathered} \mathrm{FFN}(x)=W_2\big(\mathrm{SiLU}(W_1x)\odot W_3x\big)\\ \mathrm{SiLU}(z)=z/(1+e^{-z}) \end{gathered} \]
+          <p>Son tres matrices: de ahí el factor 3 del conteo de parámetros.</p>
+          <p class="ref">Su et al. (2024), «RoFormer», <i>Neurocomputing</i> 568; Shazeer (2020), «GLU variants improve Transformer».</p>
+        </section>
       </article>
       <article class="paso" data-paso="salida" hidden>
         <span class="eyebrow">Paso 6</span>
@@ -215,6 +279,14 @@ tr.uno td:first-child { font-weight: 600; }
         <details><summary>Detalle técnico</summary>
           <p>El shannon es la unidad de información de la norma ISO/IEC 80000-13. Un token con p = 0.5 aporta 1 Sh; con p = 0.25, 2 Sh. Hay decimales porque los tokens comparten bits dentro del mensaje comprimido. Los 8 primeros tokens del poema suman 68.80 Sh. La suma sobre todo el texto es, casi exactamente, el número de bits del mensaje comprimido.</p>
         </details>
+      
+                <section class="nivel" data-titulo="Regla de la cadena: por qué se suman">
+          <p>La red da probabilidades condicionales. La probabilidad del texto es su producto, y su información, la suma:</p>
+          \[ -\log_2 Q(x_{1:n})=\sum_{t=1}^{n}-\log_2 Q(x_t\mid x_{&lt;t}) \]
+          <p>Si los textos siguen una distribución \(P\), el valor esperado de esa suma es \(H(P,Q)=H(P)+D(P\|Q)\). En un solo texto solo se observa la suma; la entropía \(H(P)\) del español no se conoce, así que el resultado mide la red en este poema y no permite afirmar cuánto falta para el óptimo.</p>
+          <p>Unidades: \(1\ \mathrm{Sh}=\ln 2\ \mathrm{nat}\approx0.693\ \mathrm{nat}\); las bibliotecas suelen dar la pérdida en nats. El dado: \(100\log_2 6=258.50\) Sh y \(6^{100}&lt;2^{259}\), por eso caben en 259 bits.</p>
+          <p class="ref">Cover y Thomas (2006), cap. 2; ISO/IEC 80000-13:2008.</p>
+        </section>
       </article>
       <article class="paso" data-paso="aritmetico" hidden>
         <span class="eyebrow">Paso 9</span>
@@ -226,6 +298,19 @@ tr.uno td:first-child { font-weight: 600; }
         <details><summary>Detalle técnico</summary>
           <p>Esa ampliación al doble se llama renormalización. Bit pendiente: si el intervalo queda alrededor de 0.5, entre 0.25 y 0.75, también se amplía al doble, pero el bit se decide cuando el intervalo se mueve hacia un lado. La demostración usa probabilidades de ejemplo y float64, suficiente para cinco pasos; el programa real usa enteros de 62 bits para los extremos.</p>
         </details>
+      
+                <section class="nivel" data-titulo="Cota de longitud y el «+2»">
+          <p>Con aritmética exacta, el texto queda en un intervalo de longitud \(P(x)=\prod_t \hat q(x_t\mid x_{&lt;t})\). Basta un número binario de \(\ell\) bits cuyo intervalo diádico \([0.b_1\dots b_\ell,\;0.b_1\dots b_\ell+2^{-\ell})\) quepa dentro, y siempre existe uno con</p>
+          \[ \ell\;\le\;\Big\lceil\log_2\tfrac{1}{P(x)}\Big\rceil+1\;&lt;\;\log_2\tfrac{1}{P(x)}+2 . \]
+          <p>Con renormalización (esquema de Witten, Neal y Cleary), tras cada paso el intervalo mide más de \(1/4\) y contiene \([1/4,1/2)\) o \([1/2,3/4)\). Al terminar se escriben 2 bits, «01» o «10» (con los bits pendientes intercalados), que señalan ese cuarto: es el «+2» de la fórmula del artículo. Después se completa el último byte.</p>
+          <p class="ref">Witten, Neal y Cleary (1987), «Arithmetic coding for data compression», <i>CACM</i> 30(6); Cover y Thomas (2006), sec. 13.3.</p>
+        </section>
+        <section class="nivel" data-titulo="Precisión finita: enteros de 62 bits">
+          <p>Los extremos son enteros en \([0,2^{62})\). Tras renormalizar, el ancho \(R\) del intervalo cumple \(R&gt;2^{60}\). Con cortes de la forma \(\lfloor R\,c_v/T\rfloor\), donde \(c_v\) es la frecuencia acumulada y \(T=\sum_u f_u\le2^{24}\),</p>
+          \[ \mathrm{ancho}(v)\;\ge\;\Big\lfloor\frac{R\,f_v}{T}\Big\rfloor\;\ge\;\Big\lfloor\frac{2^{60}}{2^{24}}\Big\rfloor=2^{36} \]
+          <p>para todo \(f_v\ge1\): ningún subintervalo queda vacío. El error relativo de cada corte es menor que \(2^{-36}\), lo que agrega menos de \(2.1\times10^{-11}\) Sh por token. El costo real de la precisión finita está en las frecuencias enteras (paso 10).</p>
+          <p class="ref">La implementación del modelo (<code>src/compresion/llm_aritmetico.py</code>) usa la forma de corte de Witten, Neal y Cleary (1987), con bits pendientes; la cota es cálculo propio.</p>
+        </section>
       </article>
       <article class="paso" data-paso="frecuencias" hidden>
         <span class="eyebrow">Paso 10</span>
@@ -237,6 +322,14 @@ tr.uno td:first-child { font-weight: 600; }
         <details><summary>Detalle técnico</summary>
           <p>⌊·⌋ es la función piso: redondea hacia abajo. La longitud del subintervalo de v es proporcional a f<sub>v</sub> / Σ<sub>u</sub> f<sub>u</sub>. Se restan V = 151 936 unidades a 2<sup>24</sup> para reservar la unidad extra de cada salida, de modo que la suma de frecuencias no supere 2<sup>24</sup>.</p>
         </details>
+      
+                <section class="nivel" data-titulo="Lo que cuesta cuantizar p">
+          <p>El codificador usa \(\hat q_v=f_v/\sum_u f_u\) en lugar de \(p_v\). Como \(f_v\ge p_v(2^{24}-V)\) y \(\sum_u f_u\le2^{24}\) cuando \(\sum_v p_v=1\),</p>
+          \[ \begin{aligned} -\log_2\hat q_v&\le-\log_2 p_v+\log_2\tfrac{2^{24}}{2^{24}-V}\\ &=-\log_2 p_v+0.0131\ \mathrm{Sh} \end{aligned} \]
+          <p>Para los 294 tokens del poema eso da, en el peor caso, 3.86 bits. En distribuciones de prueba tipo Zipf sobre 151 936 salidas, la divergencia \(D(p\|\hat q)\) quedó entre \(10^{-4}\) y \(10^{-2}\) Sh por token (cálculo propio, no del artículo).</p>
+          <p>Además, ningún token cuesta más de \(\log_2\sum_u f_u\le24\) Sh, aunque la red le dé \(p\approx0\) o el exponencial de float32 subdesborde a 0. « dul» quedó en 24.00 Sh, en ese tope. Para decodificar no importa que \(\hat q\) se parezca a \(p\): importa que emisor y receptor obtengan los mismos enteros \(f_v\).</p>
+          <p class="ref">Cota y simulación propias, verificadas numéricamente.</p>
+        </section>
       </article>
       <article class="paso" data-paso="resultado" hidden>
         <span class="eyebrow">Paso 11</span>
@@ -248,6 +341,19 @@ tr.uno td:first-child { font-weight: 600; }
           <div class="formula">ℓ ≈ Σ<sub>t=1</sub><sup>Q+1</sup> −log<sub>2</sub> p(x<sub>t</sub> | x<sub>&lt;t</sub>) + 2</div>
           <p>Q = 293 es el número de tokens del poema y el término Q+1 es el token de fin. Tiempos medidos: compresión 53.29 s y descompresión 56.77 s, con la red ya cargada; cargar la red toma 3.34 s. A los 173 bytes se les agregan 2 bytes con la longitud, para un total de 175 bytes (1400 bits) que pasan al cifrado.</p>
         </details>
+      
+                <section class="nivel" data-titulo="Bits por carácter y perplejidad">
+          <p>Con \(\ell=173\times8=1384\) bits y \(n=901\) caracteres salen \(1384/901=1.536\) bits por carácter; el UTF-8 usa \(928\times8/901=8.24\). Por token, con \(Q+1=294\), son unos 4.71 bits. La perplejidad es</p>
+          \[ \mathrm{PPL}=2^{\bar H},\qquad \bar H=\frac{1}{Q+1}\sum_{t=1}^{Q+1}-\log_2\hat q(x_t\mid x_{&lt;t}) \]
+          <p>La suma de información está entre \(\ell_{\text{bits}}-2\) y \(\ell_{\text{bits}}\), con \(1377\le\ell_{\text{bits}}\le1384\) por el relleno del último byte. Entonces \(\mathrm{PPL}\approx25.6\) a \(26.1\): en promedio, la red duda como si eligiera entre unas 26 opciones igual de probables. Es una estimación a partir del tamaño; el artículo no reporta la perplejidad.</p>
+          <p class="ref">Cálculo propio a partir de las cifras del caso; definición de perplejidad: Jurafsky y Martin, <i>Speech and Language Processing</i>, cap. 3.</p>
+        </section>
+        <section class="nivel" data-titulo="Límites de la comparación">
+          <p>zlib, bzip2 y LZMA son universales: aprenden del propio texto, y en 928 bytes casi no tienen de dónde. La red llega con lo aprendido en su entrenamiento, y sus pesos (unos 3.1 GB en bfloat16, 6.2 GB en float32) no se cuentan en los 173 bytes porque emisor y receptor ya los tienen.</p>
+          \[ \ell_{\text{total}}=\ell(x\mid Q)+\ell(Q) \]
+          <p>Bajo la longitud de descripción mínima habría que sumar \(\ell(Q)\). Aquí es razonable omitirlo: la red es pública y se descarga una sola vez. La ganancia depende del texto; en otros idiomas o estilos alejados del entrenamiento puede ser menor (no se midió). Y el costo es tiempo: 53.29 s para 294 tokens, unos 0.18 s por token en CPU.</p>
+          <p class="ref">Delétang et al. (2024), «Language modeling is compression», ICLR; Rissanen (1978), MDL.</p>
+        </section>
       </article>
       <article class="paso" data-paso="requisito" hidden>
         <span class="eyebrow">Paso 12</span>
@@ -256,6 +362,20 @@ tr.uno td:first-child { font-weight: 600; }
         <p>Descomprime repitiendo las mismas predicciones. La configuración es float32 y el mismo tipo de procesador.</p>
         <p>Una diferencia mínima cambia los subintervalos. En una tarjeta gráfica (GPU) el mismo poema dio <b>174 bytes</b>, no 173.</p>
         <p>La red es pública. Lo secreto es la clave K, que entra en la siguiente etapa.</p>
+      
+                <section class="nivel" data-titulo="Determinismo en coma flotante">
+          <p>La suma en coma flotante no es asociativa:</p>
+          \[ \mathrm{fl}\big(\mathrm{fl}(a+b)+c\big)\neq\mathrm{fl}\big(a+\mathrm{fl}(b+c)\big) \]
+          <p>En float32, \((10^8-10^8)+1=1\) pero \(10^8+(-10^8+1)=0\), porque cerca de \(10^8\) los float32 van de 8 en 8. Un producto de matrices o un softmax suman miles de términos, y el orden lo decide la biblioteca según el procesador, los hilos y el tamaño de bloque. CPU y GPU dan logits que difieren en los últimos bits, y basta que una sola \(f_v\) cambie en un solo paso para que los cortes difieran. Por eso se fija float32, CPU y 4 hilos; en GPU el poema dio 174 bytes. Que cambiar solo el número de hilos altere el resultado es posible, pero no se probó.</p>
+          <p class="ref">Goldberg (1991), «What every computer scientist should know about floating-point arithmetic», <i>ACM Computing Surveys</i> 23(1); IEEE 754-2019.</p>
+        </section>
+        <section class="nivel" data-titulo="Un error se propaga">
+          <p>La decodificación es secuencial: el token \(t\) sale del intervalo actual, que depende de todos los tokens y bits anteriores. La recuperación exacta exige</p>
+          \[ \hat q^{\,\text{rec}}(v\mid x_{&lt;t})=\hat q^{\,\text{emi}}(v\mid x_{&lt;t})\ \ \forall\,t,\,v . \]
+          <p>Si un bit del mensaje comprimido cambia, o una frecuencia difiere, el decodificador elige otro token desde ese punto, la red recibe otro contexto y el resto del texto se pierde: el error no se corrige solo.</p>
+          <p>El modelo no lleva código corrector de errores. Supone un canal sin errores: el estegoaudio debe llegar bit a bit, sin recompresión con pérdida ni remuestreo. Es una limitación del sistema.</p>
+          <p class="ref">Witten, Neal y Cleary (1987); MacKay (2003), <i>Information Theory, Inference, and Learning Algorithms</i>, cap. 6.</p>
+        </section>
       </article>
       <div class="mando"></div>
     </div>
@@ -659,19 +779,22 @@ emb.position.y = 0.35; lin.position.y = TOP + 0.15;
 // Detalle de la capa 1: 12 cabezas de consulta y 2 de clave/valor; perceptrón 1536 → 8960 → 1536 (6 → 14 → 6 puntos).
 const matDet = new THREE.MeshStandardMaterial({ color: C.net, emissive: C.net, emissiveIntensity: 0.15 });
 const matDet2 = new THREE.MeshStandardMaterial({ color: C.ink });
+// Cada esfera del detalle lleva su propio material para que el hover resalte solo esa.
+const matsDet = [], matsDet2 = [];
+const mDet = () => { const m = matDet.clone(); matsDet.push(m); return m; }, mDet2 = () => { const m = matDet2.clone(); matsDet2.push(m); return m; };
 const matHilo = new THREE.LineBasicMaterial({ color: C.net, transparent: true, opacity: 0.3 });
 const detAtt = new THREE.Group(), detFfn = new THREE.Group();
 const bolita = new THREE.SphereGeometry(0.07, 12, 12), bola = new THREE.SphereGeometry(0.13, 16, 16);
 const hilosAtt = [];
-const kv = [-0.5, 0.5].map(x => { const m = new THREE.Mesh(bola, matDet2); m.position.set(x, 0.12, 0.55); detAtt.add(m); return m; });
+const kv = [-0.5, 0.5].map((x, k) => { const m = new THREE.Mesh(bola, mDet2()); m.position.set(x, 0.12, 0.55); m.userData = { tipo: "kv", k }; detAtt.add(m); return m; });
 for (let q = 0; q < 12; q++) {
-  const m = new THREE.Mesh(bolita, matDet); m.position.set(-1.32 + q * 0.24, 0.1, -0.55); detAtt.add(m);
+  const m = new THREE.Mesh(bolita, mDet()); m.position.set(-1.32 + q * 0.24, 0.1, -0.55); m.userData = { tipo: "q", j: q }; detAtt.add(m);
   hilosAtt.push(m.position.x, 0.1, -0.55, kv[q < 6 ? 0 : 1].position.x, 0.12, 0.55);
 }
 const gHA = new THREE.BufferGeometry(); gHA.setAttribute("position", new THREE.Float32BufferAttribute(hilosAtt, 3));
 detAtt.add(new THREE.LineSegments(gHA, matHilo));
 const filas = [6, 14, 6], zf = [-0.75, 0, 0.75], posF = filas.map((n, r) => [...Array(n)].map((_, k) => new THREE.Vector3((k - (n - 1) / 2) * (r === 1 ? 0.2 : 0.34), 0.1, zf[r])));
-posF.flat().forEach(p => { const m = new THREE.Mesh(bolita, matDet); m.position.copy(p); detFfn.add(m); });
+posF.forEach((fila, r) => fila.forEach(p => { const m = new THREE.Mesh(bolita, mDet()); m.position.copy(p); m.userData = { tipo: "ffn", fila: r }; detFfn.add(m); }));
 const hilosF = [];
 for (let r = 0; r < 2; r++) for (const a of posF[r]) for (const b of posF[r + 1]) hilosF.push(a.x, a.y, a.z, b.x, b.y, b.z);
 const gHF = new THREE.BufferGeometry(); gHF.setAttribute("position", new THREE.Float32BufferAttribute(hilosF, 3));
@@ -699,7 +822,7 @@ for (let k = 0; k < NB; k++) {
   const a = -1.25 + 2.5 * k / (NB - 1), centro = k === (NB - 1) / 2;
   const h = centro ? 39.93 / 100 * 5 : EJ[Math.min(k, NB - 1 - k) % EJ.length];
   for (const padre of [e.scene, receptor]) {
-    const m = new THREE.Mesh(geoBar, centro ? matCe : matBarra);
+    const m = new THREE.Mesh(geoBar, centro ? matCe : matBarra.clone());
     m.userData = { h, centro };
     m.position.set(R * Math.sin(a), 0, -R * Math.cos(a) + R * 0.7);
     padre.add(m); barras.push(m);
@@ -732,7 +855,7 @@ function escalarRotulos() {
 }
 
 // Estado.
-let modo = "general", abrir = 0;
+let modo = "general", abrir = 0, foco = -1, hov = null, kTokVivo = 0;
 const posSub = s => { const L = s >> 1, ffn = s & 1; return Y0 + L * DY + (ffn ? GAP : 0) + (L === 0 ? (ffn ? 0.95 * abrir : 0) : 1.3 * abrir); };
 const datoVivo = { v: "Capa 1 de 28", t: "autoatención" };
 const suave = u => u * u * (3 - 2 * u);
@@ -755,13 +878,13 @@ function cuadro(t) {
       datoVivo.v = `Capa ${L + 1} de 28`; datoVivo.t = ffn ? "red prealimentada" : "autoatención";
     }
   } else if (modo === "tokens") {
-    kTok = Math.floor(t / 1.4) % TOKS.length;
+    kTok = kTokVivo = Math.floor(t / 1.4) % TOKS.length;
     const w = suave(Math.min(1, (t % 1.4) / 1.1)), q = cola[kTok].gris.position;
     xTok = q.x * (1 - w); yTok = (q.y + 0.35) * (1 - w) + 0.35 * w; zTok = q.z * (1 - w);
   } else if (modo === "capa") {
-    const ffn = Math.floor(t / 1.6) % 2;
+    const ffn = foco >= 0 ? foco : Math.floor(t / 1.6) % 2;
     activa = ffn;
-    const y = posSub(ffn), ant = posSub(1 - ffn), w = Math.min(1, (t % 1.6) / 0.5);
+    const y = posSub(ffn), ant = posSub(1 - ffn), w = foco >= 0 ? 1 : Math.min(1, (t % 1.6) / 0.5);
     yTok = ant + (y - ant) * suave(w);
     xTok = -2.5;
   } else {
@@ -774,11 +897,12 @@ function cuadro(t) {
     const lejos = modo === "capa" && s > 1;
     // Solo la subcapa que atraviesa el token se ilumina (en «capa», las dos de la capa abierta quedan teñidas).
     const obj = s === activa ? 1 : modo === "capa" && s <= 1 ? 0.45 : 0;
+    const bajo = m === hov;
     m.userData.on += (obj - m.userData.on) * (s === activa ? 1 : u);
     const on = m.userData.on;
     m.material.color.copy(cT.copy(C.muted).lerp(C.net, on));
-    m.material.opacity = (lejos ? 0.04 : 0.16) + 0.6 * on;
-    m.material.emissiveIntensity = 0.45 * on;
+    m.material.opacity = bajo ? Math.max(0.5, 0.16 + 0.6 * on) : (lejos ? 0.04 : 0.16) + 0.6 * on;
+    m.material.emissiveIntensity = bajo ? 0.55 : 0.45 * on;
     m.children[0].material.color.copy(cT);
     m.children[0].material.opacity = lejos ? 0.06 : 0.3 + 0.4 * on;
   });
@@ -800,8 +924,10 @@ e.alTema(c => {
   C = c;
   [emb, lin].forEach(m => { m.material.color.copy(C.muted); m.children[0].material.color.copy(C.muted); });
   subs.forEach(m => m.material.emissive.copy(C.net));
-  matDet.color.copy(C.net); matDet.emissive.copy(C.net); matDet2.color.copy(C.ink); matHilo.color.copy(C.net); matHiloF.color.copy(C.net);
+  matDet.color.copy(C.net); matDet.emissive.copy(C.net); matDet2.color.copy(C.ink);
+  matsDet.forEach(m => { m.color.copy(C.net); m.emissive.copy(C.net); }); matsDet2.forEach(m => m.color.copy(C.ink)); matHilo.color.copy(C.net); matHiloF.color.copy(C.net);
   matRA.color.copy(C.muted); matRB.color.copy(C.muted); matBarra.color.copy(C.muted);
+  barras.forEach(b => { if (!b.userData.centro) b.material.color.copy(C.muted); });
   matTok.color.copy(C.net); matTok.emissive.copy(C.net);
   cuadro(ultimoT);
 });
@@ -818,6 +944,48 @@ function ponerDato(d, vivo = false) {
   if (vivo || sinMovimiento() || !d) return poner();
   dato.classList.add("fuera"); setTimeout(() => { if (datoTxt === txt) poner(); }, 220);
 }
+
+
+/* ---------- Hover: cada pieza dice qué es y su dato real ---------- */
+const PARAM = { att: "5 507 072", ffn: "41 287 680" };
+const bytesDe = s => [...enc.encode(s)].map(x => x.toString(16).toUpperCase().padStart(2, "0")).join(" ");
+const filaDe = tok => FILAS.find(f => f[0] === tok);
+function textoHover(o) {
+  const u = o.userData || {};
+  if (subs.includes(o)) {
+    const s = subs.indexOf(o), L = (s >> 1) + 1;
+    return s & 1
+      ? `<b>Capa ${L} de 28 · red prealimentada</b><br>SwiGLU 1536 → 8960 → 1536, tras RMSNorm<br><span class="mono">${PARAM.ffn} parámetros</span>`
+      : `<b>Capa ${L} de 28 · autoatención</b><br>12 cabezas de consulta, 2 de clave/valor, tras RMSNorm<br><span class="mono">${PARAM.att} parámetros</span>`;
+  }
+  if (o === emb) return `<b>Embedding</b><br>matriz E de 151 936 × 1536, compartida con la salida<br><span class="mono">233 373 696 parámetros</span>`;
+  if (o === lin) return `<b>RMSNorm final + capa lineal + softmax</b><br>z = E·h: 151 936 puntuaciones → probabilidades<br><span class="mono">usa la misma E del embedding</span>`;
+  if (o === token) {
+    if (modo === "tokens") { const t = TOKS[kTokVivo], f = filaDe(t); return `<b>Token «${vis(t)}»</b><br>bytes UTF-8 <span class="mono">${bytesDe(t)}</span><br>p = ${f[1]} · ${f[4]} Sh`; }
+    return `<b>Un token</b><br>vector de 1536 números en float32 que sube por las 28 capas`;
+  }
+  const c = cola.findIndex(c => c.gris === o || c.vivo === o);
+  if (c >= 0) { const t = TOKS[c], f = filaDe(t); return `<b>Token ${c + 1}: «${vis(t)}»</b><br>bytes <span class="mono">${bytesDe(t)}</span><br>p = ${f[1]} · puesto ${f[3]} · ${f[4]} Sh`; }
+  if (u.tipo === "q") return `<b>Cabeza de consulta ${u.j + 1} de 12</b><br>d<sub>k</sub> = 128 · usa el par clave/valor ${(u.j < 6 ? 1 : 2)}`;
+  if (u.tipo === "kv") return `<b>Par clave/valor ${u.k + 1} de 2</b><br>lo comparten 6 cabezas de consulta (${u.k ? "7 a 12" : "1 a 6"})`;
+  if (u.tipo === "ffn") return [`<b>Entrada de la red prealimentada</b><br>1536 números (aquí 6 puntos)`, `<b>Capa intermedia</b><br>8960 neuronas: SiLU(W₁x) ⊙ W₃x (aquí 14 puntos)`, `<b>Salida de la red prealimentada</b><br>1536 números, W₂ (aquí 6 puntos)`][u.fila];
+  if (barras.includes(o)) return u.centro
+    ? `<b>«ce»</b><br>p = 39.93 % · 1.32 Sh · puesto 1 de 151 936`
+    : `<b>Otra salida</b> (altura de ejemplo)<br>las 151 935 restantes suman 60.07 %`;
+  if (o === receptor) return `<b>Receptor</b><br>la misma red: mismos pesos, float32, CPU, 4 hilos.<br>Repite las mismas probabilidades.`;
+  return null;
+}
+let tocado = false;
+const alPasarCon = objs => e.alPasar(objs, (o) => { const h = textoHover(o); if (h) { hov = o; tocado = true; } return h; }, { color: "key" });
+// Primero las piezas pequeñas (cabezas, neuronas, token): ganan aunque una losa quede más cerca del puntero.
+alPasarCon(() => [...(abrir > 0.5 ? [...detAtt.children, ...detFfn.children].filter(m => m.isMesh) : []), token]);
+e.alPasar(() => [
+  ...barras.filter(b => b.parent === e.scene || receptor.visible),
+  ...(modo === "tokens" ? cola.flatMap(c => [c.gris, c.vivo]).filter(s => s.visible) : []),
+  ...(receptor.visible ? [receptor] : []), lin, ...(modo === "capa" ? subs.slice(0, 2) : subs), emb,
+], (o) => { const h = textoHover(o); if (h) { hov = o; tocado = true; } return h; }, { color: "net" });
+e.renderer.domElement.addEventListener("pointermove", () => { if (!tocado) hov = null; tocado = false; });
+e.renderer.domElement.addEventListener("pointerleave", () => (hov = null));
 
 /* ---------- Cámara: tomas encuadradas según el tamaño real del lienzo ----------
    Cada toma es una caja que debe caber en pantalla y la dirección desde la que se mira. Arriba queda
@@ -959,6 +1127,10 @@ recorrido($("recorrido"), (i) => {
   if (MODOS[i]) irModo(MODOS[i], primera || sinMovimiento());
   narra.innerHTML = `<b>Qué estás viendo:</b> ${NARRA[i]}`;
   primera = false;
+  foco = -1;
+}, (i, k) => {
+  // En el paso 5, cada capa de detalle deja encendida la subcapa de la que habla (1: autoatención, 2: red prealimentada).
+  foco = i === 4 && k ? k - 1 : -1;
 });
 </script>
 </body>

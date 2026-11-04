@@ -48,6 +48,15 @@
 .rec-t .b { height: .8rem; border-radius: 3px; background: var(--muted); min-width: 2px; opacity: .6; }
 .rec-t .b.red { background: var(--key); opacity: 1; }
 .rec-t .tot { font-weight: 600; border-top: 1px solid var(--line); padding-top: .35rem; }
+/* Capas de detalle: en teléfono, letra algo menor para que cada capa quepa sin desplazarse */
+@media (max-width: 900px) {
+  .nivel { font-size: .84rem; line-height: 1.42; gap: .45rem !important; }
+  .nivel .katex { font-size: .98em; }
+  .nivel .katex-display { margin: 0; }
+  .nivel .ref { font-size: .68rem; line-height: 1.3; }
+  .nivel-cab h3 { font-size: 1.08rem; }
+  .nivel-pie button { padding: .3rem .7rem; font-size: .8rem; }
+}
 </style>
 </head>
 <body>
@@ -75,6 +84,13 @@
         <p>De ella toma las condiciones iniciales y los parámetros de las secuencias, los mismos que usó el emisor.</p>
         <p class="analogia">Como una receta: siempre sale el mismo plato.</p>
         <details><summary>Detalle técnico</summary><p>La entrada son 18 bytes: x0 y r como float64 big-endian y N como entero de 16 bits. De la salida se toman 8 bloques de 8 bytes; cada bloque se lee como entero, se desplaza 11 bits a la derecha y se divide entre 2<sup>53</sup> para obtener u ∈ [0, 1). Luego x = 0.001 + 0.998·u y r = 3.99 + 0.01·u (3.99 + 0.0099·u en la secuencia de posiciones).</p></details>
+        <section class="nivel" data-titulo="Derivación determinista">
+        <p>Sea \(H=\mathrm{SHA\text{-}512}(\mathrm{enc}(K))\), donde enc empaqueta K en 18 bytes, y sea \(H_i\) su bloque i de 64 bits leído como entero:</p>
+        \[ u_i=\frac{\lfloor H_i/2^{11}\rfloor}{2^{53}},\qquad x=0.001+0.998\,u,\qquad r=3.99+0.01\,u \]
+        <p>El desplazamiento deja 53 bits, la precisión de float64, así que pasar a número es exacto. Si se supone que H se comporta como una cadena uniforme (modelo de oráculo aleatorio), u es uniforme en la rejilla \(\{k/2^{53}\}\), sin sesgo de módulo, porque \(2^{64}/2^{53}\) es entero. Se usan 6 de los 8 bloques.</p>
+        <p>El receptor obtiene los mismos bits porque SHA-512 es una función y IEEE 754 exige redondeo correcto en +, − y ×: el resultado no depende del equipo, siempre que no se fusionen operaciones (FMA) ni se use precisión extendida.</p>
+        <p class="ref">NIST FIPS 180-4 (2015); IEEE 754-2019, sec. 4.3; M. Bellare y P. Rogaway, «Random oracles are practical», ACM CCS 1993.</p>
+        </section>
       </article>
       <article class="paso" data-paso="cabecera">
         <span class="eyebrow">Paso 3 · Lee la cabecera</span>
@@ -95,6 +111,12 @@
         <h2>Regenera las 1400 posiciones y lee 1400 bits</h2>
         <p>Regenera las 1400 posiciones, las mismas del emisor, y lee el último bit de cada muestra.</p>
         <p>Ahora que conoce L, sigue iterando la secuencia de posiciones hasta tener 1400. Los bits leídos son los 1400 bits del mensaje cifrado.</p>
+        <section class="nivel" data-titulo="Posiciones sin reemplazo">
+        <p>La posición i es \(p_i=\lfloor y_{t_i}M\rfloor\), con \(y_t\) la secuencia de posiciones tras \(N_p=N+1000\) iteraciones; las repetidas se descartan. Es un muestreo sin reemplazo, y el receptor repite la misma regla. Con \(y_t\) uniformes e independientes, las colisiones esperadas serían</p>
+        \[ \mathbb E[C]\approx\binom{L}{2}\frac1M=\frac{1400\cdot1399}{2\cdot 25\,143\,552}\approx0.039 \]
+        <p>Con la densidad arcoseno de r = 4, que acumula valores cerca de 0 y 1, sube a ≈ 0.17 (aproximación: \(r_p=3.99602\)). En el caso de estudio no hubo ninguna. La misma densidad explica que el primer y el último décimo del audio reciban 227 y 287 de las 1400 posiciones, frente a unas 100 en cada décimo central.</p>
+        <p class="ref">S. M. Ulam y J. von Neumann, Bull. AMS 53, 1947 (densidad de r = 4). Conteos con la clave del caso.</p>
+        </section>
       </article>
       <article class="paso" data-paso="xor">
         <span class="eyebrow">Paso 6 · Descifra</span>
@@ -103,6 +125,12 @@
         <p>Agrupa los bits de 8 en 8 y regenera el flujo de clave. Dos XOR con el mismo valor se anulan.</p>
         <p class="analogia">Como un interruptor: pulsarlo dos veces deja la luz igual.</p>
         <details><summary>Detalle técnico</summary><p class="formula">(m ⊕ k) ⊕ k = m ⊕ (k ⊕ k) = m ⊕ 0 = m</p><p>m es un byte del mensaje comprimido, k el byte del flujo de clave en la misma posición y ⊕ la XOR bit a bit.</p></details>
+        <section class="nivel" data-titulo="Corrección del descifrado">
+        <p>El emisor aplica \(\mathcal E_K=I_P\circ X_k\circ A_f\): codificación aritmética con las frecuencias f de cada paso, XOR con el flujo \(k=G(K)\) e inserción en las posiciones \(P=P(K,M)\). El receptor aplica</p>
+        \[ \mathcal D_K=A_f^{-1}\circ X_k\circ R_P,\qquad R_P(s')=\big(s'[p_i]\wedge1\big)_{i=1}^{L} \]
+        <p>y \(\mathcal D_K(\mathcal E_K(m))=m\) porque cada pieza deshace la anterior: \(R_P\circ I_P\) devuelve los bits escritos (las posiciones son distintas), \(X_k\circ X_k=\mathrm{id}\) y \(A_f^{-1}\circ A_f=\mathrm{id}\) si el decodificador usa exactamente las mismas f.</p>
+        <p>Supuestos: el estegoaudio llega sin cambios, M es el mismo y las f coinciden bit a bit (capa siguiente del paso 7). Si alguno falla, la igualdad deja de valer y el modelo no tiene cómo detectarlo ni corregirlo.</p>
+        </section>
       </article>
       <article class="paso" data-paso="red">
         <span class="eyebrow">Paso 7 · Descomprime con la red</span>
@@ -111,6 +139,19 @@
         <p>Los bits comprimidos forman un número entre 0 y 1, el valor recibido. Con las mismas probabilidades de la compresión, el token es el del subintervalo donde cae ese valor.</p>
         <p class="analogia">Mismas pistas que el emisor, misma respuesta.</p>
         <details><summary>Detalle técnico</summary><p>El decodificador divide el intervalo en subintervalos, mira en cuál cae el valor recibido, agrega ese token al texto y repite hasta el token de fin. Usa las mismas frecuencias enteras f<sub>v</sub> = ⌊p<sub>v</sub>(2<sup>24</sup> − V)⌋ + 1 que el codificador, así que los subintervalos coinciden exactamente. Para eso emisor y receptor deben usar la misma red, en float32 y en el mismo tipo de dispositivo. En GPU el mismo poema dio 174 bytes en vez de 173.</p></details>
+        <section class="nivel" data-titulo="Regla de decodificación">
+        <p>Con frecuencias enteras \(f_v\), acumuladas \(F_v=\sum_{u&lt;v}f_u\) y total F, la implementación del modelo (<code>src/compresion/llm_aritmetico.py</code>), que sigue el esquema entero de Witten, Neal y Cleary, toma el intervalo actual \([l,\,l+R)\) y el valor recibido c, y elige el único token v con</p>
+        \[ F_v\;\le\;\left\lfloor\frac{(c-l+1)\,F-1}{R}\right\rfloor\;&lt;\;F_v+f_v \]
+        <p>Luego actualiza l y R igual que el codificador y renormaliza. Cada token necesita una pasada de la red para obtener las f del siguiente, así que la decodificación es secuencial y no se reparte entre tokens: tarda lo mismo que la compresión (56.77 s frente a 53.29 s).</p>
+        <p class="ref">I. H. Witten, R. M. Neal y J. G. Cleary, «Arithmetic coding for data compression», Commun. ACM 30(6), 1987.</p>
+        </section>
+        <section class="nivel" data-titulo="Determinismo en coma flotante">
+        <p>Las f dependen de p a través de un piso: un cambio de \(1/(2^{24}-V)\approx6.0\times10^{-8}\) en \(p_v\) puede mover \(f_v\) una unidad. Es el orden del redondeo de float32, \(2^{-24}\approx6.0\times10^{-8}\) relativo.</p>
+        <p>La suma en coma flotante no es asociativa. En float32:</p>
+        \[ (10^8+1)-10^8=0,\qquad (10^8-10^8)+1=1 \]
+        <p>Una GPU suma los productos de cada capa en otro orden, con otras bibliotecas, así que las p difieren en los últimos bits, alguna f cambia y desde ese token los subintervalos del receptor ya no son los del emisor. Por eso se exige el mismo modelo, float32 y el mismo tipo de dispositivo. En GPU el poema dio 174 bytes en vez de 173.</p>
+        <p class="ref">D. Goldberg, «What every computer scientist should know about floating-point arithmetic», ACM Comput. Surv. 23(1), 1991.</p>
+        </section>
       </article>
       <article class="paso" data-paso="verifica">
         <span class="eyebrow">Paso 8 · Verificación</span>
@@ -118,6 +159,13 @@
         <p>El texto recuperado coincide byte a byte con el original y su resumen SHA-256 es idéntico.</p>
         <p>Se comprobó en un proceso separado, que solo recibió el estegoaudio y la clave, y en otra máquina.</p>
         <details><summary>Detalle técnico</summary><p>SHA-256 convierte cualquier archivo en una cadena fija de 256 bits. Si cambia un solo bit del archivo, el resumen cambia por completo. Dos resúmenes iguales prueban que los textos son idénticos.</p></details>
+        <section class="nivel" data-titulo="Qué garantiza el SHA-256">
+        <p>Comparar \(\mathrm{SHA\text{-}256}(m)\) con \(\mathrm{SHA\text{-}256}(\hat m)\) permite verificar en otra máquina sin copiar el texto. Si \(\hat m\ne m\) y SHA-256 se modela como una función aleatoria, la probabilidad de que los resúmenes coincidan por azar es</p>
+        \[ P\big[\mathrm{SHA\text{-}256}(\hat m)=\mathrm{SHA\text{-}256}(m)\big]=2^{-256} \]
+        <p>Un adversario que buscara a propósito dos textos con el mismo resumen necesitaría del orden de \(2^{128}\) evaluaciones (paradoja del cumpleaños). Aquí no hay adversario: el resumen confirma una comparación byte a byte que también se hizo.</p>
+        <p>El SHA-256 no prueba que el sistema funcione con otros textos o equipos: eso lo muestran los 16 casos del paso siguiente, una muestra limitada.</p>
+        <p class="ref">NIST FIPS 180-4 (2015); A. Menezes, P. van Oorschot y S. Vanstone, Handbook of Applied Cryptography, 1996, cap. 9.</p>
+        </section>
       </article>
       <article class="paso" data-paso="casos">
         <span class="eyebrow">Paso 9 · Más casos</span>
@@ -131,6 +179,12 @@
         <p>La ida y vuelta completa tomó 113.47 s, y casi todo ese tiempo lo usa la red neuronal.</p>
         <p>Compresión y descompresión suman 110.06 s. Cifrar, insertar y extraer tarda milésimas de segundo.</p>
         <p>Las barras están a escala: lo que no usa la red casi no se ve.</p>
+        <section class="nivel" data-titulo="Costo computacional">
+        <p>Una pasada de la red cuesta del orden de 2P operaciones de coma flotante por token, con \(P=1.54\times10^9\) parámetros, más la atención, que crece con el contexto. El código reutiliza las claves y los valores de los tokens anteriores (caché KV, <code>past_key_values</code>), así que para los 294 símbolos del poema:</p>
+        \[ C_{\text{red}}\approx2P\,(Q+1)\approx9.1\times10^{11} \]
+        <p>Cifrar, insertar y extraer son lineales: unas \(2.4\times10^{4}\) iteraciones del mapa logístico y 1400 lecturas, siete órdenes de magnitud menos. En tiempo medido la diferencia es de unos tres (110.06 s frente a 0.073 s), porque las etapas cortas incluyen leer y guardar archivos. No se registró si la implementación usa caché KV; sin ella, la atención crece con el cuadrado de Q.</p>
+        <p class="ref">J. Kaplan et al., «Scaling laws for neural language models», arXiv:2001.08361, 2020.</p>
+        </section>
       </article>
       <div class="mando"></div>
     </div>
@@ -201,9 +255,13 @@ const rot = (t, x, y, tam = 0.24, z = 0, alin = 0.5) => { const s = etiqueta(t, 
 const X = { texto: -6, comp: -2.8, cif: 0.4, aud: 5 };
 const AUD0 = 2.6, AUD1 = 7.4;
 const disco = (x, r) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.08, 48), mat("muted", { transparent: true, opacity: 0.14 })); m.position.set(x, -0.5, 0); e.scene.add(m); return m; };
-disco(X.texto, 1.25); disco(X.comp, 1.0); disco(X.cif, 1.0);
+const discos = [disco(X.texto, 1.25), disco(X.comp, 1.0), disco(X.cif, 1.0)];
+discos[0].userData.txt = "<b>Estación: texto</b><br>293 tokens · 928 bytes";
+discos[1].userData.txt = "<b>Estación: mensaje comprimido</b><br>2 bytes de longitud + 173 bytes";
+discos[2].userData.txt = "<b>Estación: mensaje cifrado</b><br>175 bytes leídos del audio";
 const placa = new THREE.Mesh(new THREE.BoxGeometry(AUD1 - AUD0 + 0.6, 0.08, 1.6), mat("muted", { transparent: true, opacity: 0.12 }));
 placa.position.set((AUD0 + AUD1) / 2, -0.5, 0); e.scene.add(placa);
+placa.userData.txt = `<b>Estación: estegoaudio</b><br>${fmtN(M)} muestras int16`;
 
 // Onda del estegoaudio: muestras como tallos verticales
 const onda = x => 0.55 * Math.sin((x - AUD0) * 3.1) + 0.3 * Math.sin((x - AUD0) * 7.3 + 1) + 0.15 * Math.sin((x - AUD0) * 13.7);
@@ -213,6 +271,11 @@ for (let i = 0; i < NS; i++) { const x = AUD0 + (AUD1 - AUD0) * i / (NS - 1), y 
 const gT = new THREE.BufferGeometry(); gT.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
 e.scene.add(new THREE.LineSegments(gT, mat("muted", { transparent: true, opacity: 0.25 }, THREE.LineBasicMaterial)));
 e.scene.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tallos), 400, 0.03, 6, false), mat("muted", {}, THREE.MeshStandardMaterial, "audio")));
+// Zona invisible sobre la onda para el hover (la onda es demasiado fina para apuntarle)
+const cuerda = new THREE.Mesh(new THREE.BoxGeometry(AUD1 - AUD0, 1.9, 0.3), new THREE.MeshBasicMaterial({ visible: false }));
+cuerda.position.set((AUD0 + AUD1) / 2, 0.5, 0); e.scene.add(cuerda);
+cuerda.userData.txt = (o, pt) => { const p = Math.max(0, Math.min(M - 1, Math.round((pt.x - AUD0) / (AUD1 - AUD0) * (M - 1))));
+  return `<b>Estegoaudio</b><br>muestra ≈ ${fmtN(p)} de ${fmtN(M)} · ${fmtT(Math.floor(p / 2) / FS)}<br>1400 muestras llevan un bit del mensaje`; };
 
 // Las 1400 posiciones reales (calculadas con la clave) como marcas sobre la onda
 const pm = [];
@@ -228,7 +291,9 @@ const FILAS = [[W16, "leidos"], [K16, "flujo"], [R16, "resultado"]];
 const geoC = new THREE.BoxGeometry(0.2, 0.2, 0.2);
 const filas = FILAS.map(([bits, g], f) => bits.map((b, i) => {
   const m = new THREE.Mesh(geoC, b ? mat("muted", {}, THREE.MeshStandardMaterial, g) : mat("muted", { transparent: true, opacity: 0.2 }, THREE.MeshStandardMaterial, g));
-  m.position.set(HX(i), HY[f], 0); m.scale.setScalar(b ? 1 : 0.7); m.visible = false; e.scene.add(m); return m;
+  m.position.set(HX(i), HY[f], 0); m.scale.setScalar(b ? 1 : 0.7); m.visible = false; e.scene.add(m);
+  m.userData.txt = [`<b>Bit ${i + 1} leído</b><br>muestra ${fmtN(pos.P[i])} · último bit = ${W16[i]}`, `<b>Bit ${i + 1} del flujo de clave</b><br>k = ${K16[i]}`, `<b>Bit ${i + 1} de la longitud</b><br>${W16[i]} ⊕ ${K16[i]} = ${R16[i]}`][f];
+  return m;
 }));
 const lc = []; for (let i = 0; i < 16; i++) { const x = xDe(pos.P[i]); lc.push(x, onda(x) + 0.46, 0.02, HX(i), HY[0] - 0.12, 0); }
 const gL = new THREE.BufferGeometry(); gL.setAttribute("position", new THREE.Float32BufferAttribute(lc, 3));
@@ -244,8 +309,10 @@ const cana = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.12, 0.12), matK); cana.
 const d1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.22, 0.1), matK); d1.position.set(0.45, -0.15, 0);
 const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.1), matK); d2.position.set(0.6, -0.12, 0);
 llave.add(anillo, cana, d1, d2); llave.position.set(1.1, 4.35, 0); e.scene.add(llave);
+llave.userData.txt = `<b>Clave K</b><br><span class="mono">(${C.x0}, ${C.r}, ${C.N})</span><br>144 bits en memoria`;
 const matH = mat("muted", {}, THREE.MeshStandardMaterial, "hash");
 const hash = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), matH); hash.position.set(1.1, 3.1, 0); e.scene.add(hash);
+hash.userData.txt = `<b>SHA-512(K)</b><br><span class="mono">${Mo.hex(d.hash).slice(0, 16)}…</span><br>512 bits; de ellos salen los 6 parámetros`;
 const XORX = -1.2;
 const tubo = (a, b, alto) => {
   const c = new THREE.QuadraticBezierCurve3(new THREE.Vector3(...a), new THREE.Vector3((a[0] + b[0]) / 2, Math.max(a[1], b[1]) + alto, 0), new THREE.Vector3(...b));
@@ -265,9 +332,11 @@ rot("SHA-512", 1.65, 3.1, 0.22, 0, 0);
 // XOR: anillo por el que pasan los bytes; red: 28 capas por las que pasan hacia el texto
 const matX = mat("muted", {}, THREE.MeshStandardMaterial, "xor");
 const aro = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.06, 12, 48), matX); aro.rotation.y = Math.PI / 2; aro.position.set(XORX, 0.75, 0); e.scene.add(aro);
+aro.userData.txt = "<b>XOR con el flujo de clave</b><br>175 bytes · (m ⊕ k) ⊕ k = m";
 rot("XOR", XORX, 1.95, 0.24);
-const matCapa = mat("muted", { transparent: true, opacity: 0.08, depthWrite: false }, THREE.MeshStandardMaterial, "red");
-for (let k = 0; k < 28; k++) { const c = new THREE.Mesh(new THREE.BoxGeometry(0.018, 2.1, 1.6), matCapa); c.position.set(-4.95 + k * 0.045, 0.75, 0); e.scene.add(c); }
+const geoCapa = new THREE.BoxGeometry(0.018, 2.1, 1.6);
+const capasRed = [...Array(28)].map((_, k) => { const c = new THREE.Mesh(geoCapa, mat("muted", { transparent: true, opacity: 0.08, depthWrite: false }, THREE.MeshStandardMaterial, "red")); c.position.set(-4.95 + k * 0.045, 0.75, 0); e.scene.add(c);
+  c.userData.txt = `<b>Capa ${k + 1} de 28</b><br>autoatención + red prealimentada 1536 → 8960 → 1536<br>46 797 824 parámetros`; return c; });
 rot("red · 28 capas", -4.35, 2.15, 0.24);
 
 // Rótulos de las estaciones, pequeños y apagados
@@ -292,6 +361,8 @@ for (let i = 0; i < N; i++) {
 const geoB = new THREE.BoxGeometry(1, 1, 1);
 const matB = mat("muted", { roughness: 0.6 }, THREE.MeshStandardMaterial, "mensaje");
 const bloques = [...Array(N)].map(() => { const m = new THREE.Mesh(geoB, matB); e.scene.add(m); return m; });
+const TXB = ["<b>Texto recuperado</b><br>293 tokens · 928 bytes", "<b>Mensaje comprimido</b><br>2 bytes de longitud + 173 bytes", "<b>Mensaje cifrado</b><br>175 bytes = 1400 bits", "<b>El mensaje, oculto en el audio</b><br>1400 bits en 1400 muestras"];
+bloques.forEach(b => (b.userData.txt = () => TXB[Math.max(0, Math.min(3, Math.round(f)))] + "<br><span class=\"mono\">27 bloques ilustrativos</span>"));
 let f = 3;
 const tmp = new THREE.Vector3();
 const suave = t => t * t * (3 - 2 * t);
@@ -317,6 +388,7 @@ for (let t = 0; t < 4; t++) for (let a = 0; a < 4; a++) {
   m.position.set(CX - 1.5 + a, 2.6 - t, 0); casos.add(m);
   const b = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), matCasoBorde); b.position.copy(m.position); casos.add(b);
   const v = etiqueta("✓", { color: "surface", tam: 0.42, peso: 700 }); v.position.set(m.position.x, m.position.y, 0.12); v.visible = false; casos.add(v);
+  m.userData.txt = () => `<b>Texto ${t + 1} · audio ${a + 1}</b><br>${4 * t + a < estado.casos ? "recuperado exactamente ✓" : "…"}`;
   tejas.push({ m, v });
 }
 const ra = etiqueta("4 audios", { color: "muted", tam: 0.26, peso: 500 }); ra.position.set(CX, 3.3, 0); casos.add(ra);
@@ -331,11 +403,19 @@ const barrasT = TB.map(([n, s, red], i) => {
   const m = new THREE.Mesh(new THREE.BoxGeometry(1, 0.42, 0.4), red ? mat("muted", {}, THREE.MeshStandardMaterial, "redT") : mat("muted", { transparent: true, opacity: 0.5 })); m.position.set(TX, y, 0); tiempos.add(m);
   const a = etiqueta(n, { color: "muted", tam: 0.3, peso: 500 }); a.center.set(0, 0.5); a.position.set(TX, y + 0.45, 0); tiempos.add(a);
   const v = etiqueta(`${s} s`, { color: "muted", tam: 0.3, peso: 600 }); v.center.set(0, 0.5); tiempos.add(v);
+  m.userData.txt = `<b>${n}</b><br>${s} s${red ? " · usa la red" : ""}`;
   return { m, v, largo, y };
 });
 function ponerTiempos(u) { barrasT.forEach(({ m, v, largo, y }) => { const l = Math.max(0.03, largo * u); m.scale.x = l; m.position.x = TX + l / 2; v.position.set(TX + l + 0.15, y, 0); }); }
 
 e.alTema(c => { Co = c; recolorear(); ponerCasos(estado.casos); });
+
+// Hover: cada pieza muestra su dato. Primero las piezas pequeñas; el audio y las estaciones, al final.
+const seVe = o => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
+const textoDe = (o, pt) => { const t = o.userData.txt; return typeof t === "function" ? t(o, pt) : t || null; };
+e.alPasar(() => [...filas.flat(), llave, hash, aro, ...bloques, ...tejas.map(t => t.m), ...barrasT.map(b => b.m)].filter(seVe), textoDe);
+e.alPasar(() => [cuerda, ...capasRed].filter(seVe), textoDe);
+e.alPasar(() => [placa, ...discos].filter(seVe), textoDe);
 
 /* ---------- Cámara: encuadre por paso según el tamaño real del lienzo ---------- */
 // v = { c: centro, w: medio ancho, h: medio alto, dir: dirección desde el centro hacia la cámara }
