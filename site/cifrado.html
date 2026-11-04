@@ -15,71 +15,49 @@
 /* La barra común no debe ensanchar la página en teléfono (el ancho mínimo de la rejilla del body sería el de sus botones). */
 body { grid-template-columns: minmax(0, 1fr); }
 .barra { min-width: 0; }
-/* Tarjetas flotantes sobre el lienzo 3D: arriba, abajo y a la derecha. La cámara deja libre el espacio que ocupan. */
-.cif-capa { position: absolute; z-index: 2; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+/* Capas sobre el lienzo 3D: arriba y abajo. La cámara deja libre el espacio que ocupan. */
+.cif-capa { position: absolute; z-index: 2; display: flex; gap: 10px; pointer-events: none; align-items: flex-end; }
 .cif-capa:empty { display: none; }
-.cif-capa.arriba { top: 8px; left: 8px; right: 8px; }
-.cif-capa.abajo { bottom: 8px; left: 8px; right: 8px; align-items: flex-end; }
-.flota { pointer-events: auto; background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: blur(4px); border: 1px solid var(--line); border-radius: 8px; padding: .4rem .6rem; font-size: .84rem; line-height: 1.35; max-width: 100%; box-shadow: 0 2px 10px rgb(0 0 0 / .06); }
-.flota b { font-weight: 600; }
-.flota .mono { font-size: .82rem; }
-.flota button { padding: .35rem .55rem; margin-left: .4rem; vertical-align: middle; }
-.flota .kv { gap: .1rem .7rem; font-size: .84rem; }
-.cif-leyenda { display: inline-flex; align-items: center; gap: .3rem; margin-right: .7rem; white-space: nowrap; }
-.cif-leyenda i { width: .8rem; height: .8rem; border-radius: 3px; display: inline-block; }
-.cif-barra { height: .55rem; border-radius: 3px; background: var(--ciph); transition: width .8s; }
-.cif-barra.g { background: var(--muted); }
-.cif-ok { color: var(--ok); font-weight: 600; }
+.cif-capa.arriba { top: 6px; left: 6px; right: 48px; }
+.cif-capa.abajo { bottom: 6px; left: 6px; right: 6px; }
+/* Un solo dato clave por paso: cifra grande y una etiqueta corta. */
+.cif-dato { display: grid; gap: .1rem; pointer-events: auto; }
+.cif-dato b { font: 700 clamp(1.15rem, 2vw, 1.6rem)/1.1 var(--f-display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.cif-dato b.ac { color: var(--ciph); }
+.cif-dato span { font-size: .8rem; color: var(--muted); line-height: 1.3; }
+.cif-rep { pointer-events: auto; background: transparent; border: 0; color: var(--muted); font-size: .8rem; padding: .3rem .5rem; border-radius: 999px; }
+.cif-rep:hover { color: var(--ink); background: var(--soft); }
+.cif-mas { position: absolute; top: 4px; right: 4px; margin: 0; z-index: 5; width: 1.6rem; height: 1.6rem; font-size: .8rem; }
+.cif-mas[hidden] { display: none; }
+.cif-ok { color: var(--ciph); }
 
 /* Vistas en HTML (pasos 5 y 6), superpuestas al lienzo. */
-.cif-html { position: absolute; inset: 0; z-index: 3; background: var(--soft); padding: 12px; display: grid; min-height: 0; }
+.cif-html { position: absolute; inset: 0; z-index: 3; padding: 8px 8px 8px; display: grid; min-height: 0; }
 .cif-html[hidden] { display: none !important; }
-.cif-tarjetas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 10px; min-height: 0; }
-.cif-tarjetas .card { padding: .8rem .9rem; display: flex; flex-direction: column; justify-content: center; gap: .45rem; min-height: 0; overflow: hidden; animation: cif-sube .5s calc(var(--k) * 90ms) both cubic-bezier(.2, 0, 0, 1); }
-@keyframes cif-sube { from { opacity: 0; transform: translateY(10px) scale(.97); } }
-.cif-tarjetas .card b { font: 700 1.15rem/1.15 var(--f-display); }
-.cif-tarjetas .card .gr { font: 700 clamp(1.1rem, 2.4vw, 1.9rem)/1.1 var(--f-mono); color: var(--ciph); }
-.cif-tarjetas .card p { margin: 0; font-size: .92rem; color: var(--muted); line-height: 1.35; }
-.cif-hist { display: grid; grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; min-height: 0; }
-.cif-hist .bloque { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 3px; min-height: 0; }
-.cif-hist .bloque .cab { display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap; font-size: var(--s-1); color: var(--muted); }
-.cif-hist .bloque .cab b { color: var(--ink); }
-.cif-hist canvas { width: 100%; height: 100%; min-height: 0; display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
-.cif-hist .note { margin: 0; }
+.cif-formula { display: grid; place-content: center; text-align: center; gap: .9rem; }
+.cif-formula .gr { font: 700 clamp(1.6rem, 4.2vw, 3.2rem)/1.1 var(--f-mono); color: var(--ciph); animation: cif-sube .6s both cubic-bezier(.2, 0, 0, 1); }
+.cif-formula .gr i { font-style: normal; color: var(--muted); }
+@keyframes cif-sube { from { opacity: 0; transform: translateY(10px); } }
+#cif-h-histograma { padding-bottom: 64px; }
+.cif-hist { display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 14px; min-height: 0; padding-top: 28px; }
+.cif-hist .bloque { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 2px; min-height: 0; }
+.cif-hist .bloque span { font-size: .78rem; color: var(--muted); }
+.cif-hist canvas { width: 100%; height: 100%; min-height: 0; display: block; }
 .cif-tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--surface); font: 400 .78rem/1.3 var(--f-mono); padding: .3rem .5rem; border-radius: 6px; white-space: nowrap; z-index: 4; }
 
+.info-sec .cif-lista { margin: 0; padding-left: 1.1rem; display: grid; gap: .35rem; }
 #cif-explora input[type="text"] { width: 100%; max-width: 46ch; font-family: var(--f-body); }
 #cif-explora table td { font-family: var(--f-mono); white-space: nowrap; }
 .explora { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
-.escena .narra { font-size: .9rem; line-height: 1.4; padding: .45rem .75rem; }
 
 @media (max-width: 900px) {
-  .escena .narra { display: none; }
   .escena .ayuda3d { display: none; }
-  .flota { font-size: .74rem; padding: .3rem .45rem; }
-  .flota .kv { font-size: .74rem; }
-  .flota .sec, .cif-sec { display: none; }
-  .cif-capa { gap: 4px; }
-  .cif-capa.arriba { top: 5px; left: 5px; right: 5px; }
-  .cif-capa.abajo { bottom: 5px; left: 5px; right: 5px; }
-  .cif-html { padding: 6px; }
-  .cif-tarjetas { gap: 6px; }
-  .cif-tarjetas .card { padding: .45rem .55rem; gap: .15rem; }
-  .cif-tarjetas .card b { font-size: .92rem; }
-  .cif-tarjetas .card .gr { font-size: .9rem; }
-  .cif-tarjetas .card p { font-size: .74rem; line-height: 1.3; }
-  .cif-hist { gap: 4px; }
-  .cif-hist .bloque .cab { font-size: .7rem; }
-  .cif-hist .note { font-size: .68rem; }
-  .paso { line-height: 1.45; }
-  .paso p { margin-bottom: .45rem; }
-  .paso .analogia { font-size: .88rem; padding: .4rem .6rem; }
-  .paso details { margin-top: .45rem; padding-top: .4rem; }
-}
-@media (max-height: 760px) and (min-width: 901px) {
-  .paso { padding: .9rem 1.1rem; }
-  .paso h2 { margin-bottom: .4rem; }
+  .cif-dato b { font-size: 1.05rem; }
+  .cif-dato span { font-size: .7rem; }
+  .cif-hist { gap: 6px; padding-top: 22px; }
+  #cif-h-histograma { padding-bottom: 46px; }
+  .cif-hist .bloque span { font-size: .7rem; }
 }
 </style>
 </head>
@@ -97,41 +75,47 @@ body { grid-template-columns: minmax(0, 1fr); }
       <article class="paso" data-paso="xor">
         <span class="eyebrow">Paso 1</span>
         <h2>Qué es XOR</h2>
-        <p>XOR (⊕) combina dos bits: da 1 si son distintos y 0 si son iguales. El bit de la clave decide si el bit del mensaje se deja igual (0) o se invierte (1).</p>
+        <p>XOR (⊕) combina dos bits: da 1 si son distintos y 0 si son iguales.</p>
+        <p>El bit de la clave decide si el bit del mensaje se deja igual (0) o se invierte (1).</p>
         <p class="analogia">Es un interruptor de luz: con clave 1 alguien lo acciona y la luz cambia; con clave 0 nadie lo toca.</p>
         <details><summary>Detalle técnico</summary><p>XOR es el «o exclusivo». Cumple x ⊕ 0 = x y x ⊕ x = 0, y es conmutativo y asociativo. Aplicado a bytes, se opera en cada una de las 8 posiciones por separado.</p></details>
       </article>
       <article class="paso" data-paso="flujo" hidden>
         <span class="eyebrow">Paso 2</span>
         <h2>El flujo de clave se agrupa en bytes</h2>
-        <p>La etapa anterior produjo una larga fila de bits, el flujo de clave. Se toman de 8 en 8 y cada grupo forma un byte k<sub>1</sub>, k<sub>2</sub>, k<sub>3</sub>… El primer bit del grupo vale 128 y el último vale 1.</p>
+        <p>El flujo de clave se lee de 8 en 8 bits, y cada grupo de 8 forma un byte.</p>
+        <p>La etapa anterior produjo una larga fila de bits, el flujo de clave. Cada grupo de 8 forma un byte k<sub>1</sub>, k<sub>2</sub>, k<sub>3</sub>… El primer bit del grupo vale 128 y el último vale 1.</p>
         <p class="analogia">Como al leer un número: la primera cifra es la que más pesa.</p>
         <details><summary>Detalle técnico</summary><p>k<sub>j</sub> = Σ<sub>t=0..7</sub> b<sub>8(j−1)+t+1</sub> · 2<sup>7−t</sup>, donde b es el flujo de clave (XOR de las secuencias 1 y 2 binarizadas con el umbral 0.5: &gt; 0.5 → 1, ≤ 0.5 → 0).</p></details>
       </article>
       <article class="paso" data-paso="cifrar" hidden>
         <span class="eyebrow">Paso 3</span>
         <h2>Cifrar los dos primeros bytes</h2>
+        <p>Cada bit del mensaje se combina con el bit de la clave de su columna: c = m ⊕ k.</p>
         <p>Los dos primeros bytes del mensaje guardan su longitud, 173 bytes: m<sub>1</sub> = 00000000 y m<sub>2</sub> = 10101101.</p>
-        <p>Cada columna se cifra por separado, c = m ⊕ k. Donde la clave tiene un 1, la ficha del mensaje gira y su bit se invierte.</p>
+        <p>Cada columna se cifra por separado. Donde la clave tiene un 1, la ficha del mensaje gira y su bit se invierte.</p>
         <details><summary>Detalle técnico</summary><p>173 = 0x00AD, escrito en 2 bytes con el byte más significativo primero (big-endian). c<sub>j</sub> = m<sub>j</sub> ⊕ k<sub>j</sub>. Los bytes k<sub>1</sub> y k<sub>2</sub> de la escena se calculan en tu navegador con la clave del caso (x0 = 0.123456, r = 3.999952, N = 6173).</p></details>
       </article>
       <article class="paso" data-paso="descifrar" hidden>
         <span class="eyebrow">Paso 4</span>
         <h2>Descifrar es repetir la misma operación</h2>
-        <p>El receptor tiene la misma clave y produce el mismo flujo k. Aplica otra vez XOR al cifrado y obtiene el mensaje original: (m ⊕ k) ⊕ k = m.</p>
+        <p>Para descifrar se aplica otra vez XOR con la misma clave: (m ⊕ k) ⊕ k = m.</p>
+        <p>El receptor tiene la misma clave y produce el mismo flujo k. Al aplicar XOR al cifrado obtiene el mensaje original.</p>
         <p class="analogia">Si accionas el mismo interruptor dos veces, la luz vuelve a su estado inicial.</p>
         <details><summary>Detalle técnico</summary><p>(m ⊕ k) ⊕ k = m ⊕ (k ⊕ k) = m ⊕ 0 = m, por la asociatividad de XOR y porque k ⊕ k = 0.</p></details>
       </article>
       <article class="paso" data-paso="porque" hidden>
         <span class="eyebrow">Paso 5</span>
         <h2>Por qué XOR</h2>
-        <p>El mismo procedimiento cifra y descifra, no agranda el mensaje y su costo crece en proporción a la longitud.</p>
+        <p>El mismo procedimiento cifra y descifra, y el cifrado mide lo mismo que el mensaje.</p>
+        <p>XOR no agranda el mensaje y su costo crece en proporción a la longitud.</p>
         <p>Si el flujo está equilibrado y no se puede predecir, el cifrado no conserva la estadística del texto. Es un cifrado de flujo del tipo de Vernam.</p>
         <details><summary>Detalle técnico</summary><p>XOR es involutivo: aplicarlo dos veces con la misma clave devuelve el original. El costo es O(n) operaciones de bytes: 175 bytes, 175 XOR. El cifrado de Vernam combina el mensaje con una clave tan larga como él; aquí esa clave larga la genera el mapa logístico a partir de la clave corta K.</p></details>
       </article>
       <article class="paso" data-paso="histograma" hidden>
         <span class="eyebrow">Paso 6</span>
         <h2>Qué le pasa a un texto</h2>
+        <p>Tras el XOR, los bytes de un texto se reparten de 0 a 255 y sus picos desaparecen.</p>
         <p>Un texto en español usa pocos valores de byte: letras, espacios y algunos acentos, y su histograma tiene picos. Tras el XOR los bytes se reparten de 0 a 255 y los picos desaparecen.</p>
         <p class="note">En el modelo real se cifra el mensaje ya comprimido; aquí se cifra un verso sin comprimir para que se vea el efecto.</p>
         <details><summary>Detalle técnico</summary><p>El verso se codifica en UTF-8 (la «ñ» y las vocales con tilde ocupan 2 bytes) y se cifra con los primeros bytes del flujo real de la clave del caso.</p></details>
@@ -139,6 +123,7 @@ body { grid-template-columns: minmax(0, 1fr); }
       <article class="paso" data-paso="dos" hidden>
         <span class="eyebrow">Paso 7</span>
         <h2>Por qué dos secuencias</h2>
+        <p>El flujo de clave sale de dos secuencias: conocer una sola no basta para reconstruirlo.</p>
         <p>El flujo de clave es el XOR de dos secuencias del mapa logístico, cada una con su valor inicial y su parámetro. Quien reconstruyera una sola seguiría sin conocer el flujo.</p>
         <p class="analogia">Es como una caja fuerte con dos cerraduras: abrir una no basta.</p>
         <details><summary>Detalle técnico</summary><p>Juntas tienen un estado interno de 4 × 64 = 256 bits: (x, r) de cada secuencia, 4 valores float64. Es más que los 144 bits que ocupa la clave K = (x0, r, N) en memoria, que admite 2<sup>112.91</sup> claves válidas.</p></details>
@@ -146,7 +131,8 @@ body { grid-template-columns: minmax(0, 1fr); }
       <article class="paso" data-paso="bits" hidden>
         <span class="eyebrow">Paso 8</span>
         <h2>De bytes a bits</h2>
-        <p>El mensaje cifrado c tiene n = 175 bytes y se escribe como L = 8 × 175 = 1400 bits, w<sub>1</sub> … w<sub>1400</sub>. Esos son los bits que se esconderán en el audio.</p>
+        <p>Los 175 bytes cifrados se escriben como 1400 bits, los que se esconderán en el audio.</p>
+        <p>El mensaje cifrado c tiene n = 175 bytes y se escribe como L = 8 × 175 = 1400 bits, w<sub>1</sub> … w<sub>1400</sub>.</p>
         <p>La longitud viaja cifrada en los 2 primeros bytes, así que el receptor solo necesita la clave para saber cuántos bits leer.</p>
         <details><summary>Detalle técnico</summary><p>175 = 2 bytes de longitud + 173 bytes del mensaje comprimido. Los bits de cada byte se escriben del más al menos significativo.</p></details>
       </article>
@@ -158,6 +144,7 @@ body { grid-template-columns: minmax(0, 1fr); }
         <div class="cif-capa abajo" id="cif-abajo"></div>
         <div class="cif-html" id="cif-h-porque" hidden></div>
         <div class="cif-html" id="cif-h-histograma" hidden></div>
+        <button type="button" class="boton-i cif-mas" id="cif-mas" hidden aria-label="Datos de la escena">i</button>
       </div>
       <p class="narra" id="cif-narra"><b>Qué estás viendo:</b> la tabla de verdad de XOR.</p>
     </div>
@@ -190,7 +177,7 @@ body { grid-template-columns: minmax(0, 1fr); }
 </main>
 <footer class="pie"></footer>
 <script type="module">
-import { recorrido, animar, color, alCambiarTema, sinMovimiento } from "./assets/js/guia.js";
+import { recorrido, animar, color, alCambiarTema, sinMovimiento, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
 const Mo = window.Modelo, C = Mo.CASO;
 const $ = id => document.getElementById(id);
@@ -211,7 +198,8 @@ const lienzo = $("cif-lienzo");
 const e = escena3d(lienzo, { camara: [0, 0, 16], fov: 40 });
 const { scene, camera, controls } = e;
 const raiz = new THREE.Group(); scene.add(raiz);
-const ROL = { m: "ink", k: "key", c: "ciph", s: "hash", g: "muted" };
+// Sobrio: el acento (verde del cifrado) solo en lo que el paso señala; el resto en grises del tema.
+const ROL = { m: "ink", k: "muted", c: "ciph", a: "ciph", s: "muted", g: "line" };
 
 // Caras de las fichas: una textura por (rol, símbolo), repintada al cambiar el tema.
 const caras = new Map();
@@ -243,9 +231,9 @@ function cara(rol, sym) {
 }
 const lado = new THREE.MeshStandardMaterial({ color: e.colores().line, roughness: .6 });
 const geoF = new THREE.BoxGeometry(1, 1, 0.16);
-const luzMat = new THREE.MeshBasicMaterial({ color: e.colores().pos, transparent: true, opacity: .22, depthWrite: false });
+const luzMat = new THREE.MeshBasicMaterial({ color: e.colores().ciph, transparent: true, opacity: .16, depthWrite: false });
 const sepMat = new THREE.MeshBasicMaterial({ color: e.colores().muted });
-const repintar = () => { caras.forEach(pintarCara); const c = e.colores(); lado.color.copy(c.line); luzMat.color.copy(c.pos); sepMat.color.copy(c.muted); };
+const repintar = () => { caras.forEach(pintarCara); const c = e.colores(); lado.color.copy(c.line); luzMat.color.copy(c.ciph); sepMat.color.copy(c.muted); };
 e.alTema(repintar);
 document.fonts?.ready.then(repintar);
 
@@ -351,27 +339,36 @@ new ResizeObserver(() => {
 
 /* ---------- Construcción de filas de 8 bits ---------- */
 const P8 = 1.15;
+const tono = rol => (rol === "c" || rol === "a" ? "ciph" : "muted");
 function fila8(bits, rol, y, etq, valor = "", x0 = 0) {
   const fs = bits.map((b, t) => ficha(rol, b == null ? "·" : String(b), x0 + t * P8, y));
-  if (etq) rotulo(etq, x0 - 0.75, y, { tam: .55, colorN: ROL[rol], ancla: "d" });
-  const v = valor !== null ? rotulo(valor || " ", x0 + 7 * P8 + 0.75, y, { tam: .48, colorN: "muted", ancla: "i" }) : null;
+  if (etq) rotulo(etq, x0 - 0.75, y, { tam: .46, colorN: tono(rol), ancla: "d" });
+  const v = valor !== null ? rotulo(valor || " ", x0 + 7 * P8 + 0.75, y, { tam: .4, colorN: "muted", ancla: "i" }) : null;
   return { fs, v, y };
 }
 function cambiarRotulo(viejo, texto, colorN = "muted") {
   if (!viejo) return null;
   const x = viejo.position.x - viejo.scale.x / 2, y = viejo.position.y;
   raiz.remove(viejo); viejo.material.map?.dispose(); viejo.material.dispose();
-  return rotulo(texto, x, y, { tam: .48, colorN, ancla: "i" });
+  return rotulo(texto, x, y, { tam: .4, colorN, ancla: "i" });
 }
 
-/* ---------- Tarjetas y narración ---------- */
+/* ---------- Dato clave, botón «i» de la escena y narración ---------- */
 const narra = $("cif-narra");
 const decir = t => (narra.innerHTML = "<b>Qué estás viendo:</b> " + t);
-function tarjetas(arriba = [], abajo = []) {
-  $("cif-arriba").innerHTML = arriba.join("");
-  $("cif-abajo").innerHTML = abajo.join("");
+// Abajo: un solo dato (cifra grande + etiqueta corta) y, si el paso anima, un botón discreto para repetir.
+function dato(cifra, etiqueta = "", { acento = false, repetir = null } = {}) {
+  $("cif-arriba").innerHTML = repetir ? `<button type="button" class="cif-rep" id="cif-rep" aria-label="Repetir la animación">↻ Repetir</button>` : "";
+  $("cif-abajo").innerHTML = cifra ? `<div class="cif-dato"><b class="${acento ? "ac" : ""}" id="cif-cifra">${cifra}</b>${etiqueta ? `<span id="cif-etq">${etiqueta}</span>` : ""}</div>` : "";
+  if (repetir) $("cif-rep").onclick = repetir;
 }
-const flota = (html, cls = "") => `<div class="flota ${cls}">${html}</div>`;
+const ponDato = (cifra, etq) => { const c = $("cif-cifra"); if (c) c.innerHTML = cifra; const t = $("cif-etq"); if (t && etq != null) t.innerHTML = etq; };
+// Botón «i» de la escena: datos que ya no se ven en pantalla.
+let masDatos = null;
+const mas = $("cif-mas");
+function datosEscena(titulo, secciones) { masDatos = titulo ? { titulo, secciones } : null; mas.hidden = !masDatos; }
+mas.addEventListener("click", () => masDatos && abrirInfo({ eyebrow: "Datos de la escena", titulo: masDatos.titulo, secciones: masDatos.secciones }));
+const tarjetas = () => { $("cif-arriba").innerHTML = ""; $("cif-abajo").innerHTML = ""; };
 function verHtml(nombre) { document.querySelectorAll(".cif-html").forEach(h => (h.hidden = h.id !== "cif-h-" + nombre)); }
 
 /* ---------- Paso 1: XOR con cuatro casos ---------- */
@@ -383,14 +380,11 @@ function vXor() {
     fk.push(ficha("k", String(b), i * PX, 0));
     fc.push(ficha("c", "·", i * PX, -1.65));
   });
-  rotulo("m", -0.85, 1.3, { tam: .6, colorN: "ink", ancla: "d" });
-  rotulo("k", -0.85, 0, { tam: .6, colorN: "key", ancla: "d" });
-  rotulo("m ⊕ k", -0.85, -1.65, { tam: .6, colorN: "ciph", ancla: "d" });
+  rotulo("m", -0.85, 1.3, { tam: .5, ancla: "d" });
+  rotulo("k", -0.85, 0, { tam: .5, ancla: "d" });
+  rotulo("m ⊕ k", -0.85, -1.65, { tam: .5, colorN: "ciph", ancla: "d" });
   separador(-0.6, 3 * PX + 0.6, -0.82);
   const luz = marco(1.4, 4.4); luz.position.y = -0.15;
-  tarjetas([flota("<b>Tabla de verdad de XOR.</b> El resultado es 1 solo si los dos bits son distintos.")],
-    [flota(`<span class="cif-leyenda">k = 1: la ficha gira y el bit se invierte</span><span class="cif-leyenda sec">k = 0: queda igual</span><button class="ghost" type="button" id="cif-rep">Repetir</button>`)]);
-  encuadrar();
   const correr = () => {
     cancelarTodo(); fc.forEach(m => ponCara(m, "c", "·")); luz.visible = false;
     CASOS.forEach(([a, b], i) => {
@@ -400,24 +394,25 @@ function vXor() {
     });
     despues(900 + 4 * 1300 + 300, () => (luz.visible = false));
   };
-  correr(); $("cif-rep").onclick = correr;
-  decir("cada columna es un caso. La ficha de abajo empieza como el bit del mensaje; si la clave vale 1, gira y se invierte.");
+  dato("distintos → 1", "iguales → 0", { repetir: correr });
+  encuadrar();
+  correr();
+  decir("la tabla de verdad de XOR. Cada columna es un caso: arriba el bit del mensaje m, en medio el de la clave k y abajo el resultado. La ficha de abajo empieza como el bit de m; si la clave vale 1, gira y se invierte; si vale 0, queda igual.");
 }
 
 /* ---------- Paso 2: flujo en bytes ---------- */
 function vFlujo() {
-  const filas = Array.from({ length: 4 }, (_, g) => fila8(Array(8).fill(null), "k", 1.5 * P8 - g * P8, "k" + (g + 1), `${K[g]} · ${hx(K[g])}`));
+  const filas = Array.from({ length: 4 }, (_, g) => fila8(Array(8).fill(null), "a", 1.5 * P8 - g * P8, "k" + (g + 1), String(K[g])));
   filas.forEach(f => (f.v.visible = false));
-  [128, 64, 32, 16, 8, 4, 2, 1].forEach((p, t) => rotulo(String(p), t * P8, 1.5 * P8 + 0.95, { tam: .4 }));
-  tarjetas([flota("<b>Primeros 32 bits del flujo de clave</b>, de 8 en 8 (clave del caso). Arriba, lo que vale cada posición.")],
-    [flota(`k<sub>1</sub> = <span class="mono">${Mo.bin8(K[0])}</span> = 128·${F.bits[0]} + … = <b>${K[0]}</b> (${hx(K[0])})`, "sec")]);
+  [128, 64, 32, 16, 8, 4, 2, 1].forEach((p, t) => rotulo(String(p), t * P8, 1.5 * P8 + 0.9, { tam: .34 }));
+  dato(`k<sub>1</sub> = ${K[0]}`, "primer byte del flujo", { acento: true });
   encuadrar();
   for (let i = 0; i < 32; i++) {
     const g = Math.floor(i / 8), t = i % 8, m = filas[g].fs[t];
-    despues(400 + i * 110, () => { ponCara(m, "k", String(F.bits[i])); aparecer(m); });
+    despues(400 + i * 110, () => { ponCara(m, "a", String(F.bits[i])); aparecer(m); });
     if (t === 7) despues(400 + i * 110 + 300, () => (filas[g].v.visible = true));
   }
-  decir(`los bits del flujo caen uno a uno y se agrupan de 8 en 8. A la derecha, el valor de cada byte: k<sub>1</sub> = ${K[0]}, k<sub>2</sub> = ${K[1]}.`);
+  decir(`los primeros 32 bits del flujo de clave (clave del caso) caen uno a uno y se agrupan de 8 en 8. Encima de cada columna, lo que vale esa posición: 128, 64, … 1. A la derecha, el valor de cada byte: k<sub>1</sub> = <span class="mono">${Mo.bin8(K[0])}</span> = ${K[0]} (${hx(K[0])}), k<sub>2</sub> = ${K[1]} (${hx(K[1])}).`);
 }
 
 /* ---------- Pasos 3 y 4: cifrar y descifrar ---------- */
@@ -425,17 +420,17 @@ function bloques(vuelta) {
   const nf = vuelta ? 5 : 3, alto = nf * P8 + 0.5, B = [];
   MSG.forEach((m, j) => {
     const y0 = -j * (alto + 1.0);
-    rotulo(`Byte ${j + 1} · longitud, parte ${j ? "baja" : "alta"}`, -0.5, y0 + 0.95, { tam: .5, colorN: "muted", ancla: "i" });
+    rotulo(`Byte ${j + 1}`, -0.5, y0 + 0.9, { tam: .4, colorN: "muted", ancla: "i" });
     const fm = fila8(bitsDe(m), "m", y0, "m" + (j + 1), hx(m));
     const fk = fila8(bitsDe(K[j]), "k", y0 - P8, "⊕ k" + (j + 1), hx(K[j]));
     separador(-0.6, 7 * P8 + 0.6, y0 - 1.5 * P8 - 0.1);
     const yc = y0 - 2 * P8 - 0.2;
-    const fc = fila8(vuelta ? bitsDe(CB[j]) : Array(8).fill(null), "c", yc, "c" + (j + 1), vuelta ? hx(CB[j]) : "");
+    const fc = fila8(vuelta ? bitsDe(CB[j]) : Array(8).fill(null), vuelta ? "m" : "c", yc, "c" + (j + 1), vuelta ? hx(CB[j]) : "");
     let fk2 = null, fr = null;
     if (vuelta) {
       fk2 = fila8(bitsDe(K[j]), "k", yc - P8, "⊕ k" + (j + 1), hx(K[j]));
       separador(-0.6, 7 * P8 + 0.6, yc - 1.5 * P8 - 0.1);
-      fr = fila8(Array(8).fill(null), "m", yc - 2 * P8 - 0.2, "m" + (j + 1), "");
+      fr = fila8(Array(8).fill(null), "c", yc - 2 * P8 - 0.2, "m" + (j + 1), "");
     }
     const luz = marco(1.35, (vuelta ? 5 : 3) * P8 + 0.55);
     luz.position.y = vuelta ? y0 - 2 * P8 - 0.2 : y0 - P8 - 0.1;
@@ -448,56 +443,51 @@ function barrido(B, vuelta, fin) {
   B.forEach((b, j) => {
     for (let t = 0; t < 8; t++) {
       const k = (K[j] >> (7 - t)) & 1, desde = vuelta ? (CB[j] >> (7 - t)) & 1 : (MSG[j] >> (7 - t)) & 1, hasta = desde ^ k;
-      const destino = vuelta ? b.fr.fs[t] : b.fc.fs[t], rol = vuelta ? "m" : "c";
+      const destino = vuelta ? b.fr.fs[t] : b.fc.fs[t], rol = "c";
       despues(t0, () => { B.forEach(o => (o.luz.visible = false)); b.luz.visible = true; b.luz.position.x = t * P8; ponCara(destino, rol, String(desde)); aparecer(destino); });
       if (k) girar(destino, rol, String(hasta), t0 + 330); else brinco(destino, t0 + 330);
       t0 += 520;
     }
-    despues(t0 - 100, () => { const f = vuelta ? b.fr : b.fc; f.v = cambiarRotulo(f.v, hx(vuelta ? MSG[j] : CB[j]), vuelta ? "ink" : "ciph"); });
+    despues(t0 - 100, () => { const f = vuelta ? b.fr : b.fc; f.v = cambiarRotulo(f.v, hx(vuelta ? MSG[j] : CB[j]), "ciph"); });
   });
   despues(t0 + 200, () => { B.forEach(o => (o.luz.visible = false)); fin(); });
 }
 function vCifrar() {
   const B = bloques(false);
-  tarjetas([flota(`<b>c = m ⊕ k</b>, columna por columna. Azul = clave; verde = cifrado.`)],
-    [flota(`<span id="cif-res">Las fichas verdes giran donde la clave tiene un 1.</span><button class="ghost" type="button" id="cif-rep">Repetir</button>`)]);
-  encuadrar();
   const correr = () => {
     cancelarTodo(); B.forEach(b => b.fc.fs.forEach(m => ponCara(m, "c", "·")));
-    $("cif-res").textContent = "Las fichas verdes giran donde la clave tiene un 1.";
-    barrido(B, false, () => ($("cif-res").innerHTML = `c = <b class="mono">${hx(CB[0])} ${hx(CB[1])}</b>: sin la clave no se sabe que es 173.`));
+    ponDato("c = m ⊕ k", "columna por columna");
+    barrido(B, false, () => ponDato(`${hx(CB[0])} ${hx(CB[1])}`, "sin la clave no se sabe que es 173"));
   };
-  correr(); $("cif-rep").onclick = correr;
-  decir("la columna naranja avanza. En cada una, la ficha del cifrado empieza como el bit de m y gira si el bit de k es 1. Como m<sub>1</sub> es todo ceros, c<sub>1</sub> sale igual a k<sub>1</sub>.");
+  dato("c = m ⊕ k", "columna por columna", { acento: true, repetir: correr });
+  encuadrar();
+  correr();
+  decir(`los dos bytes de la longitud. En cada bloque, arriba el mensaje m, en medio la clave k y abajo el cifrado c, en verde. La columna resaltada avanza: la ficha del cifrado empieza como el bit de m y gira si el bit de k es 1. Como m<sub>1</sub> es todo ceros, c<sub>1</sub> sale igual a k<sub>1</sub>. Resultado: c = ${hx(CB[0])} ${hx(CB[1])}.`);
 }
 function vDescifrar() {
   const B = bloques(true);
-  tarjetas([flota(`<b>Vuelta: c ⊕ k = m.</b> Las filas primera y última de cada byte deben coincidir.`)],
-    [flota(`<span id="cif-res">El receptor aplica el mismo k al cifrado.</span><button class="ghost" type="button" id="cif-rep">Repetir</button>`)]);
-  encuadrar();
   const correr = () => {
-    cancelarTodo(); B.forEach(b => b.fr.fs.forEach(m => ponCara(m, "m", "·")));
-    $("cif-res").textContent = "El receptor aplica el mismo k al cifrado.";
-    barrido(B, true, () => ($("cif-res").innerHTML = `<span class="cif-ok">Recuperado: 00000000 10101101 = 173.</span>`));
+    cancelarTodo(); B.forEach(b => b.fr.fs.forEach(m => ponCara(m, "c", "·")));
+    ponDato("c ⊕ k = m", "el mismo k, otra vez");
+    barrido(B, true, () => ponDato("173", "longitud recuperada: 00000000 10101101"));
   };
-  correr(); $("cif-rep").onclick = correr;
-  decir("el cifrado c ya está calculado. Se le aplica XOR con el mismo k y la última fila reconstruye el mensaje m, bit a bit.");
+  dato("c ⊕ k = m", "el mismo k, otra vez", { acento: true, repetir: correr });
+  encuadrar();
+  correr();
+  decir("el cifrado c ya está calculado. Se le aplica XOR con el mismo k y la última fila de cada bloque, en verde, reconstruye el mensaje m bit a bit: coincide con la primera fila. Se recupera 00000000 10101101 = 173.");
 }
 
-/* ---------- Paso 5: por qué XOR (tarjetas HTML) ---------- */
+/* ---------- Paso 5: por qué XOR ---------- */
 function vPorque() {
   const v = $("cif-h-porque"), L = 8 * C.n, unos = F.bits.slice(0, L).reduce((a, b) => a + b, 0);
-  v.innerHTML = `<div class="cif-tarjetas">
-    <div class="card" style="--k:0"><b>Involutivo</b><span class="gr">(m ⊕ k) ⊕ k = m</span><p>La misma función cifra y descifra.</p></div>
-    <div class="card" style="--k:1"><b>No expande</b><p>Mensaje y cifrado miden lo mismo.</p>
-      <div style="display:grid;gap:3px;margin-top:.4rem"><span class="note">mensaje · 175 bytes</span><div class="cif-barra g" id="cif-b1" style="width:0"></div>
-      <span class="note">cifrado · 175 bytes</span><div class="cif-barra" id="cif-b2" style="width:0"></div></div></div>
-    <div class="card" style="--k:2"><b>Costo lineal</b><span class="gr">175 → 175 XOR</span><p>Una operación por byte.</p></div>
-    <div class="card" style="--k:3"><b>Flujo equilibrado</b><span class="gr">${(100 * unos / L).toFixed(1)} % de unos</span><p>${unos} unos y ${L - unos} ceros en los ${L.toLocaleString("es-CO")} bits usados<span class="cif-sec"> (calculado en tu navegador)</span>.</p>
-      <div style="display:flex;height:.55rem;border-radius:3px;overflow:hidden;margin-top:.4rem;gap:2px"><div style="background:var(--ciph);width:${100 * unos / L}%"></div><div style="background:var(--line);flex:1"></div></div></div>
-  </div>`;
-  tween(900, t => { const b1 = $("cif-b1"), b2 = $("cif-b2"); if (b1) b1.style.width = b2.style.width = 100 * suave(t) + "%"; }, { retardo: 300 });
-  decir(`cuatro razones para usar XOR. Las dos barras de «No expande» miden lo mismo. El flujo real tiene ${unos} unos de ${L} bits.`);
+  v.innerHTML = `<div class="cif-formula"><span class="gr">(m ⊕ k) ⊕ k <i>=</i> m</span></div>`;
+  dato("175 → 175 bytes", "el cifrado mide lo mismo que el mensaje");
+  datosEscena("Cuatro razones para usar XOR", [{ html: `<ul class="cif-lista">
+    <li><b>Involutivo:</b> (m ⊕ k) ⊕ k = m. La misma función cifra y descifra.</li>
+    <li><b>No expande:</b> mensaje y cifrado miden lo mismo, 175 bytes.</li>
+    <li><b>Costo lineal:</b> una operación por byte, 175 bytes → 175 XOR.</li>
+    <li><b>Flujo equilibrado:</b> ${(100 * unos / L).toFixed(1)} % de unos: ${unos} unos y ${L - unos} ceros en los ${L.toLocaleString("es-CO")} bits usados (calculado en tu navegador con la clave del caso).</li></ul>` }]);
+  decir(`la propiedad que hace útil a XOR: aplicar dos veces la misma clave devuelve el mensaje. El cifrado mide lo mismo que el mensaje (175 bytes) y el flujo real está equilibrado: ${unos} unos de ${L} bits.`);
 }
 
 /* ---------- Paso 6: histogramas ---------- */
@@ -510,23 +500,27 @@ function dibujarHist(cv, h, rol, t = 1) {
   const dpr = devicePixelRatio || 1, w = cv.clientWidth || 300, H = Math.max(40, cv.clientHeight || 120);
   cv.width = Math.round(w * dpr); cv.height = Math.round(H * dpr);
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, H);
-  const top = 8, base = H - 18, max = Math.max(...HT, ...HC), bw = (w - 16) / 256;
+  const top = 4, base = H - 16, max = Math.max(...HT, ...HC), bw = (w - 16) / 256;
   g.strokeStyle = color("line"); g.lineWidth = 1; g.beginPath(); g.moveTo(8, base + .5); g.lineTo(w - 8, base + .5); g.stroke();
   g.fillStyle = color(rol);
   for (let i = 0; i < 256; i++) if (h[i]) { const hh = Math.max(2, (base - top) * h[i] / max * t); g.fillRect(8 + i * bw, base - hh, Math.max(1, bw - .3), hh); }
-  g.fillStyle = color("muted"); g.font = "10px " + color("f-mono"); g.textBaseline = "top";
-  [0, 64, 128, 192, 255].forEach(x => { g.textAlign = x === 0 ? "left" : x === 255 ? "right" : "center"; g.fillText(String(x), 8 + (x + .5) * bw, base + 4); });
+  g.fillStyle = color("muted"); g.globalAlpha = .7; g.font = "10px " + color("f-mono"); g.textBaseline = "top";
+  [0, 255].forEach(x => { g.textAlign = x === 0 ? "left" : "right"; g.fillText(String(x), 8 + (x + .5) * bw, base + 3); });
+  g.globalAlpha = 1;
 }
 let histT = 1;
-const redibujar = () => { if (!$("cif-h-histograma").hidden) { dibujarHist($("cif-h1"), HT, "ink", histT); dibujarHist($("cif-h2"), HC, "ciph", histT); } };
+const redibujar = () => { if (!$("cif-h-histograma").hidden) { dibujarHist($("cif-h1"), HT, "muted", histT); dibujarHist($("cif-h2"), HC, "ciph", histT); } };
 function vHist() {
   const v = $("cif-h-histograma");
   v.innerHTML = `<div class="cif-hist">
-    <p class="note"><b>Verso en UTF-8 · ${VB.length} bytes.</b> Eje horizontal: valor del byte (0 a 255); altura: veces que aparece.</p>
-    <div class="bloque"><div class="cab"><b>Texto sin cifrar</b><span>${distintos(HT)} valores distintos · pico ${Math.max(...HT)} (el espacio)</span></div><canvas id="cif-h1" aria-label="Histograma de bytes del texto"></canvas></div>
-    <div class="bloque"><div class="cab"><b>Cifrado con el flujo real</b><span>${distintos(HC)} valores distintos · pico ${Math.max(...HC)}</span></div><canvas id="cif-h2" aria-label="Histograma de bytes del cifrado"></canvas></div>
-    <p class="note cif-sec">«${esc(VERSO)}»</p>
+    <div class="bloque"><span>texto</span><canvas id="cif-h1" aria-label="Histograma de bytes del texto"></canvas></div>
+    <div class="bloque"><span>cifrado</span><canvas id="cif-h2" aria-label="Histograma de bytes del cifrado"></canvas></div>
   </div><div class="cif-tip" id="cif-tip" hidden></div>`;
+  dato(`${distintos(HT)} → ${distintos(HC)}`, "valores de byte distintos");
+  datosEscena("El verso del ejemplo", [
+    { titulo: "Texto", html: `<p>«${esc(VERSO)}»</p><p>${VB.length} bytes en UTF-8.</p>` },
+    { titulo: "Cómo leer los histogramas", html: `<p>Eje horizontal: valor del byte, de 0 a 255. Altura: cuántas veces aparece.</p><p>Texto sin cifrar: ${distintos(HT)} valores distintos; el pico más alto es el espacio, ${Math.max(...HT)} veces. Cifrado con el flujo real: ${distintos(HC)} valores distintos; pico de ${Math.max(...HC)}.</p><p>Pasa el puntero sobre una barra para ver su valor.</p>` },
+  ]);
   histT = 0;
   tween(900, t => { histT = suave(t); redibujar(); }, { retardo: 150 });
   if (sinMovimiento()) { histT = 1; redibujar(); }
@@ -543,54 +537,49 @@ function vHist() {
     };
     cv.onpointerleave = () => (tip.hidden = true);
   });
-  decir(`arriba, el verso: ${distintos(HT)} valores y picos altos, como el espacio (${HT[32]} veces). Abajo, cifrado: ${distintos(HC)} valores repartidos por todo el rango. Pasa el puntero sobre una barra.`);
+  decir(`dos histogramas del mismo verso (${VB.length} bytes en UTF-8): el eje horizontal es el valor del byte (0 a 255) y la altura, cuántas veces aparece. Arriba, el texto: ${distintos(HT)} valores y picos altos, como el espacio (${HT[32]} veces). Abajo, cifrado: ${distintos(HC)} valores repartidos por todo el rango.`);
 }
 alCambiarTema(redibujar);
 
 /* ---------- Paso 7: dos secuencias ---------- */
 function vDos() {
   const b1 = [...F.b1.slice(0, 8)], b2 = [...F.b2.slice(0, 8)], fl = [...F.bits.slice(0, 8)];
-  rotulo("Con las dos secuencias", -0.5, 0.95, { tam: .5, ancla: "i" });
+  rotulo("con las dos secuencias", -0.5, 0.9, { tam: .4, ancla: "i" });
   fila8(b1, "s", 0, "sec 1", null);
   fila8(b2, "s", -P8, "⊕ sec 2", null);
   separador(-0.6, 7 * P8 + 0.6, -1.5 * P8 - 0.1);
-  fila8(fl, "k", -2 * P8 - 0.2, "flujo", hx(K[0]));
+  fila8(fl, "a", -2 * P8 - 0.2, "flujo", null);
   const y0 = -2 * P8 - 0.2 - 2.4;
-  rotulo("Si el atacante solo conoce la secuencia 1", -0.5, y0 + 0.95, { tam: .5, ancla: "i" });
+  rotulo("con una sola", -0.5, y0 + 0.9, { tam: .4, ancla: "i" });
   fila8(b1, "s", y0, "sec 1", null);
   const f2 = fila8(Array(8).fill(null), "s", y0 - P8, "⊕ sec 2", null);
   separador(-0.6, 7 * P8 + 0.6, y0 - 1.5 * P8 - 0.1);
-  const f3 = fila8(Array(8).fill(null), "k", y0 - 2 * P8 - 0.2, "flujo", "?");
-  tarjetas([flota("Sin la secuencia 2, cada bit del flujo puede ser 0 o 1 con la misma probabilidad: el atacante no aprende nada.")],
-    [flota(`<div style="display:grid;gap:3px;min-width:min(19rem,60vw)"><span>Estado interno de las dos secuencias · <b>256 bits</b></span><div class="cif-barra" id="cif-e1" style="width:0"></div>
-      <span>Clave K en memoria · <b>144 bits</b><span class="cif-sec"> (2<sup>112.91</sup> claves válidas)</span></span><div class="cif-barra g" id="cif-e2" style="width:0"></div></div>`)]);
+  const f3 = fila8(Array(8).fill(null), "a", y0 - 2 * P8 - 0.2, "flujo", null);
+  dato("256 bits", "de estado interno entre las dos");
+  datosEscena("Cuánto estado guardan las dos secuencias", [{ html: `<p>Estado interno de las dos secuencias: <b>256 bits</b>, los valores (x, r) de cada una, 4 valores float64.</p><p>Clave K en memoria: <b>144 bits</b>, con 2<sup>112.91</sup> claves válidas.</p><p>Sin la secuencia 2, cada bit del flujo puede ser 0 o 1 con la misma probabilidad: el atacante no aprende nada.</p>` }]);
   encuadrar();
   f2.fs.forEach((m, t) => girar(m, "s", "?", 900 + t * 90));
-  f3.fs.forEach((m, t) => girar(m, "k", "?", 1500 + t * 90));
-  tween(900, t => { const a = $("cif-e1"), b = $("cif-e2"); if (a) { a.style.width = 100 * suave(t) + "%"; b.style.width = 100 * 144 / 256 * suave(t) + "%"; } }, { retardo: 400 });
-  decir("arriba, el flujo sale del XOR de las dos secuencias binarizadas. Abajo, sin la secuencia 2 los bits del flujo quedan como «?».");
+  f3.fs.forEach((m, t) => girar(m, "a", "?", 1500 + t * 90));
+  decir(`arriba, con las dos secuencias: el flujo (verde) sale del XOR de la secuencia 1 y la secuencia 2 binarizadas, y su primer byte es ${hx(K[0])}. Abajo, si el atacante solo conoce la secuencia 1: sin la secuencia 2, los bits del flujo quedan como «?», cada uno puede ser 0 o 1 con la misma probabilidad.`);
 }
 
 /* ---------- Paso 8: de bytes a bits ---------- */
 function vBits() {
   const PB = 0.5, cols = 25;
   const cuad = Array.from({ length: 175 }, (_, j) => ficha(j < 2 ? "c" : "g", "#", (j % cols) * PB, -Math.floor(j / cols) * PB, 0.42));
-  rotulo("c · 175 bytes (cada cuadro es un byte)", -0.25, 0.75, { tam: .42, ancla: "i" });
   const w = [...bitsDe(CB[0]), ...bitsDe(CB[1])], PW = 0.76, yW = -7 * PB - 1.6;
   const fw = w.map((b, i) => ficha("c", "·", i * PW + (i >= 8 ? 0.3 : 0), yW, 0.68));
-  w.forEach((b, i) => { if (i % 8 === 0 || i % 8 === 7) rotulo("w" + (i + 1), i * PW + (i >= 8 ? 0.3 : 0), yW - 0.62, { tam: .32 }); });
-  rotulo("c₁ y c₂ abiertos en bits", -0.25, yW + 0.72, { tam: .42, ancla: "i", colorN: "ciph" });
-  tarjetas([flota(`<span class="cif-leyenda"><i style="background:var(--ciph)"></i>c<sub>1</sub>, c<sub>2</sub>: longitud cifrada</span><span class="cif-leyenda"><i style="background:var(--muted)"></i>173 bytes del mensaje</span>`)],
-    [flota(`<b>n = 175 bytes → L = 8 × 175 = 1400 bits</b>, w<sub>1</sub> … w<sub>1400</sub>`)]);
+  [0, 15].forEach(i => rotulo("w" + (i + 1), i * PW + (i >= 8 ? 0.3 : 0), yW - 0.6, { tam: .3 }));
+  dato("1400 bits", "8 × 175 bytes", { acento: true });
   encuadrar();
   cuad.forEach((m, j) => aparecer(m, 200 + j * 6));
   w.forEach((b, i) => despues(1500 + i * 130, () => { ponCara(fw[i], "c", String(b)); aparecer(fw[i]); }));
-  decir(`un cuadro por cada uno de los 175 bytes cifrados; los dos verdes llevan la longitud. Debajo, esos dos bytes abiertos en sus 16 bits: ${Mo.bin8(CB[0])} ${Mo.bin8(CB[1])}.`);
+  decir(`un cuadro por cada uno de los 175 bytes cifrados. Los dos verdes, c<sub>1</sub> y c<sub>2</sub>, llevan la longitud cifrada; los grises son los 173 bytes del mensaje. Debajo, esos dos bytes abiertos en sus 16 bits, w<sub>1</sub> … w<sub>16</sub>: ${Mo.bin8(CB[0])} ${Mo.bin8(CB[1])}. En total n = 175 bytes → L = 8 × 175 = 1400 bits.`);
 }
 
 const VISTAS = { xor: vXor, flujo: vFlujo, cifrar: vCifrar, descifrar: vDescifrar, porque: vPorque, histograma: vHist, dos: vDos, bits: vBits };
 recorrido($("recorrido"), (i, nombre) => {
-  cancelarTodo(); cancelCam(); limpiar(); tarjetas(); toma = null;
+  cancelarTodo(); cancelCam(); limpiar(); tarjetas(); toma = null; datosEscena(null);
   verHtml(nombre);
   VISTAS[nombre]();
 });

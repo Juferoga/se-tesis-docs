@@ -12,100 +12,55 @@
 <script src="assets/js/modelo.js"></script>
 <script type="module" src="assets/js/sitio.js"></script>
 <style>
-/* Tarjeta flotante sobre la caja 3D */
-.seg-tar { position: absolute; left: 10px; top: 10px; z-index: 2; width: max-content; max-width: min(50%, 400px); display: grid; gap: .45rem; background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: blur(4px); border: 1px solid var(--line); border-radius: 10px; padding: .6rem .75rem; font-size: .86rem; line-height: 1.35; box-shadow: 0 4px 16px rgb(0 0 0 / .06); }
-.seg-tar:empty { display: none; }
-.seg-tar.entra, .seg-vista.entra { animation: seg-entra .45s ease-out; }
-@keyframes seg-entra { from { opacity: 0; transform: translateY(-6px); } }
-.seg-tar .big { font: 700 1.5rem/1.1 var(--f-display); font-variant-numeric: tabular-nums; }
-.seg-tar .note, .seg-vista .note { margin: 0; }
-.seg-tar .seg-fila { grid-template-columns: 3.6rem minmax(0, 1fr); }
-.seg-tar .seg-cifras { grid-template-columns: repeat(4, max-content); gap: .4rem; }
-.seg-tar .seg-cifras .card { padding: .4rem .6rem; }
-.seg-tar .seg-barra { height: 1.35rem; min-width: 15rem; }
-.seg-tar .seg-par .fila { grid-template-columns: 8.5rem minmax(4rem, 1fr) 3.4rem; font-size: .8rem; }
-.seg-tar .controls { gap: .4rem; }
-.seg-tar .controls button { padding: .45rem .6rem; }
-.seg-vista { display: grid; align-content: center; gap: 1rem; padding: clamp(.5rem, 2vw, 1.5rem); font-size: clamp(.82rem, 1.25vw, 1.05rem); min-height: 0; overflow: hidden; }
-.seg-vista .seg-tok { font-size: clamp(.85rem, 1.5vw, 1.25rem); gap: 4px; }
-.seg-vista .seg-tok span { padding: .38rem .45rem; }
-.seg-vista .bits { font-size: clamp(.78rem, 1.15vw, 1rem); }
-.seg-vista .seg-ber { font-size: clamp(.8rem, 1.2vw, 1rem); gap: .35rem .7rem; }
-.seg-vista .seg-ber .b { height: clamp(.7rem, 1.4vw, 1.1rem); }
-.seg-par .v, .seg-ber .v { white-space: nowrap; }
-.escena .narra { font-size: .9rem; padding: .45rem .75rem; }
+/* Dato clave de la escena: una cifra discreta y un botón «i» con el resto */
+.seg-dato { position: absolute; left: 4px; top: 2px; z-index: 2; display: flex; align-items: flex-start; gap: .55rem; max-width: calc(100% - 8px); pointer-events: none; }
+.seg-dato:empty { display: none; }
+.seg-dato.entra { animation: seg-entra .45s ease-out; }
+@keyframes seg-entra { from { opacity: 0; transform: translateY(-4px); } }
+.seg-dato .v { display: block; font: 700 clamp(1.25rem, 2vw, 1.8rem)/1.05 var(--f-display); font-variant-numeric: tabular-nums; color: var(--ink); }
+.seg-dato .e { display: block; font-size: .82rem; color: var(--muted); margin-top: .2rem; }
+.seg-dato .boton-i { pointer-events: auto; width: 1.55rem; height: 1.55rem; margin-top: .1rem; font-size: .8rem; }
+.seg-vista .seg-dato { position: static; }
+/* Vista amplia (pasos 11 y 12) */
+.seg-vista { display: grid; align-content: center; gap: 1.1rem; padding: clamp(.25rem, 1.5vw, 1rem); font-size: clamp(.82rem, 1.2vw, 1rem); min-height: 0; overflow: hidden; }
+.seg-vista.entra { animation: seg-entra .45s ease-out; }
+.seg-bits { display: flex; flex-wrap: wrap; gap: 1px; font: 400 clamp(.8rem, 1.15vw, 1rem)/1 var(--f-mono); }
+.seg-bits button { border: 0; background: transparent; color: var(--muted); padding: .28rem .12rem; border-radius: 3px; font: inherit; min-width: 0; }
+.seg-bits button:hover { color: var(--ink); background: var(--soft); }
+.seg-bits button.flip { background: var(--bad); color: var(--surface); font-weight: 600; }
+.seg-dec { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .55rem .8rem; align-items: center; }
+.seg-dec .etq, .seg-vista .etq { font-size: .78rem; color: var(--muted); }
+.seg-tok { display: flex; flex-wrap: wrap; gap: 3px; font: 600 clamp(.8rem, 1.3vw, 1.1rem)/1 var(--f-mono); min-height: 1.8rem; }
+.seg-tok span { padding: .34rem .4rem; border-radius: 4px; background: var(--soft); color: var(--ink); }
+.seg-tok span.bad { background: transparent; color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad); }
+.seg-ber { display: grid; grid-template-columns: minmax(8.5rem, max-content) minmax(0, 1fr) 3.6rem; gap: .35rem .7rem; align-items: center; }
+.seg-ber .b { height: .7rem; border-radius: 3px; background: var(--muted); opacity: .45; min-width: 2px; transition: width .8s ease; }
+.seg-ber .v { text-align: right; font: 400 .8rem/1 var(--f-mono); color: var(--muted); white-space: nowrap; }
+.seg-ber .si { color: var(--key); font-weight: 600; }
+.seg-ber .g { grid-column: 1 / -1; font: 600 .7rem/1.2 var(--f-mono); color: var(--muted); margin-top: .35rem; text-transform: uppercase; letter-spacing: .06em; }
 @media (max-width: 900px) {
-  .seg-tar { left: 6px; top: 6px; max-width: calc(100% - 12px); font-size: .72rem; padding: .35rem .5rem; gap: .25rem; border-radius: 8px; }
-  .seg-tar .sec, .seg-vista .sec { display: none; }
-  .seg-tar .big { font-size: 1.05rem; }
-  .seg-tar .seg-cifras { gap: .3rem; }
-  .seg-tar .seg-cifras .card { padding: .25rem .4rem; }
-  .seg-tar .seg-cifras .card b { font-size: .85rem; }
-  .seg-tar .seg-cifras .card .note { font-size: .62rem; }
-  .seg-tar .seg-calc { font-size: .66rem; padding: .3rem .45rem; }
-  .seg-tar .seg-barra { height: 1.05rem; min-width: 12rem; }
-  .seg-tar .seg-barra .s { font-size: .6rem; }
-  .seg-tar .seg-fila { grid-template-columns: 3rem minmax(0, 1fr); }
-  .seg-tar .seg-fila .etq { font-size: .62rem; }
-  .seg-tar .seg-par .fila { grid-template-columns: 7rem minmax(3rem, 1fr) 3.4rem; font-size: .66rem; }
-  .seg-tar .seg-par .v { font-size: .66rem; }
-  .seg-tar .seg-par .b { height: .6rem; }
-  .seg-tar .seg-reloj { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .25rem; }
-  .seg-tar .seg-reloj div { padding: .2rem .35rem; }
-  .seg-tar .seg-reloj b { font-size: .68rem; }
-  .seg-tar .seg-reloj small { font-size: .6rem; }
-  .seg-tar .controls button { padding: .3rem .4rem; font-size: .68rem; }
-  .seg-vista { gap: .3rem; padding: .2rem; line-height: 1.3; }
-  .seg-vista .controls input { padding: .2rem .4rem; }
-  .seg-vista .seg-tok span { padding: .22rem .26rem; }
-  .seg-vista .seg-ber { gap: .05rem .5rem; font-size: .7rem; line-height: 1.25; grid-template-columns: minmax(7.5rem, max-content) minmax(0, 1fr) 3.6rem; }
-  .seg-vista .seg-ber .v { font-size: .7rem; }
-  .seg-vista .seg-ber .b { height: .6rem; }
-  .seg-vista .seg-ber .g { margin-top: .1rem; }
-  .escena .narra { font-size: .78rem; padding: .3rem .5rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow: clip; overflow-clip-margin: content-box; }
+  .seg-dato .v { font-size: 1.05rem; } .seg-dato .e { font-size: .7rem; }
   .escena .ayuda3d { display: none; }
+  .seg-vista { gap: .45rem; padding: 0; line-height: 1.25; }
+  .seg-bits { font-size: .72rem; } .seg-bits button { padding: .2rem .08rem; }
+  .seg-tok { font-size: .72rem; min-height: 1.3rem; } .seg-tok span { padding: .2rem .24rem; }
+  .seg-dec { gap: .3rem .5rem; }
+  .seg-ber { gap: .05rem .5rem; font-size: .72rem; grid-template-columns: minmax(6.5rem, max-content) minmax(0, 1fr) 3.2rem; }
+  .seg-ber .v { font-size: .7rem; } .seg-ber .b { height: .5rem; } .seg-ber .g { margin-top: .1rem; font-size: .62rem; }
 }
-.seg-cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: .6rem; }
-.seg-cifras .card { padding: .65rem .8rem; }
-.seg-cifras .card b { display: block; font: 700 1.2rem/1.25 var(--f-display); font-variant-numeric: tabular-nums; }
-.seg-cifras .card.x0 b { color: var(--key); } .seg-cifras .card.r b { color: var(--ciph); } .seg-cifras .card.n b { color: var(--pos); }
-.seg-cifras .card.bad b { color: var(--bad); } .seg-cifras .card.ok b { color: var(--ok); }
-.seg-barras { display: grid; gap: .4rem; }
-.seg-fila { display: grid; grid-template-columns: 4.8rem minmax(0, 1fr); gap: .5rem; align-items: center; }
-.seg-fila .etq { font-size: var(--s-1); color: var(--muted); }
-.seg-barra { display: flex; height: 1.9rem; gap: 2px; position: relative; }
-.seg-barra .s { display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; font: 600 .72rem/1 var(--f-mono); border-radius: 4px; min-width: 0; transition: flex-grow .9s cubic-bezier(.2,.7,.2,1); }
-.seg-barra .s.x0 { background: var(--key); color: var(--surface); }
-.seg-barra .s.r { background: var(--ciph); color: var(--surface); }
-.seg-barra .s.n { background: var(--pos); color: var(--surface); }
-.seg-barra .s.mem { background: var(--soft); color: var(--ink); border: 1px solid var(--line); }
-.seg-barra .s.hueco { background: transparent; }
-.seg-barra .umbral { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--ink); }
-.seg-barra .umbral span { position: absolute; top: -1.15rem; left: 50%; transform: translateX(-50%); font: 600 .7rem/1 var(--f-mono); white-space: nowrap; color: var(--ink); }
-.seg-calc { font: 400 .82rem/1.5 var(--f-mono); background: var(--soft); border-radius: 8px; padding: .55rem .75rem; overflow-wrap: anywhere; }
+/* Datos de la escena (dentro de la ventana «i») */
+.seg-cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: .5rem; margin: .4rem 0; }
+.seg-cifras > div { background: var(--surface); border-radius: 8px; padding: .5rem .7rem; }
+.seg-cifras b { display: block; font: 700 1.1rem/1.25 var(--f-display); font-variant-numeric: tabular-nums; }
+.seg-calc { font: 400 .82rem/1.55 var(--f-mono); background: var(--surface); border-radius: 8px; padding: .55rem .75rem; overflow-wrap: anywhere; margin: .4rem 0; }
 .seg-calc b { color: var(--key); }
-.seg-reloj { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); gap: .5rem; }
-.seg-reloj div { background: var(--soft); border-radius: 8px; padding: .5rem .65rem; min-width: 0; }
-.seg-reloj small { display: block; color: var(--muted); font-size: .75rem; }
-.seg-reloj b { font: 600 1rem/1.3 var(--f-mono); overflow-wrap: anywhere; }
-.seg-prog { height: .6rem; border-radius: 4px; background: var(--soft); overflow: hidden; }
-.seg-prog i { display: block; height: 100%; background: var(--bad); width: 0; }
-.seg-dec { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .5rem .8rem; align-items: center; }
-.seg-dec .etq { font-size: var(--s-1); color: var(--muted); }
-.seg-tok { display: flex; flex-wrap: wrap; gap: 3px; font: 600 .82rem/1 var(--f-mono); min-height: 1.8rem; }
-.seg-tok span { padding: .32rem .36rem; border-radius: 4px; background: var(--soft); border: 1px solid var(--line); }
-.seg-tok span.ok { background: var(--ciph-soft); color: var(--ok); border-color: var(--ok); }
-.seg-tok span.bad { background: var(--pos-soft); color: var(--bad); border-color: var(--bad); }
-.seg-flip { background: var(--bad); color: var(--surface); border-radius: 3px; padding: 0 2px; }
-.seg-ber { display: grid; grid-template-columns: minmax(8.5rem, max-content) minmax(0, 1fr) 3.6rem; gap: .3rem .6rem; align-items: center; font-size: .86rem; }
-.seg-ber .b { height: .8rem; border-radius: 3px; background: var(--bad); min-width: 2px; transition: width .8s ease; }
-.seg-ber .b.ok { background: var(--ok); }
-.seg-ber .v { text-align: right; font: 400 .8rem/1 var(--f-mono); }
-.seg-ber .g { grid-column: 1 / -1; font: 600 var(--s-1)/1.2 var(--f-mono); color: var(--muted); margin-top: .3rem; text-transform: uppercase; letter-spacing: .05em; }
-.seg-par { display: grid; gap: .35rem; }
-.seg-par .fila { display: grid; grid-template-columns: 9rem minmax(0, 1fr) 3.6rem; gap: .5rem; align-items: center; font-size: .88rem; }
-.seg-par .b { height: .9rem; border-radius: 3px; min-width: 2px; transition: width .8s ease; }
-.seg-par .v { text-align: right; font: 400 .8rem/1 var(--f-mono); }
+.seg-par { display: grid; gap: .35rem; margin: .4rem 0; }
+.seg-par .fila { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr) 3.6rem; gap: .5rem; align-items: center; font-size: .88rem; }
+.seg-par .b { height: .7rem; border-radius: 3px; min-width: 2px; background: var(--muted); }
+.seg-par .b.si { background: var(--key); }
+.seg-par .v { text-align: right; font: 400 .8rem/1 var(--f-mono); white-space: nowrap; }
+.seg-reloj { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .25rem .8rem; font-size: .88rem; margin: .4rem 0; }
+.seg-reloj b { font: 600 .85rem/1.35 var(--f-mono); overflow-wrap: anywhere; }
 .seg-explora { display: grid; gap: 1rem; }
 .seg-explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
 </style>
@@ -124,14 +79,16 @@
       <article class="paso" data-paso="memoria">
         <span class="eyebrow">Paso 1 · Tamaño en memoria</span>
         <h2>La clave ocupa 144 bits</h2>
-        <p>x0 y r se guardan como float64, de 64 bits cada uno, y N como entero de 16 bits: 64 + 64 + 16 = 144 bits. En la caja, cada lado mide los bits de su componente.</p>
+        <p>x0 y r ocupan 64 bits cada uno y N ocupa 16: la clave mide 144 bits en memoria.</p>
+        <p>x0 y r se guardan como float64 y N como entero de 16 bits: 64 + 64 + 16 = 144 bits. En la caja, cada lado mide los bits de su componente.</p>
         <p class="analogia">Como un candado de 144 ruedas que solo marcan 0 o 1.</p>
         <details><summary>Detalle técnico</summary><p>Un float64 (IEEE 754 binary64) tiene 1 bit de signo, 11 de exponente y 52 de fracción. N se empaqueta como entero sin signo de 16 bits. Con n bits hay 2<sup>n</sup> combinaciones, así que la longitud de cada lado es el logaritmo en base 2 del número de valores: la caja está en escala logarítmica.</p></details>
       </article>
       <article class="paso" data-paso="invalidas">
         <span class="eyebrow">Paso 2 · No todas sirven</span>
         <h2>Muchas combinaciones de bits no son claves</h2>
-        <p>Los 144 bits también pueden escribir r = 1, un x0 negativo o N = 0, y el sistema no los acepta: con r = 1 la secuencia se apaga hacia 0, con x0 negativo crece sin límite y con N = 0 no hay transitorio.</p>
+        <p>Los 144 bits también pueden escribir valores que el sistema no acepta, como r = 1, un x0 negativo o N = 0.</p>
+        <p>Con r = 1 la secuencia se apaga hacia 0, con x0 negativo crece sin límite y con N = 0 no hay transitorio.</p>
         <p>Solo cuentan los valores dentro del rango permitido.</p>
         <details><summary>Detalle técnico</summary><p>Rangos permitidos: x0 ∈ [0.001, 0.999], r ∈ [3.99, 4) y N ∈ [100, 10 000], todos enteros en el caso de N.</p></details>
       </article>
@@ -145,7 +102,8 @@
       <article class="paso" data-paso="r">
         <span class="eyebrow">Paso 4 · Contar r</span>
         <h2>r puede tomar 2.25 × 10<sup>13</sup> valores</h2>
-        <p>Entre 3.99 y 4, dos float64 consecutivos están a 2<sup>−51</sup> ≈ 4.44 × 10<sup>−16</sup>, así que caben 22 517 998 136 852 valores: 44.36 bits.</p>
+        <p>Entre 3.99 y 4 caben 22 517 998 136 852 valores de r: 44.36 de sus 64 bits.</p>
+        <p>En ese rango, dos float64 consecutivos están a 2<sup>−51</sup> ≈ 4.44 × 10<sup>−16</sup>.</p>
         <p class="analogia">Como una regla con marcas a 2<sup>−51</sup>: en 0.01 caben 0.01 / 2<sup>−51</sup> marcas.</p>
         <details><summary>Detalle técnico</summary><p>Esa separación mínima se llama ulp (unidad en el último lugar). Entre 2 y 4 todos los float64 tienen el mismo exponente, y la ulp vale 2 × 2<sup>−52</sup> = 2<sup>−51</sup>.</p></details>
       </article>
@@ -157,43 +115,50 @@
       <article class="paso" data-paso="suma">
         <span class="eyebrow">Paso 6 · Sumar bits</span>
         <h2>Los bits se suman porque las cantidades se multiplican</h2>
-        <p>Cada valor de x0 se combina con cada valor de r y de N: el total es el producto. Multiplicar potencias de 2 suma exponentes: 55.32 + 44.36 + 13.27 = 112.95 bits.</p>
+        <p>El total de claves es el producto de las tres cantidades, así que sus bits se suman: 55.32 + 44.36 + 13.27 = 112.95 bits.</p>
+        <p>Cada valor de x0 se combina con cada valor de r y de N. Multiplicar potencias de 2 suma exponentes.</p>
         <p class="analogia">3 camisas y 4 pantalones dan 3 × 4 = 12 combinaciones.</p>
       </article>
       <article class="paso" data-paso="validas">
         <span class="eyebrow">Paso 7 · Claves válidas</span>
         <h2>2<sup>112.91</sup> claves, más que las 2<sup>100</sup> recomendadas</h2>
-        <p>Una clave es válida si sus tres secuencias son caóticas (exponente de Lyapunov positivo), y lo cumple el 97.67 %. Quitar el resto resta 0.03 bits: quedan 2<sup>112.91</sup> ≈ 9.78 × 10<sup>33</sup> claves.</p>
+        <p>El 97.67 % de las claves da secuencias caóticas: quedan 2<sup>112.91</sup> ≈ 9.78 × 10<sup>33</sup> claves válidas.</p>
+        <p>Una clave es válida si sus tres secuencias son caóticas (exponente de Lyapunov positivo). Quitar el resto resta 0.03 bits.</p>
         <details><summary>Detalle técnico</summary><p class="formula">log₂(0.9767) ≈ −0.03 → 112.95 − 0.03 = 112.91</p><p>El exponente de Lyapunov es el promedio de ln|r(1 − 2x<sub>i</sub>)| a lo largo de la secuencia. Si es positivo, dos valores iniciales muy cercanos se separan rápidamente. El mínimo recomendado es 2<sup>100</sup>.</p></details>
       </article>
       <article class="paso" data-paso="resolucion">
         <span class="eyebrow">Paso 8 · Resolución efectiva</span>
         <h2>Dos claves vecinas dan resultados distintos</h2>
+        <p>Cambiar x0, r o N en la unidad más pequeña cambia cerca de la mitad de los bits del flujo de clave.</p>
         <p>A 300 claves se les cambió x0 en 1 ulp, r en 1 ulp y N en 1. El flujo de clave cambió en promedio el 49.93 %, el 50.05 % y el 50.11 % de sus bits, como dos flujos sin relación.</p>
         <p>Todas las claves son distinguibles: el espacio efectivo sigue en 2<sup>112.91</sup>.</p>
       </article>
       <article class="paso" data-paso="fuerza">
         <span class="eyebrow">Paso 9 · Fuerza bruta</span>
         <h2>Probar todas las claves tomaría 3.10 × 10<sup>14</sup> años</h2>
-        <p>Fuerza bruta es probar claves una por una. A 10<sup>12</sup> claves por segundo se tardaría 3.10 × 10<sup>14</sup> años; a 10<sup>9</sup>, 3.10 × 10<sup>17</sup>. El universo tiene unos 1.38 × 10<sup>10</sup> años.</p>
+        <p>A 10<sup>12</sup> claves por segundo, probarlas todas tomaría 3.10 × 10<sup>14</sup> años; el universo tiene unos 1.38 × 10<sup>10</sup>.</p>
+        <p>Fuerza bruta es probar claves una por una. A 10<sup>9</sup> claves por segundo se tardaría 3.10 × 10<sup>17</sup> años.</p>
         <details><summary>Detalle técnico</summary><p class="formula">años = 2<sup>112.91</sup> / (claves por segundo × 31 557 600)</p><p>31 557 600 son los segundos de un año de 365.25 días. La fracción explorada es (claves por segundo × segundos transcurridos) / 2<sup>112.91</sup>.</p></details>
       </article>
       <article class="paso" data-paso="sensibilidad">
         <span class="eyebrow">Paso 10 · Sensibilidad</span>
         <h2>Una clave casi correcta no sirve</h2>
-        <p>Con x0 cambiada en 10<sup>−15</sup>, los bits extraídos difieren en un 47.64 % y el texto recuperado tiene solo un 8.91 % de similitud con el original.</p>
+        <p>Con x0 cambiada en 10<sup>−15</sup>, el texto recuperado tiene solo un 8.91 % de similitud con el original.</p>
+        <p>Los bits extraídos difieren en un 47.64 %.</p>
         <p>Un atacante no puede acercarse poco a poco: una clave casi correcta da lo mismo que una cualquiera.</p>
       </article>
       <article class="paso" data-paso="bit">
         <span class="eyebrow">Paso 11 · Robustez</span>
         <h2>Un solo bit erróneo arruina el texto</h2>
+        <p>Sin código corrector de errores, un solo bit cambiado desvía la decodificación desde ese punto.</p>
         <p>El modelo no usa código corrector de errores. Si un bit llega cambiado, el valor recibido cae en otro subintervalo y desde ahí los tokens salen mal.</p>
-        <p>En la escena puedes elegir qué bit se daña.</p>
+        <p>En la escena puedes tocar cualquier bit para dañarlo.</p>
       </article>
       <article class="paso" data-paso="ataques">
         <span class="eyebrow">Paso 12 · Ataques al audio</span>
         <h2>Solo el ruido más débil conserva el mensaje</h2>
-        <p>La tasa de error de bits (BER) es el porcentaje de bits extraídos que no coinciden con los insertados. Sal y pimienta y oclusión destruyen el mensaje; del ruido gaussiano solo sobrevive el de SNR 100 dB.</p>
+        <p>Sal y pimienta y oclusión destruyen el mensaje; del ruido gaussiano solo sobrevive el de SNR 100 dB.</p>
+        <p>La tasa de error de bits (BER) es el porcentaje de bits extraídos que no coinciden con los insertados.</p>
         <p>Como trabajo futuro se propone un código corrector, como Reed-Solomon.</p>
         <details><summary>Detalle técnico</summary><p>Sal y pimienta reemplaza muestras al azar por valores extremos. La oclusión borra tramos del audio. El ruido gaussiano suma pequeñas variaciones aleatorias; su SNR (relación señal a ruido) en dB indica qué tan débil es: más dB, ruido más débil. Reed-Solomon añade, antes de la inserción, bytes calculados a partir del mensaje que permiten corregir algunos bytes dañados; se usa, por ejemplo, en los códigos QR.</p></details>
       </article>
@@ -201,7 +166,7 @@
     </div>
     <div class="escena">
       <div class="lienzo" id="seg-lienzo" role="img" aria-label="Espacio de clave como una caja con ejes x0, r y N">
-        <div class="seg-tar" id="seg-tar" aria-live="polite"></div>
+        <div class="seg-dato" id="seg-dato" aria-live="polite"></div>
       </div>
       <div class="vista seg-vista" id="seg-vista" aria-live="polite" hidden></div>
       <p class="narra" id="seg-narra"><b>Qué estás viendo:</b> …</p>
@@ -224,7 +189,7 @@
 </main>
 <footer class="pie"></footer>
 <script type="module">
-import { recorrido, animar, sinMovimiento, color } from "./assets/js/guia.js";
+import { recorrido, animar, sinMovimiento, color, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
 const $ = id => document.getElementById(id);
 const fmtN = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -240,6 +205,7 @@ const lsum = lx + lr + ln, ltot = lsum + lv, K = 2 ** ltot;
 const ANIO = 365.25 * 86400, UNIV = 1.38e10;
 
 /* ---------- Escena 3D ---------- */
+// Todo en grises del tema; solo lo que el paso señala toma el color de la clave (acento).
 const S = 0.05; // unidades de escena por bit
 const MEM = [64, 16, 64]; // x: x0, y: N, z: r
 const UTIL = [lx, ln, lr];
@@ -249,68 +215,59 @@ let c = conRojo();
 const grupoLog = new THREE.Group(), grupoLin = new THREE.Group();
 e.scene.add(grupoLog, grupoLin);
 
-const cajaMem = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: c.muted }));
+const cajaMem = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: c.muted, transparent: true, opacity: .7 }));
 cajaMem.scale.set(MEM[0] * S, MEM[1] * S, MEM[2] * S);
 cajaMem.position.set(MEM[0] * S / 2, MEM[1] * S / 2, MEM[2] * S / 2);
 const velo = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: c.bad, transparent: true, opacity: 0, depthWrite: false }));
 velo.scale.copy(cajaMem.scale); velo.position.copy(cajaMem.position);
-const util = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: c.key, transparent: true, opacity: .55 }));
+const util = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: c.key, transparent: true, opacity: .45 }));
 const utilBorde = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: c.key }));
 const fantasma = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineDashedMaterial({ color: c.ink, dashSize: .08, gapSize: .06 }));
 fantasma.scale.set(UTIL[0] * S, UTIL[1] * S, UTIL[2] * S); fantasma.position.set(UTIL[0] * S / 2, UTIL[1] * S / 2, UTIL[2] * S / 2); fantasma.computeLineDistances();
 grupoLog.add(cajaMem, velo, util, utilBorde, fantasma);
 
-// Barras sobre los ejes (crecen en los pasos 3 a 5)
-const eje = (col, dir) => { const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: c[col] })); m.userData = { col, dir }; grupoLog.add(m); return m; };
-const ejes = [eje("key", 0), eje("pos", 1), eje("ciph", 2)];
+// Barras sobre los ejes (crecen en los pasos 3 a 5); la del paso va en acento, las demás en gris
+const eje = dir => { const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: c.muted })); m.userData = { dir }; grupoLog.add(m); return m; };
+const ejes = [eje(0), eje(1), eje(2)];   // x0, N, r
 const GROSOR = 0.07;
 function ponerEje(m, largo) {
   const s = [GROSOR, GROSOR, GROSOR]; s[m.userData.dir] = Math.max(1e-3, largo * S); m.scale.set(...s);
-  const p = [-GROSOR, -GROSOR, -GROSOR]; p[m.userData.dir] = largo * S / 2; p[1] = m.userData.dir === 1 ? largo * S / 2 : -GROSOR; m.position.set(...p);
-  if (m.userData.dir === 1) m.position.set(-GROSOR, largo * S / 2, -GROSOR);
+  const p = [-GROSOR, -GROSOR, -GROSOR]; p[m.userData.dir] = largo * S / 2; m.position.set(...p);
   m.visible = largo > 0.01;
 }
-// Rótulos
-const rot = (txt, col, pos, tam = .26) => { const s = etiqueta(txt, { color: col, tam }); s.position.set(...pos); grupoLog.add(s); return s; };
+// Rótulos: pocos, pequeños y apagados
+const rot = (txt, pos, tam = .17) => { const s = etiqueta(txt, { color: "muted", tam, peso: 500 }); s.position.set(...pos); grupoLog.add(s); return s; };
 const R = {
-  x0m: rot("x0 · 64 bits (memoria)", "muted", [MEM[0] * S / 2, -.3, MEM[2] * S + .45], .19),
-  rm: rot("r · 64 bits (memoria)", "muted", [MEM[0] * S + .6, -.3, MEM[2] * S / 2], .19),
-  nm: rot("N · 16 bits (memoria)", "muted", [-.25, MEM[1] * S + .3, 1.0], .19),
-  x0u: rot(`x0 · ${lx.toFixed(2)} bits`, "key", [UTIL[0] * S + .25, .2, -.35]),
-  ru: rot(`r · ${lr.toFixed(2)} bits`, "ciph", [-.45, .2, UTIL[2] * S + .25]),
-  nu: rot(`N · ${ln.toFixed(2)} bits`, "pos", [-.2, UTIL[1] * S + .3, -.2]),
-  tot: rot("", "key", [0, 0, 0], .26),
-  inv1: rot("r = 1  ✗", "bad", [2.9, 0.65, 2.9], .2),
-  inv2: rot("x0 < 0  ✗", "bad", [3.0, 0.2, 0.4], .2),
-  inv3: rot("N = 0  ✗", "bad", [0.4, 0.75, 3.05], .2),
+  x0m: rot("x0 · 64 bits", [MEM[0] * S / 2, -.3, MEM[2] * S + .45]),
+  rm: rot("r · 64 bits", [MEM[0] * S + .55, -.3, MEM[2] * S / 2]),
+  nm: rot("N · 16 bits", [-.25, MEM[1] * S + .3, 1.0]),
+  x0u: rot("x0", [UTIL[0] * S + .2, .05, -.25], .2),
+  ru: rot("r", [-.3, .05, UTIL[2] * S + .2], .2),
+  nu: rot("N", [-.2, UTIL[1] * S + .25, -.2], .2),
+  inv1: rot("r = 1", [2.9, 0.65, 2.9]),
+  inv2: rot("x0 < 0", [3.0, 0.2, 0.4]),
+  inv3: rot("N = 0", [0.4, 0.75, 3.05]),
 };
-let rotTot = null;
-function rotuloTotal(txt) { if (rotTot) grupoLog.remove(rotTot); rotTot = etiqueta(txt, { color: "key", tam: .34 }); rotTot.position.set(UTIL[0] * S / 2 + .3, UTIL[1] * S + .75, UTIL[2] * S / 2 + .3); grupoLog.add(rotTot); }
-grupoLog.remove(R.tot);
 
 // Puntos vecinos (paso de resolución y sensibilidad)
-const esf = (col) => { const m = new THREE.Mesh(new THREE.SphereGeometry(.07, 20, 14), new THREE.MeshStandardMaterial({ color: c[col] })); m.userData.col = col; grupoLog.add(m); return m; };
+const esf = col => { const m = new THREE.Mesh(new THREE.SphereGeometry(.07, 20, 14), new THREE.MeshStandardMaterial({ color: c[col] })); m.userData.col = col; grupoLog.add(m); return m; };
 const centro = new THREE.Vector3(1.3, .35, 1.1);
-const pK = esf("ink"), vec = [esf("key"), esf("ciph"), esf("pos")];
+const pK = esf("ink"), vec = [esf("key"), esf("key"), esf("key")];
 const DIRV = [new THREE.Vector3(.5, 0, 0), new THREE.Vector3(0, 0, .5), new THREE.Vector3(0, .32, 0)];
 const lineas = vec.map((v, i) => { const g = new THREE.BufferGeometry().setFromPoints([centro, centro.clone().add(DIRV[i])]); const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: c.muted })); grupoLog.add(l); return l; });
 pK.position.copy(centro); vec.forEach((v, i) => v.position.copy(centro).add(DIRV[i]));
-const RV = [rot("x0 + 1 ulp: 49.93 %", "key", [centro.x + 1.05, centro.y + .05, centro.z], .2), rot("r + 1 ulp: 50.05 %", "ciph", [centro.x + .1, centro.y + .3, centro.z + .8], .2), rot("N + 1: 50.11 %", "pos", [centro.x - .15, centro.y + .62, centro.z - .2], .2)];
-const RS = rot("x0 y x0 + 10⁻¹⁵", "ink", [centro.x, centro.y + .35, centro.z], .22);
 
 // Vista lineal para la fuerza bruta
 const LADO = 2.6;
-const cuboTodo = new THREE.Mesh(new THREE.BoxGeometry(LADO, LADO, LADO), new THREE.MeshStandardMaterial({ color: c.key, transparent: true, opacity: .16, depthWrite: false }));
-const cuboBorde = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(LADO, LADO, LADO)), new THREE.LineBasicMaterial({ color: c.key }));
-const explorado = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: c.bad }));
-const exploradoBorde = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: c.bad }));
+const cuboTodo = new THREE.Mesh(new THREE.BoxGeometry(LADO, LADO, LADO), new THREE.MeshStandardMaterial({ color: c.muted, transparent: true, opacity: .1, depthWrite: false }));
+const cuboBorde = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(LADO, LADO, LADO)), new THREE.LineBasicMaterial({ color: c.muted }));
+const explorado = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: c.key }));
+const exploradoBorde = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: c.key }));
 const centroLin = new THREE.Vector3(1.6, .6, 1.6);
 cuboTodo.position.copy(centroLin); cuboBorde.position.copy(centroLin);
 grupoLin.add(cuboTodo, cuboBorde, explorado, exploradoBorde);
-const linTodo = etiqueta("todas las claves: 9.78 × 10³³", { color: "key", tam: .22 }); linTodo.position.set(centroLin.x, centroLin.y + LADO / 2 + .35, centroLin.z);
-const linEsc = etiqueta("escala lineal: volumen = cantidad", { color: "muted", tam: .17 }); linEsc.position.set(centroLin.x, centroLin.y - LADO / 2 - .3, centroLin.z + LADO / 2);
-const linExp = etiqueta("explorado", { color: "bad", tam: .2 });
-grupoLin.add(linTodo, linEsc, linExp);
+const linExp = etiqueta("explorado", { color: "muted", tam: .17, peso: 500 });
+grupoLin.add(linExp);
 function ponerExplorado(frac) {
   const l = Math.max(1e-4, LADO * Math.cbrt(frac));
   const p = new THREE.Vector3(centroLin.x - LADO / 2 + l / 2, centroLin.y - LADO / 2 + l / 2, centroLin.z + LADO / 2 - l / 2);
@@ -320,13 +277,17 @@ function ponerExplorado(frac) {
   linExp.position.set(p.x + .1, p.y + .25, p.z + .3);
 }
 
-e.alTema(() => {
-  c = conRojo();
+let pasoActual = 0;
+function colorear() {
+  const i = pasoActual;
   cajaMem.material.color.copy(c.muted); velo.material.color.copy(c.bad); util.material.color.copy(c.key); utilBorde.material.color.copy(c.key); fantasma.material.color.copy(c.ink);
-  ejes.forEach(m => m.material.color.copy(c[m.userData.col])); [pK, ...vec].forEach(m => m.material.color.copy(c[m.userData.col]));
+  const focoEje = { 2: 0, 3: 2, 4: 1 }[i];                  // x0, r, N en los pasos 3, 4 y 5
+  ejes.forEach((m, k) => m.material.color.copy(k === focoEje ? c.key : c.muted));
+  [pK, ...vec].forEach(m => m.material.color.copy(c[m.userData.col]));
   lineas.forEach(l => l.material.color.copy(c.muted));
-  cuboTodo.material.color.copy(c.key); cuboBorde.material.color.copy(c.key); explorado.material.color.copy(c.bad); exploradoBorde.material.color.copy(c.bad);
-});
+  cuboTodo.material.color.copy(c.muted); cuboBorde.material.color.copy(c.muted); explorado.material.color.copy(c.key); exploradoBorde.material.color.copy(c.key);
+}
+e.alTema(() => { c = conRojo(); colorear(); });
 
 /* Estado de la escena por paso: [largo x0, largo N, largo r] de las barras, caja útil, etc. */
 let est = { ex: [0, 0, 0], util: 0, velo: 0 };
@@ -337,7 +298,7 @@ function aplicar(s) {
   const dims = UTIL.map(v => Math.max(1e-3, v * S * u));
   util.scale.set(...dims); utilBorde.scale.set(...dims);
   util.position.set(dims[0] / 2, dims[1] / 2, dims[2] / 2); utilBorde.position.copy(util.position);
-  velo.material.opacity = .22 * s.velo; velo.visible = s.velo > 0.01;
+  velo.material.opacity = .2 * s.velo; velo.visible = s.velo > 0.01;
 }
 const OBJ = [
   { ex: [0, 0, 0], util: 0, velo: 0 },
@@ -355,102 +316,94 @@ function visibles(i) {
   const log = i !== 8;
   grupoLog.visible = log; grupoLin.visible = !log;
   fantasma.visible = i === 1;
-  [R.x0m, R.rm, R.nm].forEach(r => (r.visible = i <= 1 || i >= 5));
-  R.x0u.visible = i >= 2; R.ru.visible = i >= 3; R.nu.visible = i >= 4;
+  [R.x0m, R.rm, R.nm].forEach(r => (r.visible = i <= 1));
+  R.x0u.visible = i >= 2 && i <= 6; R.ru.visible = i >= 3 && i <= 6; R.nu.visible = i >= 4 && i <= 6;
   [R.inv1, R.inv2, R.inv3].forEach(r => (r.visible = i === 1));
-  if (rotTot) rotTot.visible = i >= 5 && i !== 8 && i !== 7 && i !== 9;
-  [pK, ...vec, ...lineas, ...RV].forEach(o => (o.visible = i === 7));
-  RS.visible = i === 9; if (i === 9) { pK.visible = true; vec[0].visible = true; vec[0].position.copy(centro).add(new THREE.Vector3(.02, 0, 0)); } else vec[0].position.copy(centro).add(DIRV[0]);
-  util.material.opacity = i >= 7 ? .25 : .55;
+  [pK, ...vec, ...lineas].forEach(o => (o.visible = i === 7));
+  if (i === 9) { pK.visible = true; vec[0].visible = true; vec[0].position.copy(centro).add(new THREE.Vector3(.02, 0, 0)); } else vec[0].position.copy(centro).add(DIRV[0]);
+  util.material.opacity = i >= 7 ? .18 : .45;
 }
 
-/* ---------- Tarjetas flotantes (pasos 1 a 10) y vista amplia (pasos 11 y 12) ---------- */
-const tar = $("seg-tar"), vistaEl = $("seg-vista"), narra = $("seg-narra"), lienzo = $("seg-lienzo");
-const seg = (cls, v, txt) => `<div class="s ${cls}" style="flex:${v} 1 0" title="${txt}">${txt}</div>`;
-const barraMem = () => `<div class="seg-fila"><span class="etq">Memoria</span><div class="seg-barra">${seg("mem", 64, "x0 · 64")}${seg("mem", 64, "r · 64")}${seg("mem", 16, "N · 16")}</div></div>`;
-function barraUtil(hasta) {
-  const v = [lx, lr, ln], m = [64, 64, 16], cl = ["x0", "r", "n"];
-  return `<div class="seg-fila"><span class="etq">Útiles</span><div class="seg-barra">${v.map((b, k) => k < hasta ? seg(cl[k], b, b.toFixed(2)) + seg("hueco", m[k] - b, "") : seg("hueco", m[k], "")).join("")}</div></div>`;
-}
-const calc = (sec, res) => `<div class="seg-calc"><span class="sec">${sec}<br></span>${res}</div>`;
-const PANEL = [
-  () => `<div class="seg-cifras"><div class="card x0"><b>64</b><span class="note">bits de x0</span></div><div class="card r"><b>64</b><span class="note">bits de r</span></div><div class="card n"><b>16</b><span class="note">bits de N</span></div><div class="card"><b>144</b><span class="note">bits en total</span></div></div>
-    <div class="seg-barras sec">${barraMem()}</div>`,
-  () => `<div class="seg-cifras"><div class="card bad"><b>r = 1</b><span class="note">se apaga hacia 0</span></div><div class="card bad"><b>x0 &lt; 0</b><span class="note">crece sin límite</span></div><div class="card bad"><b>N = 0</b><span class="note">sin transitorio</span></div></div>
-    <p class="note sec">Rojo: ocupa memoria pero no es clave. Punteado: la parte que sí se acepta.</p>`,
-  () => calc(`bits(0.999) = 0x${hex64(0.999)}<br>bits(0.001) = 0x${hex64(0.001)}`, `diferencia + 1 = <b>${fmtN(cx.toString())}</b><br>log₂ = <b>${lx.toFixed(2)} bits</b>`)
-    + `<div class="seg-barras sec">${barraUtil(1)}${barraMem()}</div><p class="note sec">Calculado en tu navegador con DataView y BigInt.</p>`,
-  () => calc(`bits(4.0) = 0x${hex64(4)}<br>bits(3.99) = 0x${hex64(3.99)}`, `diferencia = <b>${fmtN(cr.toString())}</b><br>log₂ = <b>${lr.toFixed(2)} bits</b> · ulp = 2⁻⁵¹`)
-    + `<div class="seg-barras sec">${barraUtil(2)}${barraMem()}</div><p class="note sec">Calculado en tu navegador con DataView y BigInt.</p>`,
-  () => `<div class="seg-calc">10 000 − 100 + 1 = <b>${fmtN(cn)}</b><br>log₂ = <b>${ln.toFixed(2)} bits</b></div><div class="seg-barras sec">${barraUtil(3)}${barraMem()}</div>`,
-  () => `<div class="seg-calc"><span class="sec">${fmtN(cx.toString())} × ${fmtN(cr.toString())} × ${fmtN(cn)}<br></span>2<sup>${lx.toFixed(2)}</sup> × 2<sup>${lr.toFixed(2)}</sup> × 2<sup>${ln.toFixed(2)}</sup> = <b>2<sup>${lsum.toFixed(2)}</sup></b></div>
-    <div class="seg-barras"><div class="seg-fila"><span class="etq">Suma</span><div class="seg-barra">${seg("x0", lx, lx.toFixed(2))}${seg("r", lr, lr.toFixed(2))}${seg("n", ln, ln.toFixed(2))}${seg("hueco", 144 - lsum, "")}</div></div><div class="sec">${barraMem()}</div></div>`,
-  () => `<div class="seg-cifras"><div class="card"><b>97.67 %</b><span class="note">claves válidas</span></div><div class="card"><b>${lv.toFixed(2)} bits</b><span class="note">log₂(0.9767)</span></div><div class="card ok"><b>2<sup>${ltot.toFixed(2)}</sup></b><span class="note">≈ ${fmtE(K)}</span></div></div>
-    <div class="seg-barras sec" style="margin-top:1rem"><div class="seg-fila"><span class="etq">Claves</span><div class="seg-barra">${seg("x0", lx, "")}${seg("r", lr, "")}${seg("n", ln + lv, "")}${seg("hueco", 144 - ltot, "")}<i class="umbral" style="left:${(100 / 144 * 100).toFixed(2)}%"><span>2¹⁰⁰ mínimo</span></i></div></div>${barraMem()}</div>`,
-  () => `<div class="seg-par">${[["1 ulp en x0", 49.93, "key"], ["1 ulp en r", 50.05, "ciph"], ["1 en N", 50.11, "pos"]].map(([tx, v, col]) => `<div class="fila"><span>${tx}</span><div class="b" style="width:${v}%;background:var(--${col})"></div><span class="v">${v.toFixed(2)} %</span></div>`).join("")}
-    <div class="fila"><span>Posiciones compartidas</span><div class="b" style="width:5%;background:var(--muted)"></div><span class="v">&lt; 5 %</span></div></div>
-    <p class="note sec">Bits del flujo de clave que cambian, promedio de 300 claves. 50 % es lo esperado entre dos flujos sin relación. En la escena la separación está exagerada: es de una ulp.</p>`,
-  () => `<div class="controls"><button type="button" class="ghost" id="seg-v9" aria-pressed="false">10⁹ claves/s</button><button type="button" class="ghost" id="seg-v12" aria-pressed="true">10¹² claves/s</button><button type="button" id="seg-otra">▶ Otra vez</button></div>
-    <div class="seg-reloj"><div><small>Tiempo</small><b id="seg-t">0</b></div><div><small>Claves probadas</small><b id="seg-k">0</b></div><div><small>Fracción</small><b id="seg-f">0</b></div></div>
-    <div class="seg-prog" aria-hidden="true"><i id="seg-p"></i></div>
-    <p class="note sec" id="seg-nota" style="max-width:24rem"></p>`,
-  () => `<div class="seg-par">
-      <div class="fila"><span>Bits extraídos distintos</span><div class="b" style="width:47.64%;background:var(--bad)"></div><span class="v">47.64 %</span></div>
-      <div class="fila"><span>Similitud, x0 + 10⁻¹⁵</span><div class="b" style="width:8.91%;background:var(--bad)"></div><span class="v">8.91 %</span></div>
-      <div class="fila"><span>Similitud, clave correcta</span><div class="b" style="width:100%;background:var(--ok)"></div><span class="v">100 %</span></div></div>
-    <p class="note sec">Las dos claves están a 10⁻¹⁵: en la escena ocupan el mismo punto.</p>`,
-  () => `<p class="note sec"><b>Ejemplo de juguete</b> calculado en tu navegador: un codificador aritmético con probabilidades fijas (la frecuencia de cada letra, más un token de fin ■) comprime «LA CLAVE SECRETA». La red real da probabilidades distintas en cada paso, pero un bit erróneo tiene el mismo efecto.</p>
-    <div class="controls"><label for="seg-bit">Bit dañado <input type="number" id="seg-bit" min="1" value="${kBit}"></label></div>
-    <p class="bits" id="seg-bits" style="margin:0"></p>
-    <div class="seg-dec"><span class="etq">Bits correctos</span><div class="seg-tok" id="seg-ok"></div><span class="etq">Con 1 bit dañado</span><div class="seg-tok" id="seg-mal"></div></div>
-    <p class="note" id="seg-res-bit"></p>`,
-  () => {
-    const A = [["Sal y pimienta", [["5 %", 2.14], ["10 %", 5.36], ["25 %", 13.07]]], ["Oclusión", [["5 %", 1.79], ["10 %", 3.79], ["25 %", 7.93]]], ["Ruido gaussiano", [["SNR 100 dB", 0], ["SNR 90 dB", 5.86], ["SNR 80 dB", 47.5]]]];
-    return `<div class="seg-ber">${A.map(([n, fs]) => `<span class="g">${n}</span>` + fs.map(([tx, v]) => `<span>${tx} ${v === 0 ? "· conservado ✓" : "· destruido"}</span><div class="b${v === 0 ? " ok" : ""}" data-w="${(v / 50 * 100).toFixed(2)}" style="width:0"></div><span class="v">${v.toFixed(2)} %</span>`).join("")).join("")}</div>
-      <p class="note sec">BER a escala: el ancho completo es 50 %, lo que daría adivinar al azar.</p>
-      <div class="flow sec"><span class="step">mensaje</span><span class="arrow">→</span><span class="step" style="background:var(--key-soft);color:var(--key)">+ Reed-Solomon (trabajo futuro)</span><span class="arrow">→</span><span class="step">inserción</span></div>`;
-  },
+/* ---------- Dato clave por paso; tras la «i» de la escena, el resto de los datos ---------- */
+const tar = $("seg-dato"), vistaEl = $("seg-vista"), narra = $("seg-narra"), lienzo = $("seg-lienzo");
+const calc = (sec, res) => `<div class="seg-calc">${sec}<br>${res}</div>`;
+const cifras = l => `<div class="seg-cifras">${l.map(([b, t]) => `<div><b>${b}</b><span class="note">${t}</span></div>`).join("")}</div>`;
+const par = l => `<div class="seg-par">${l.map(([tx, v, si]) => `<div class="fila"><span>${tx}</span><div class="b${si ? " si" : ""}" style="width:${typeof v === "number" ? v : 5}%"></div><span class="v">${typeof v === "number" ? v.toFixed(2) + " %" : v}</span></div>`).join("")}</div>`;
+const reloj = vel => { const T = UNIV * ANIO; return `<div class="seg-reloj"><span>Todas las claves</span><b>${fmtE(K / vel / ANIO)} años</b><span>Claves probadas en la edad del universo</span><b>${fmtE(vel * T)}</b><span>Fracción explorada</span><b>${fmtE(vel * T / K)}</b></div>`; };
+const DATOS = [
+  { v: "144 bits", e: "la clave en memoria",
+    info: () => cifras([["64", "bits de x0"], ["64", "bits de r"], ["16", "bits de N"], ["144", "bits en total"]]) },
+  { v: "fuera de rango", e: "bits que no forman claves",
+    info: () => cifras([["r = 1", "se apaga hacia 0"], ["x0 < 0", "crece sin límite"], ["N = 0", "sin transitorio"]]) + `<p>Velo rojo: ocupa memoria pero no es clave. Caja punteada: la parte que sí se acepta.</p>` },
+  { v: `${lx.toFixed(2)} bits`, e: "útiles de los 64 de x0",
+    info: () => calc(`bits(0.999) = 0x${hex64(0.999)}<br>bits(0.001) = 0x${hex64(0.001)}`, `diferencia + 1 = <b>${fmtN(cx.toString())}</b><br>log₂ = <b>${lx.toFixed(2)} bits</b>`) + `<p>Calculado en tu navegador con DataView y BigInt.</p>` },
+  { v: `${lr.toFixed(2)} bits`, e: "útiles de los 64 de r",
+    info: () => calc(`bits(4.0) = 0x${hex64(4)}<br>bits(3.99) = 0x${hex64(3.99)}`, `diferencia = <b>${fmtN(cr.toString())}</b><br>log₂ = <b>${lr.toFixed(2)} bits</b> · ulp = 2⁻⁵¹`) + `<p>Calculado en tu navegador con DataView y BigInt.</p>` },
+  { v: `${ln.toFixed(2)} bits`, e: "útiles de los 16 de N",
+    info: () => calc("10 000 − 100 + 1 = <b>" + fmtN(cn) + "</b>", `log₂ = <b>${ln.toFixed(2)} bits</b>`) },
+  { v: `${lsum.toFixed(2)} bits`, e: "55.32 + 44.36 + 13.27",
+    info: () => calc(`${fmtN(cx.toString())} × ${fmtN(cr.toString())} × ${fmtN(cn)}`, `2<sup>${lx.toFixed(2)}</sup> × 2<sup>${lr.toFixed(2)}</sup> × 2<sup>${ln.toFixed(2)}</sup> = <b>2<sup>${lsum.toFixed(2)}</sup></b>`) },
+  { v: `2<sup>${ltot.toFixed(2)}</sup>`, e: `≈ ${fmtE(K)} claves válidas`,
+    info: () => cifras([["97.67 %", "claves válidas"], [`${lv.toFixed(2)} bits`, "log₂(0.9767)"], [`2<sup>${ltot.toFixed(2)}</sup>`, `≈ ${fmtE(K)}`], ["2<sup>100</sup>", "mínimo recomendado"]]) },
+  { v: "≈ 50 %", e: "bits que cambian entre claves vecinas",
+    info: () => par([["1 ulp en x0", 49.93, 1], ["1 ulp en r", 50.05, 1], ["1 en N", 50.11, 1], ["Posiciones compartidas", "< 5 %"]])
+      + `<p>Bits del flujo de clave que cambian, promedio de 300 claves. 50 % es lo esperado entre dos flujos sin relación. En la escena la separación está exagerada: es de una ulp.</p>` },
+  { v: "0", e: "explorado", anim: 1,
+    info: () => `<p><b>A 10¹² claves por segundo</b></p>${reloj(1e12)}<p><b>A 10⁹ claves por segundo</b></p>${reloj(1e9)}
+      <p>El cubo gris contiene todas las claves (escala lineal: volumen = cantidad). El cubito azul es lo que un atacante revisaría en toda la edad del universo, 1.38 × 10¹⁰ años; el marco solo indica dónde está. Cifras calculadas en tu navegador con 2<sup>${ltot.toFixed(2)}</sup> claves.</p>` },
+  { v: "8.91 %", e: "similitud con x0 + 10⁻¹⁵",
+    info: () => par([["Bits extraídos distintos", 47.64], ["Similitud, x0 + 10⁻¹⁵", 8.91], ["Similitud, clave correcta", 100, 1]]) + `<p>Las dos claves están a 10⁻¹⁵: en la escena ocupan el mismo punto.</p>` },
+  { v: "", e: "", bit: 1,
+    info: () => `<p><b>Ejemplo de juguete</b> calculado en tu navegador: un codificador aritmético con probabilidades fijas (la frecuencia de cada letra, más un token de fin ■) comprime «LA CLAVE SECRETA» en ${BITS.length} bits. La red real da probabilidades distintas en cada paso, pero un bit erróneo tiene el mismo efecto.</p><p>${resBit}</p>` },
+  { v: "0.00 %", e: "BER con SNR 100 dB: el mensaje se conserva",
+    info: () => `<p>BER a escala: el ancho completo es 50 %, lo que daría adivinar al azar. Sal y pimienta y oclusión destruyen el mensaje con cualquier intensidad probada; el ruido gaussiano lo destruye desde SNR 90 dB.</p>
+      <div class="flow"><span class="step">mensaje</span><span class="arrow">→</span><span class="step" style="background:var(--key-soft);color:var(--key)">+ Reed-Solomon (trabajo futuro)</span><span class="arrow">→</span><span class="step">inserción</span></div>` },
 ];
 const NARRA = [
   "la caja de memoria de la clave. Cada lado mide los bits de su componente: 64 para x0, 64 para r y 16 para N (vertical).",
   "en rojo, el espacio de bits que no forma claves válidas. La caja punteada, más pequeña, es la parte que el sistema acepta.",
   "la cámara se acerca al eje x0: la barra azul crece hasta 55.32 bits, la parte útil de sus 64.",
-  "la cámara pasa al eje r: la barra verde llega a 44.36 de sus 64 bits. El rango de r es estrecho, por eso pierde casi 20 bits.",
-  "la barra naranja, vertical, es N: 13.27 de sus 16 bits.",
-  "las tres barras forman la caja de claves útiles, dentro de la caja de memoria. Sus lados suman 112.95 bits.",
+  "la cámara pasa al eje r: la barra azul llega a 44.36 de sus 64 bits. El rango de r es estrecho, por eso pierde casi 20 bits.",
+  "la barra azul, vertical, es N: 13.27 de sus 16 bits.",
+  "las tres barras forman la caja azul de claves útiles, dentro de la caja de memoria. Sus lados suman 112.95 bits.",
   "la caja útil casi no cambia: el 2.33 % de claves no caóticas resta solo 0.03 bits. El total supera el mínimo de 2¹⁰⁰.",
-  "una clave (punto negro) y tres vecinas, cada una cambiada en una sola unidad. Cada vecina da un flujo de clave que difiere en cerca de la mitad de sus bits.",
-  "escala lineal: el cubo azul contiene todas las claves. El cubito rojo es lo que un atacante revisaría en toda la edad del universo; el marco rojo solo indica dónde está.",
-  "la cámara se acerca a una clave: x0 y x0 + 10⁻¹⁵ ocupan el mismo punto, pero los bits que extraen difieren casi a la mitad.",
-  "dos decodificaciones de los mismos bits: arriba intactos, abajo con un bit invertido. Verde es un símbolo correcto; rojo, uno equivocado.",
-  "la tasa de error de bits que deja cada ataque sobre el estegoaudio. Rojo: mensaje destruido; verde: conservado.",
+  "una clave (punto claro) y tres vecinas (azules), cada una cambiada en una sola unidad: en x0 (1 ulp), en r (1 ulp) y en N (1). Sus flujos de clave difieren en 49.93 %, 50.05 % y 50.11 % de los bits.",
+  "escala lineal: el cubo gris contiene todas las claves, 9.78 × 10³³. El cubito azul es lo que un atacante revisaría a 10¹² claves por segundo durante la edad del universo; el marco solo indica dónde está.",
+  "la cámara se acerca a una clave: x0 y x0 + 10⁻¹⁵ ocupan el mismo punto, pero los bits que extraen difieren en un 47.64 %.",
+  "arriba, los bits del mensaje comprimido de un ejemplo de juguete; en rojo, el bit dañado. Debajo, dos decodificaciones: con los bits correctos y con el bit invertido. En rojo, los símbolos equivocados.",
+  "la tasa de error de bits que deja cada ataque sobre el estegoaudio, a escala: el ancho completo es 50 %. Solo el ruido gaussiano de SNR 100 dB, en azul, conserva el mensaje.",
 ];
+function infoEscena() {
+  const paso = document.querySelectorAll("#recorrido .paso")[pasoActual], D = DATOS[pasoActual];
+  abrirInfo({ eyebrow: "La escena · " + (paso?.querySelector(".eyebrow")?.textContent || ""), titulo: (paso?.querySelector("h2")?.innerHTML || "").replace(/<sup>(.*?)<\/sup>/g, (m, t) => [...t].map(x => x === "." ? "·" : SUP[x] ?? x).join("")).replace(/<[^>]+>/g, ""),
+    secciones: [{ titulo: "Qué muestra la escena", html: `<p>${NARRA[pasoActual].replace(/^./, x => x.toUpperCase())}</p>` }, { titulo: "Datos", html: D.info() }] });
+}
+const htmlDato = D => `<div><span class="v" id="seg-dv">${D.v}</span><span class="e" id="seg-de">${D.e}</span></div><button type="button" class="boton-i" aria-label="Datos de la escena" title="Datos de la escena">i</button>`;
 
-/* ---------- Cámara: encuadre de cada paso según el tamaño real del lienzo y de la tarjeta ---------- */
+/* ---------- Cámara: encuadre de cada paso según el tamaño real del lienzo y del dato ---------- */
 const VISTAS = {
   caja:    { c: [1.6, 0.35, 1.7], w: 2.1, h: 0.85, d: 2.1, dir: [1, 0.8, 1.05] },
   x0:      { c: [1.45, 0.15, 0.2], w: 2.0, h: 0.6, d: 0.5, dir: [0.2, 0.55, 1] },
   r:       { c: [0.1, 0.15, 1.3], w: 0.6, h: 0.6, d: 1.9, dir: [1, 0.55, 0.2] },
   n:       { c: [0.2, 0.45, 0.2], w: 0.9, h: 0.75, d: 0.9, dir: [1, 0.6, 1] },
   util:    { c: [1.45, 0.5, 1.2], w: 1.6, h: 0.8, d: 1.3, dir: [1, 0.8, 1.05] },
-  vecinos: { c: [1.6, 0.6, 1.4], w: 0.95, h: 0.5, d: 0.75, dir: [0.55, 0.55, 1] },
-  lineal:  { c: [1.6, 0.7, 1.6], w: 1.45, h: 1.7, d: 1.45, dir: [1, 0.6, 1.2] },
-  sensib:  { c: [1.35, 0.5, 1.1], w: 0.9, h: 0.45, d: 0.4, dir: [0.6, 0.45, 1] },
+  vecinos: { c: [1.5, 0.5, 1.3], w: 1.1, h: 0.55, d: 1.0, dir: [0.55, 0.55, 1] },
+  lineal:  { c: [1.6, 0.6, 1.6], w: 1.4, h: 1.4, d: 1.4, dir: [1, 0.6, 1.2] },
+  sensib:  { c: [1.3, 0.4, 1.1], w: 1.3, h: 0.6, d: 0.8, dir: [0.6, 0.45, 1] },
 };
 const VPASO = ["caja", "caja", "x0", "r", "n", "util", "util", "vecinos", "lineal", "sensib"];
 const camTmp = new THREE.PerspectiveCamera(), qv = new THREE.Vector3();
 function calcular(v) {
   const W = lienzo.clientWidth || 600, H = lienzo.clientHeight || 400;
-  // La tarjeta ocupa la esquina superior izquierda: se reserva la franja de arriba o la de la izquierda, la que deje más espacio.
+  // El dato ocupa la esquina superior izquierda: se reserva una franja arriba de su alto.
   const rc = tar.offsetParent ? tar.getBoundingClientRect() : null;
-  let fx = 0, fy = 0;
-  if (rc) { const ch = rc.height + 10, cw = rc.width + 10; if (W * (H - ch) >= (W - cw) * H) fy = Math.min(0.6, ch / H); else fx = Math.min(0.6, cw / W); }
-  e.camera.setViewOffset(1000, 1000, -fx / 2 * 1000, -fy / 2 * 1000, 1000, 1000);
+  const fy = rc ? Math.min(0.3, (rc.height + 8) / H) : 0;
+  e.camera.setViewOffset(1000, 1000, 0, -fy / 2 * 1000, 1000, 1000);
   e.camera.aspect = W / H; e.camera.updateProjectionMatrix();
   const c = new THREE.Vector3(...v.c), D = new THREE.Vector3(...v.dir).normalize();
   const esq = []; for (const a of [-1, 1]) for (const b of [-1, 1]) for (const k of [-1, 1]) esq.push(new THREE.Vector3(c.x + a * v.w, c.y + b * v.h, c.z + k * v.d));
   camTmp.copy(e.camera);
-  const x0 = -1 + 2 * fx + 0.06, x1 = 0.94, y0 = -0.92, y1 = 1 - 2 * fy - 0.06;
+  const x0 = -0.92, x1 = 0.92, y0 = -0.9, y1 = 1 - 2 * fy - 0.04;
   const cabe = dist => { camTmp.position.copy(c).addScaledVector(D, dist); camTmp.lookAt(c); camTmp.updateMatrixWorld();
     return esq.every(p => { qv.copy(p).project(camTmp); return qv.z < 1 && qv.x >= x0 && qv.x <= x1 && qv.y >= y0 && qv.y <= y1; }); };
   let lo = 0.3, hi = 80;
@@ -488,36 +441,28 @@ function decodificar(bits, max) {
   return out;
 }
 const BITS = codificar(), OK = decodificar(BITS, 40), MAXT = MSG.length + 8;
-let kBit = 21;
+let kBit = 21, resBit = "";
 const vis = x => x === " " ? "␣" : x;
 function demoBit() {
-  const inp = $("seg-bit"); inp.max = BITS.length;
-  kBit = Math.max(1, Math.min(BITS.length, Math.round(+inp.value || 1))); inp.value = kBit;
   const dan = BITS.slice(0, kBit - 1) + (BITS[kBit - 1] === "0" ? "1" : "0") + BITS.slice(kBit);
   const MAL = decodificar(dan, MAXT);
-  $("seg-bits").innerHTML = `Mensaje comprimido (${BITS.length} bits): ${BITS.slice(0, kBit - 1)}<span class="seg-flip" title="bit dañado">${dan[kBit - 1]}</span>${BITS.slice(kBit)}`;
+  $("seg-bits").innerHTML = [...dan].map((b, i) => `<button type="button" data-k="${i + 1}" class="${i === kBit - 1 ? "flip" : ""}" aria-label="Dañar el bit ${i + 1}">${b}</button>`).join("");
   const div = MAL.findIndex((x, i) => x !== OK[i]), primero = div < 0 ? Math.min(MAL.length, OK.length) : div;
-  const chip = (arr, k) => arr.slice(0, k).map((x, i) => `<span class="${x === OK[i] ? "ok" : "bad"}">${vis(x)}</span>`).join("");
+  const chip = (arr, k) => arr.slice(0, k).map((x, i) => `<span class="${x === OK[i] ? "" : "bad"}">${vis(x)}</span>`).join("");
   const n = Math.max(OK.length, MAL.length);
-  cancelar(); cancelar = animar(2200, t => { const k = Math.ceil(t * n); $("seg-ok").innerHTML = chip(OK, k); $("seg-mal").innerHTML = chip(MAL, k); });
-  $("seg-res-bit").textContent = `Con los bits correctos sale «${OK.filter(x => x !== FIN).join("")}». Con el bit ${kBit} invertido, desde el símbolo ${primero + 1} la decodificación deja de ser confiable.`;
+  $("seg-dv").textContent = `bit ${kBit}`; $("seg-de").textContent = `desvía el texto desde el símbolo ${primero + 1}`;
+  resBit = `Con los bits correctos sale «${OK.filter(x => x !== FIN).join("")}». Con el bit ${kBit} invertido, desde el símbolo ${primero + 1} la decodificación deja de ser confiable.`;
+  cancelar(); cancelar = animar(1600, t => { const k = Math.ceil(t * n); $("seg-ok").innerHTML = chip(OK, k); $("seg-mal").innerHTML = chip(MAL, k); });
 }
 
-/* ---------- Búsqueda por fuerza bruta ---------- */
-let vel = 1e12;
+/* ---------- Búsqueda por fuerza bruta (10¹² claves por segundo) ---------- */
 function buscar() {
-  const T = UNIV * ANIO, lt = Math.log10(T);
-  $("seg-v9").setAttribute("aria-pressed", vel === 1e9); $("seg-v12").setAttribute("aria-pressed", vel === 1e12);
-  $("seg-v9").className = vel === 1e9 ? "" : "ghost"; $("seg-v12").className = vel === 1e12 ? "" : "ghost";
-  const total = K / vel / ANIO;
-  $("seg-nota").innerHTML = `A ${vel === 1e9 ? "10⁹" : "10¹²"} claves por segundo, revisarlas todas tomaría ${fmtE(total)} años. En 1.38 × 10¹⁰ años (la edad del universo) se revisaría solo ${fmtE(vel * T / K)} del total. Cifras calculadas en tu navegador con 2<sup>${ltot.toFixed(2)}</sup> claves.`;
+  const vel = 1e12, T = UNIV * ANIO, lt = Math.log10(T);
   cancelar();
-  cancelar = animar(6000, u => {
+  cancelar = animar(5000, u => {
     const s = 10 ** (u * lt), f = vel * s / K, a = s / ANIO;
-    $("seg-t").textContent = a < 1 ? `${fmtE(s)} s` : `${fmtE(a)} años`;
-    $("seg-k").textContent = fmtE(vel * s);
-    $("seg-f").textContent = fmtE(f);
-    $("seg-p").style.width = Math.max(0.3, f * 100) + "%";
+    $("seg-dv").textContent = fmtE(f);
+    $("seg-de").textContent = "explorado en " + (a < 1 ? `${fmtE(s)} s` : `${fmtE(a)} años`);
     ponerExplorado(f);
   });
 }
@@ -525,28 +470,29 @@ function buscar() {
 /* ---------- Recorrido ---------- */
 let cancelar = () => {}, anim3d = () => {}, primera = true;
 function mostrar(i) {
-  cancelar(); cancelar = () => {}; anim3d();
-  const amplia = i >= 10;
+  cancelar(); cancelar = () => {}; anim3d(); pasoActual = i;
+  const amplia = i >= 10, D = DATOS[i];
   lienzo.hidden = amplia; vistaEl.hidden = !amplia;
-  visibles(i);
-  if (i >= 5 && i !== 8) rotuloTotal(i >= 6 ? "≈ 9.78 × 10³³ claves" : `${lsum.toFixed(2)} bits`);
-  if (rotTot) rotTot.visible = (i === 5 || i === 6);
+  visibles(i); colorear();
   if (OBJ[i]) {
     const de = { ex: [...est.ex], util: est.util, velo: est.velo }, a = OBJ[i];
     anim3d = animar(900, t => { const s = { ex: de.ex.map((v, k) => v + (a.ex[k] - v) * t), util: de.util + (a.util - de.util) * t, velo: de.velo + (a.velo - de.velo) * t }; aplicar(s); est = s; });
   }
-  const destino = amplia ? vistaEl : tar;
   tar.innerHTML = ""; vistaEl.innerHTML = "";
-  destino.innerHTML = PANEL[i]();
-  destino.classList.remove("entra"); void destino.offsetWidth; if (!sinMovimiento() && !primera) destino.classList.add("entra");
-  narra.innerHTML = "<b>Qué estás viendo:</b> " + NARRA[i];
-  if (i === 8) {
-    $("seg-v9").addEventListener("click", () => { vel = 1e9; buscar(); });
-    $("seg-v12").addEventListener("click", () => { vel = 1e12; buscar(); });
-    $("seg-otra").addEventListener("click", buscar);
-    buscar();
+  if (!amplia) tar.innerHTML = htmlDato(D);
+  else if (i === 10) vistaEl.innerHTML = `<div class="seg-dato">${htmlDato(D)}</div>
+      <div><span class="etq">Mensaje comprimido (valores de ejemplo) · toca un bit para dañarlo</span><div class="seg-bits" id="seg-bits"></div></div>
+      <div class="seg-dec"><span class="etq">Bits correctos</span><div class="seg-tok" id="seg-ok"></div><span class="etq">Con 1 bit dañado</span><div class="seg-tok" id="seg-mal"></div></div>`;
+  else {
+    const A = [["Sal y pimienta", [["5 %", 2.14], ["10 %", 5.36], ["25 %", 13.07]]], ["Oclusión", [["5 %", 1.79], ["10 %", 3.79], ["25 %", 7.93]]], ["Ruido gaussiano", [["SNR 100 dB", 0], ["SNR 90 dB", 5.86], ["SNR 80 dB", 47.5]]]];
+    vistaEl.innerHTML = `<div class="seg-dato">${htmlDato(D)}</div><div class="seg-ber">${A.map(([n, fs]) => `<span class="g">${n}</span>` + fs.map(([tx, v]) => `<span class="${v === 0 ? "si" : ""}">${tx}${v === 0 ? " · conservado ✓" : ""}</span><div class="b" data-w="${(v / 50 * 100).toFixed(2)}" style="width:0"></div><span class="v${v === 0 ? " si" : ""}">${v.toFixed(2)} %</span>`).join("")).join("")}</div>`;
   }
-  if (i === 10) { $("seg-bit").addEventListener("change", demoBit); demoBit(); }
+  const raiz = amplia ? vistaEl : tar;
+  raiz.querySelector(".boton-i").addEventListener("click", infoEscena);
+  raiz.classList.remove("entra"); void raiz.offsetWidth; if (!sinMovimiento() && !primera) raiz.classList.add("entra");
+  narra.innerHTML = "<b>Qué estás viendo:</b> " + NARRA[i];
+  if (i === 8) buscar();
+  if (i === 10) { $("seg-bits").addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) { kBit = +b.dataset.k; demoBit(); } }); demoBit(); }
   if (i === 11) requestAnimationFrame(() => vistaEl.querySelectorAll(".seg-ber .b").forEach(b => (b.style.width = Math.max(.4, +b.dataset.w) + "%")));
   if (!amplia) { if (primera) { vista = VISTAS[VPASO[i]]; encuadrarYa(); } else mover(VISTAS[VPASO[i]]); }
   primera = false;

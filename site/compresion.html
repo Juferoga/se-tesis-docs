@@ -14,153 +14,114 @@
 <script type="module" src="assets/js/sitio.js"></script>
 <style>
 .paso .formula { margin: .4rem 0 .6rem; }
+.mando .puntos { flex-wrap: nowrap; }
 
-/* Vistas 2D: ocupan el lugar del lienzo cuando el paso no usa la escena 3D. */
-.vista { display: flex; flex-direction: column; justify-content: center; gap: .6rem; min-width: 0; }
-.vista.entra { animation: co-entra .45s ease-out; }
-@keyframes co-entra { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
-.vista h3 { margin: 0; font: 700 var(--s1)/1.25 var(--f-display); }
-.co-et { font-size: var(--s-1); color: var(--muted); margin: 0 0 -.3rem; }
-
-/* Tarjetas flotantes sobre el lienzo 3D */
+/* Dato único del paso (arriba a la izquierda) y botón «i» de la escena (arriba a la derecha). */
+.co-dato { position: absolute; z-index: 3; left: .4rem; top: .3rem; display: grid; gap: .1rem; pointer-events: none; max-width: calc(100% - 3.5rem); transition: opacity .45s; }
+.co-dato b { font: 600 clamp(1.25rem, 2.2vw, 1.9rem)/1.1 var(--f-mono); color: var(--ink); letter-spacing: -.01em; }
+.co-dato span { font-size: .82rem; color: var(--muted); }
+.co-dato.fuera { opacity: 0; }
+.co-bi { position: absolute; z-index: 3; right: .4rem; top: .3rem; margin: 0; width: 1.7rem; height: 1.7rem; font-size: .85rem; }
 #compresion-lienzo { flex: 1 1 auto; }
-.co-flota { position: absolute; z-index: 2; left: .6rem; top: .6rem; width: min(19rem, 42%); display: grid; gap: .35rem; padding: .65rem .8rem; border-radius: 10px; background: color-mix(in srgb, var(--surface) 86%, transparent); backdrop-filter: blur(4px); border: 1px solid var(--line); font-size: .88rem; line-height: 1.3; }
-.co-flota:not([hidden]) { animation: co-aparece .5s ease-out; }
-@keyframes co-aparece { from { opacity: 0; } }
-.co-flota .eyebrow { color: var(--net); font-size: .7rem; }
-.co-mitad { display: grid; gap: .2rem; }
-.co-linea { display: flex; justify-content: space-between; gap: .5rem; align-items: baseline; }
-.co-linea b { white-space: nowrap; }
-.co-linea b { font: 600 1rem/1.1 var(--f-mono); }
-.co-ruta { margin: .1rem 0; padding: 0 0 0 1.1rem; color: var(--muted); font-size: .8rem; display: grid; gap: .05rem; list-style: "↓  "; }
-.co-unido { font: 600 1.05rem/1.3 var(--f-mono); }
-.co-bytes { font: .72rem/1.5 var(--f-mono); color: var(--muted); }
-.co-bytes b { color: var(--net); font-weight: 600; }
-.co-mini { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .35rem; }
-.co-mini div { background: var(--soft); border-radius: 6px; padding: .3rem .5rem; font-size: .76rem; color: var(--muted); line-height: 1.2; }
-.co-mini b { display: block; font: 600 1rem/1.2 var(--f-mono); color: var(--ink); }
-.co-conf { margin: 0; font-size: .82rem; color: var(--muted); }
-.co-res { display: grid; gap: .3rem; }
-.co-res div { display: flex; justify-content: space-between; gap: .5rem; align-items: center; padding: .35rem .55rem; border-radius: 6px; background: var(--soft); font-size: .84rem; }
-.co-contador { position: absolute; z-index: 2; right: .5rem; top: .5rem; max-width: calc(100% - 1rem); font: 600 .78rem/1.3 var(--f-mono); color: var(--net); background: color-mix(in srgb, var(--surface) 86%, transparent); padding: .3rem .5rem; border-radius: 6px; pointer-events: none; }
-.co-leyenda { position: absolute; z-index: 2; left: .5rem; bottom: .5rem; display: flex; flex-wrap: wrap; gap: .2rem .7rem; font-size: .74rem; color: var(--muted); background: color-mix(in srgb, var(--surface) 80%, transparent); padding: .25rem .5rem; border-radius: 6px; pointer-events: none; }
-.co-leyenda i { display: inline-block; width: .7rem; height: .7rem; border-radius: 3px; vertical-align: -1px; margin-right: .3rem; }
 
-/* Vista neurona */
-#compresion-nsvg { flex: 1 1 0; min-height: 0; width: 100%; display: block; background: var(--soft); border-radius: 8px; }
+/* Vistas 2D: solo la visualización, centrada y con aire. */
+.vista { display: flex; flex-direction: column; justify-content: center; gap: 1rem; min-width: 0; padding: 2.6rem clamp(0px, 3vw, 40px) .5rem; }
+.vista.entra { animation: co-entra .45s ease-out; }
+@keyframes co-entra { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: none; } }
+.co-pie { margin: 0; font-size: .8rem; color: var(--muted); }
+.vista .controls button { font-size: .8rem; padding: .45rem .8rem; border-radius: 999px; }
+.vista .controls button.ghost { color: var(--muted); }
+
+/* Neurona */
+#compresion-nsvg { flex: 1 1 0; min-height: 0; width: 100%; display: block; }
 #compresion-nsvg text { font-family: var(--f-mono); fill: var(--ink); }
-.co-deslizas { display: grid; gap: .3rem; }
-.co-deslizas label { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr) 3rem; gap: .6rem; align-items: center; font: 600 .9rem var(--f-mono); }
+.co-deslizas { display: grid; gap: .2rem; max-width: 30rem; width: 100%; margin-inline: auto; }
+.co-deslizas label { display: grid; grid-template-columns: 2rem minmax(0, 1fr) 2.6rem; gap: .6rem; align-items: center; font: 600 .82rem var(--f-mono); color: var(--muted); }
 .co-deslizas label output { text-align: right; }
 .co-deslizas input[type="range"] { accent-color: var(--net); }
-.co-calc { font: .84rem/1.5 var(--f-mono); background: var(--soft); border-radius: 8px; padding: .45rem .7rem; white-space: normal; margin: 0; }
+#compresion-v-neurona .co-pie { text-align: center; }
+.co-calc { font: .9rem/1.6 var(--f-mono); }
 
 /* Barras */
-.co-pb { display: grid; grid-template-columns: minmax(0, 1fr) 4.4rem; gap: .4rem; align-items: center; min-width: 0; }
-.co-pista { height: .8rem; background: var(--soft); border-radius: 4px; overflow: hidden; }
-.co-pista i { display: block; height: 100%; min-width: 2px; background: var(--net); border-radius: 4px; transform-origin: left center; }
-.co-pista i.gris { background: var(--muted); }
-.co-pista i.ref { background: var(--line); }
-.vista.entra .co-pista i, .co-flota:not([hidden]) .co-pista i { animation: co-barra .9s ease-out backwards; }
+.co-pb { display: grid; grid-template-columns: minmax(0, 1fr) 4.4rem; gap: .5rem; align-items: center; min-width: 0; margin: 0 0 .3rem; }
+.co-pista { display: block; height: .55rem; background: var(--soft); border-radius: 99px; overflow: hidden; }
+.co-pista i { display: block; height: 100%; min-width: 2px; background: var(--net); border-radius: 99px; transform-origin: left center; }
+.co-pista i.gris, .co-pista i.ref { background: var(--line); }
+.vista.entra .co-pista i { animation: co-barra .9s ease-out backwards; }
 @keyframes co-barra { from { transform: scaleX(0); } }
 .co-tabla { font-size: .9rem; }
-table.co-tabla th, table.co-tabla td { padding: .3rem .5rem; line-height: 1.35; }
 tr.uno td:first-child { font-weight: 600; }
-.co-fila { display: grid; grid-template-columns: 7.2rem minmax(0, 1fr) 3.8rem; gap: .6rem; align-items: center; font-size: .95rem; }
-.co-fila b { text-align: right; font-variant-numeric: tabular-nums; }
-.co-fila .co-pista { height: 1.15rem; }
-#compresion-v-result .co-mini { grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); }
+.co-fila { display: grid; grid-template-columns: 7rem minmax(0, 1fr) 3.8rem; gap: .8rem; align-items: center; font-size: .92rem; color: var(--muted); }
+.co-fila b { text-align: right; font: 600 .9rem var(--f-mono); }
+.co-fila.on { color: var(--ink); font-weight: 600; }
+.co-fila.on b { color: var(--net); }
+.co-probs { display: grid; gap: .55rem; }
+.co-prob { display: grid; grid-template-columns: 3.6rem minmax(0, 1fr) 5rem; gap: .8rem; align-items: center; font-size: .9rem; color: var(--muted); }
+.co-prob .mono { color: var(--ink); }
+.co-prob b { text-align: right; font: 400 .82rem var(--f-mono); }
+.co-prob .co-pista i { background: var(--muted); opacity: .6; }
+.co-prob.uno .co-pista i { background: var(--net); opacity: 1; }
+.co-prob.uno b { color: var(--net); font-weight: 600; }
 
-/* Vista información */
-.co-medidor { display: grid; gap: .4rem; }
-.co-medidor .valor { font: 600 1.5rem/1.2 var(--f-mono); color: var(--net); }
-.co-botones { display: flex; flex-wrap: wrap; gap: .4rem; }
-.co-dado { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .8rem; align-items: center; background: var(--soft); border-radius: 8px; padding: .6rem .8rem; }
-.co-dado svg { width: 2.6rem; height: 2.6rem; }
+/* Información */
+.co-medidor { display: grid; gap: .6rem; }
+.co-grande { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem 1rem; }
+.co-grande .valor { font: 600 clamp(2rem, 4vw, 3.2rem)/1 var(--f-mono); color: var(--net); }
+.co-grande .mono { color: var(--muted); }
+#compresion-psh { accent-color: var(--net); }
+.co-botones { display: flex; flex-wrap: wrap; gap: .3rem; }
+.co-botones button { font-size: .78rem; padding: .35rem .7rem; border-radius: 999px; color: var(--muted); border-color: var(--line); }
 
 /* Codificador aritmético (adaptado de la demostración del artículo) */
-.comp-barra { display: flex; height: 3rem; flex: 0 0 auto; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.comp-seg { min-width: 0; display: grid; place-items: center; padding: 0 .2rem; font-size: .8rem; line-height: 1.15; text-align: center; overflow: hidden; background: var(--soft); color: var(--muted); border-right: 1px solid var(--line); }
-.comp-seg:last-child { border-right: 0; }
+.comp-barra { display: flex; height: 3.2rem; flex: 0 0 auto; border-radius: 8px; overflow: hidden; gap: 2px; }
+.comp-seg { min-width: 0; display: grid; place-items: center; padding: 0 .2rem; font-size: .8rem; line-height: 1.15; text-align: center; overflow: hidden; background: var(--soft); color: var(--muted); }
 .comp-seg.obs { background: var(--net); color: var(--surface); font-weight: 600; }
 .comp-seg.fin { background: var(--net-soft); color: var(--net); font-weight: 600; }
-.comp-ext { display: flex; justify-content: space-between; gap: .1rem 1rem; flex-wrap: wrap; font: .74rem/1.35 var(--f-mono); color: var(--muted); margin-top: -.3rem; }
-.comp-ext span:last-child { text-align: right; }
-.comp-regla { position: relative; height: .9rem; flex: 0 0 auto; background: var(--soft); border: 1px solid var(--line); border-radius: 4px; }
-.comp-sel { position: absolute; top: 0; bottom: 0; background: var(--net); border-radius: 3px; transition: left .35s, width .35s; }
-.comp-mitad { position: absolute; top: -3px; bottom: -3px; left: 50%; width: 2px; background: var(--ink); }
-.comp-evento { margin: 0; font-size: .9rem; line-height: 1.4; }
-.comp-cinta { display: flex; flex-wrap: wrap; gap: .25rem; min-height: 2rem; padding: .35rem; background: var(--soft); border-radius: 6px; }
-.comp-cinta span { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 4px; background: var(--surface); border: 1px solid var(--line); }
-.comp-cinta span.nuevo { background: var(--net); color: var(--surface); border-color: var(--net); }
-.comp-cinta span.term { border-style: dashed; border-color: var(--net); }
+.comp-regla { position: relative; height: .4rem; flex: 0 0 auto; background: var(--soft); border-radius: 99px; }
+.comp-sel { position: absolute; top: 0; bottom: 0; background: var(--net); border-radius: 99px; transition: left .35s, width .35s; }
+.comp-mitad { position: absolute; top: -3px; bottom: -3px; left: 50%; width: 1px; background: var(--muted); }
+.comp-evento { margin: 0; }
+.comp-cinta { display: flex; flex-wrap: wrap; gap: .25rem; min-height: 1.6rem; }
+.comp-cinta span { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 4px; background: var(--soft); color: var(--ink); }
+.comp-cinta span.nuevo { background: var(--net); color: var(--surface); }
+.comp-cinta span.term { outline: 1px dashed var(--net); }
 .comp-cinta span.oculto { visibility: hidden; }
-.co-cuentas { display: flex; flex-wrap: wrap; gap: .2rem 1.2rem; margin: 0; font-size: .86rem; color: var(--muted); }
-.co-cuentas b { color: var(--ink); font-family: var(--f-mono); }
-#compresion-v-frec .kv { font-size: .9rem; gap: .25rem 1rem; }
+.comp-cinta em { font-size: .8rem; }
+.co-cuentas { display: flex; flex-wrap: wrap; gap: .2rem 1.2rem; }
+.co-cuentas b { font-family: var(--f-mono); }
+.co-bytes { font: .78rem/1.6 var(--f-mono); color: var(--muted); overflow-wrap: anywhere; }
+.co-bytes b { color: var(--net); }
+
+/* Frecuencias */
+.co-frec { margin: 0; font: 600 clamp(1rem, 1.6vw, 1.3rem)/1.5 var(--f-mono); color: var(--ink); overflow-wrap: anywhere; }
 
 .co-explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0 0 .4rem; }
 .co-explora details.card summary { cursor: pointer; font-weight: 600; }
 .co-explora details.card p { margin: .5rem 0 .2rem; }
 
-/* Pantallas bajas: compactar las vistas 2D */
-@media (max-height: 800px) and (min-width: 901px) {
-  .vista { gap: .45rem; }
-  .vista h3 { font-size: 1.1rem; }
-  .comp-evento { font-size: .85rem; }
-}
-
-/* Teléfono: escena arriba con poco alto; se ocultan los detalles secundarios */
+/* Teléfono: escena arriba con poco alto */
 @media (max-width: 900px) {
+  .mando .puntos { overflow: hidden; }
   .cabeza h1 { font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .paso { padding: .6rem .8rem; font-size: .9rem; }
-  .paso h2 { font-size: 1.02rem; margin: .1rem 0 .3rem; }
-  .paso p { line-height: 1.4; margin-bottom: .4rem; }
-  .paso .analogia { font-size: .84rem; padding: .35rem .55rem; }
-  .paso .formula { font-size: .8rem; padding: .4rem .6rem; margin: .2rem 0 .45rem; }
-  .paso details { margin-top: .4rem; padding-top: .35rem; }
-  .escena .narra { font-size: .78rem; line-height: 1.35; padding: .3rem .5rem; }
-  #compresion-lienzo .ayuda3d, .co-leyenda, .sec { display: none !important; }
-  .vista { gap: .35rem; font-size: .85rem; }
-  .vista h3 { display: none; }
-  .co-flota { left: .35rem; right: .35rem; top: .35rem; width: auto; padding: .35rem .55rem; gap: .2rem; font-size: .74rem; }
-  .co-flota .eyebrow { font-size: .62rem; }
-  #compresion-f-flujo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: .7rem; }
-  #compresion-f-flujo .co-ruta { display: none; }
-  .co-linea b { font-size: .82rem; }
-  .co-unido { font-size: .84rem; }
-  .co-mini div { font-size: .66rem; padding: .2rem .4rem; }
-  .co-mini b { font-size: .82rem; }
-  .co-res div { font-size: .72rem; padding: .2rem .45rem; }
-  .co-res { grid-template-columns: 1fr 1fr; }
-  .co-conf { font-size: .7rem; }
-  .lienzo[data-tarjeta] .co-contador { display: none; }
-  .co-contador { font-size: .66rem; }
-  .co-deslizas label { font-size: .78rem; grid-template-columns: 1.8rem minmax(0, 1fr) 2.4rem; }
-  .co-calc { font-size: .72rem; padding: .3rem .5rem; line-height: 1.4; }
-  .co-tabla { font-size: .76rem; }
-  table.co-tabla th, table.co-tabla td { padding: .16rem .3rem; }
-  .co-tabla .co-pista { display: none; }
-  .co-tabla .co-pb { grid-template-columns: 1fr; }
-  .co-pb { font-size: .76rem; }
-  .co-medidor .valor { font-size: 1.15rem; }
-  .co-botones { gap: .3rem; }
-  .co-botones button { font-size: .7rem; padding: .35rem .45rem; }
-  .vista .controls { gap: .35rem; }
-  .vista .controls button { font-size: .72rem; padding: .4rem .55rem; }
-  .vista .note { font-size: .72rem; }
-  .comp-barra { height: 2.3rem; }
+  #compresion-lienzo .ayuda3d { display: none; }
+  .co-dato b { font-size: 1.05rem; }
+  .co-dato span { font-size: .72rem; }
+  .vista { gap: .5rem; padding: 2.2rem 0 0; font-size: .85rem; }
+  .co-deslizas label { font-size: .74rem; grid-template-columns: 1.6rem minmax(0, 1fr) 2.2rem; }
+  .co-deslizas input[type="range"] { height: 1rem; }
+  .co-fila { grid-template-columns: 5.4rem minmax(0, 1fr) 3.2rem; font-size: .8rem; gap: .5rem; }
+  .co-fila b { font-size: .78rem; }
+  .co-probs { gap: .3rem; }
+  .co-prob { grid-template-columns: 2.8rem minmax(0, 1fr) 4.4rem; font-size: .78rem; gap: .5rem; }
+  .co-prob b { font-size: .72rem; }
+  .vista .controls { gap: .3rem; }
+  .vista .controls button { font-size: .72rem; padding: .35rem .55rem; }
+  .comp-barra { height: 2.4rem; }
   .comp-seg { font-size: .66rem; }
-  .comp-ext { font-size: .62rem; }
-  .comp-evento { font-size: .74rem; line-height: 1.35; }
-  .comp-cinta { min-height: 1.5rem; padding: .2rem; gap: .15rem; }
   .comp-cinta span { width: 1.15rem; height: 1.15rem; font-size: .7rem; }
-  .co-cuentas { font-size: .72rem; }
-  .co-et { font-size: .7rem; }
-  #compresion-v-frec .kv { font-size: .76rem; gap: .1rem .7rem; }
-  #compresion-v-frec input[type="text"] { font-size: .85rem; padding: .25rem .4rem; }
-  .co-fila { grid-template-columns: 5.6rem minmax(0, 1fr) 3.4rem; font-size: .8rem; gap: .4rem; }
-  .co-fila .co-pista { height: .9rem; }
+  .co-botones button { font-size: .7rem; padding: .3rem .5rem; }
+  .co-pie { font-size: .7rem; }
+  #compresion-p { font-size: .85rem; padding: .25rem .4rem; }
 }
 </style>
 </head>
@@ -178,17 +139,19 @@ tr.uno td:first-child { font-weight: 600; }
       <article class="paso" data-paso="entra-sale">
         <span class="eyebrow">Paso 1</span>
         <h2>Qué entra y qué sale</h2>
-        <p>Entra el poema «Nocturno» de José Asunción Silva: 901 caracteres, <b>928 bytes</b>. Sale una cadena de <b>173 bytes</b>.</p>
+        <p>Entra el poema «Nocturno»: <b>928 bytes</b>. Sale una cadena de <b>173 bytes</b> que, al descomprimirla, devuelve el mismo texto.</p>
+        <p>El poema es de José Asunción Silva y tiene 901 caracteres.</p>
         <p>Es compresión <b>sin pérdida</b>: al descomprimir se obtiene el mismo texto, byte por byte. Así hay menos bits que esconder en el audio.</p>
         <p class="analogia">Si tu compañero de juego adivina casi siempre la palabra, basta con decirle «sí» o «no» pocas veces. La red es ese compañero.</p>
         <details><summary>Detalle técnico</summary>
-          <p>El texto está en UTF-8, la forma normal de guardar texto: letras como «ñ» o «á» ocupan 2 bytes, por eso 901 caracteres ocupan 928 bytes. Las barras de la tarjeta están a escala: 173 bytes son el 18.6 % de 928.</p>
+          <p>El texto está en UTF-8, la forma normal de guardar texto: letras como «ñ» o «á» ocupan 2 bytes, por eso 901 caracteres ocupan 928 bytes. El botón «i» de la escena muestra las dos longitudes a escala: 173 bytes son el 18.6 % de 928.</p>
         </details>
       </article>
       <article class="paso" data-paso="tokens" hidden>
         <span class="eyebrow">Paso 2</span>
         <h2>El texto se parte en tokens</h2>
-        <p>La red no lee letras sueltas: lee <b>tokens</b>, trozos de palabra o signos. « dul» y «ce» forman «dulce». El poema tiene <b>293 tokens</b>.</p>
+        <p>La red no lee letras sueltas: lee <b>tokens</b>, trozos de palabra o signos. El poema tiene <b>293 tokens</b>.</p>
+        <p>« dul» y «ce» forman «dulce».</p>
         <p>Al final va un token de fin, para que el receptor sepa dónde parar. Al unir los tokens salen exactamente los bytes originales.</p>
         <details><summary>Detalle técnico</summary>
           <p>Se usa BPE (codificación por pares de bytes) a nivel de byte: se parte de los bytes sueltos y se unen los pares más frecuentes en textos de entrenamiento. Como trabaja sobre bytes, es reversible para cualquier texto UTF-8. El vocabulario tiene 151 665 tokens. La capa de salida de la red tiene V = 151 936 salidas; las 271 restantes son de relleno y no corresponden a ningún token.</p>
@@ -207,7 +170,8 @@ tr.uno td:first-child { font-weight: 600; }
       <article class="paso" data-paso="red" hidden>
         <span class="eyebrow">Paso 4</span>
         <h2>La red: Qwen2.5-1.5B, 28 capas apiladas</h2>
-        <p><b>Qwen2.5-1.5B</b> es una red pública y ya entrenada: 1.54×10<sup>9</sup> parámetros (unos 1540 millones de pesos y sesgos) en <b>28 capas</b>.</p>
+        <p><b>Qwen2.5-1.5B</b> es una red pública y ya entrenada, con <b>28 capas</b> apiladas. Cada token las recorre de abajo hacia arriba.</p>
+        <p>Tiene 1.54×10<sup>9</sup> parámetros (unos 1540 millones de pesos y sesgos).</p>
         <p>Cada token entra por abajo como una lista de 1536 números y sube capa por capa. Cada capa ajusta esa lista con lo que sabe del texto anterior.</p>
         <details><summary>Detalle técnico</summary>
           <p>Es un Transformer de solo decodificador con dimensión 1536. Se ejecuta en float32 (números en coma flotante de 32 bits, IEEE 754) en CPU con 4 hilos. Los valores 28, 1536 y 8960 están en el <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B/blob/main/config.json">config.json oficial</a> del modelo.</p>
@@ -216,6 +180,7 @@ tr.uno td:first-child { font-weight: 600; }
       <article class="paso" data-paso="capa" hidden>
         <span class="eyebrow">Paso 5</span>
         <h2>Dentro de una capa: atención y perceptrón</h2>
+        <p>Cada capa hace dos cosas: <b>autoatención</b>, que mira los tokens anteriores, y una <b>red prealimentada</b>, que procesa cada token por separado.</p>
         <p><b>Autoatención</b>: el token mira los tokens anteriores y toma lo que le sirve. Así « dul» sabe que viene después de «Oh».</p>
         <p><b>Red prealimentada</b> (un perceptrón multicapa): procesa cada token por separado. Pasa de 1536 a 8960 neuronas y vuelve a 1536.</p>
         <p class="analogia">Atender es releer la frase para entender el contexto; el perceptrón es pensar con lo que ya entendiste.</p>
@@ -226,8 +191,8 @@ tr.uno td:first-child { font-weight: 600; }
       <article class="paso" data-paso="salida" hidden>
         <span class="eyebrow">Paso 6</span>
         <h2>La salida: una probabilidad para cada token posible</h2>
-        <p>Arriba, una última capa convierte los 1536 números en 151 936 puntuaciones, una por salida. La función <b>softmax</b> las vuelve probabilidades que suman 1.</p>
-        <p>Después de «Oh» y « dul», la red le dio <b>39.93 %</b> a «ce», el token que sigue en el poema. Fue su opción más probable.</p>
+        <p>Arriba, la red da una probabilidad a cada token posible. Después de «Oh» y « dul», le dio <b>39.93 %</b> a «ce», el que sigue en el poema.</p>
+        <p>Una última capa convierte los 1536 números en 151 936 puntuaciones, una por salida. La función <b>softmax</b> las vuelve probabilidades que suman 1. «ce» fue la opción más probable.</p>
         <details><summary>Detalle técnico</summary>
           <div class="formula">p(v | x<sub>&lt;t</sub>) = e<sup>z<sub>v</sub></sup> / Σ<sub>u</sub> e<sup>z<sub>u</sub></sup></div>
           <p>p(v | x<sub>&lt;t</sub>) es la probabilidad de que el token en la posición t sea v, dados los tokens anteriores x<sub>&lt;t</sub>; z<sub>v</sub> es la puntuación que la capa lineal le da a v; la suma recorre las V = 151 936 salidas u.</p>
@@ -236,13 +201,15 @@ tr.uno td:first-child { font-weight: 600; }
       <article class="paso" data-paso="probabilidades" hidden>
         <span class="eyebrow">Paso 7</span>
         <h2>Lo que predijo la red en el poema</h2>
-        <p>Para los primeros 8 tokens, la escena muestra la probabilidad que les dio la red y su puesto entre los candidatos (1 = el más probable).</p>
-        <p>«Oh» al inicio fue una sorpresa: puesto 1587. «ida» después de «ál» era casi segura: 97.29 %. En todo el poema, el token correcto fue el primero en <b>113 de 293</b> casos (38.6 %).</p>
+        <p>En todo el poema, el token correcto fue la primera opción de la red en <b>113 de 293</b> casos (38.6 %).</p>
+        <p>Para los primeros 8 tokens, la escena muestra la probabilidad que les dio la red. El botón «i» de la escena abre la tabla con su puesto entre los candidatos (1 = el más probable).</p>
+        <p>«Oh» al inicio fue una sorpresa: puesto 1587. «ida» después de «ál» era casi segura: 97.29 %.</p>
       </article>
       <article class="paso" data-paso="informacion" hidden>
         <span class="eyebrow">Paso 8</span>
         <h2>Cuánta información trae cada token</h2>
-        <p>Un token probable aporta poca información; uno sorpresivo, mucha. Con probabilidad p, la información es <b>−log<sub>2</sub> p</b> y se mide en <b>shannons (Sh)</b>.</p>
+        <p>Un token probable aporta poca información; uno sorpresivo, mucha. La información se mide en <b>shannons (Sh)</b>.</p>
+        <p>Con probabilidad p, la información es <b>−log<sub>2</sub> p</b>.</p>
         <p>Puede tener decimales. Lo que siempre es entero es el tamaño total en bits.</p>
         <p class="analogia">Un dado: cada lanzamiento trae log<sub>2</sub> 6 = 2.585 Sh. Cien lanzamientos caben en 259 bits, menos que los 300 de usar 3 bits por lanzamiento.</p>
         <details><summary>Detalle técnico</summary>
@@ -252,7 +219,8 @@ tr.uno td:first-child { font-weight: 600; }
       <article class="paso" data-paso="aritmetico" hidden>
         <span class="eyebrow">Paso 9</span>
         <h2>El codificador aritmético</h2>
-        <p>El mensaje es un intervalo dentro de [0, 1). En cada paso se divide en subintervalos cuya <b>longitud</b> es proporcional a la probabilidad de cada token; queda el del token que sigue.</p>
+        <p>El codificador guarda el texto como un intervalo dentro de [0, 1) que se achica con cada token. Un token probable lo achica poco.</p>
+        <p>En cada paso se divide en subintervalos cuya <b>longitud</b> es proporcional a la probabilidad de cada token; queda el del token que sigue.</p>
         <p>Los bits iniciales comunes de los extremos <b>se escriben en el mensaje comprimido</b> y el intervalo se amplía al doble.</p>
         <p class="analogia">Como dar una dirección: país, ciudad, barrio. Un token probable es un barrio grande, fácil de nombrar.</p>
         <details><summary>Detalle técnico</summary>
@@ -262,7 +230,8 @@ tr.uno td:first-child { font-weight: 600; }
       <article class="paso" data-paso="frecuencias" hidden>
         <span class="eyebrow">Paso 10</span>
         <h2>De probabilidades a números enteros</h2>
-        <p>Para que emisor y receptor corten el intervalo exactamente igual, sin diferencias de redondeo, cada probabilidad se vuelve un número entero, su <b>frecuencia</b>:</p>
+        <p>Cada probabilidad se vuelve un número entero, su <b>frecuencia</b>, para que emisor y receptor corten el intervalo exactamente igual.</p>
+        <p>Así no hay diferencias de redondeo. La frecuencia del token v es:</p>
         <div class="formula">f<sub>v</sub> = ⌊ p<sub>v</sub> · (2<sup>24</sup> − V) ⌋ + 1</div>
         <p>El «+1» evita frecuencias cero: un token con frecuencia cero no se podría escribir.</p>
         <details><summary>Detalle técnico</summary>
@@ -272,7 +241,8 @@ tr.uno td:first-child { font-weight: 600; }
       <article class="paso" data-paso="resultado" hidden>
         <span class="eyebrow">Paso 11</span>
         <h2>El resultado: 928 → 173 bytes</h2>
-        <p>La red deja el poema en <b>173 bytes</b>; los compresores de uso común, entre 535 y 597. Son <b>1.54 bits por carácter</b>, frente a 8.24 del texto original.</p>
+        <p>La red deja el poema en <b>173 bytes</b>; los compresores de uso común, entre 535 y 597.</p>
+        <p>Son <b>1.54 bits por carácter</b>, frente a 8.24 del texto original.</p>
         <p>Esa longitud en bits es casi la información total del texto, más 2 bits que cierran el último intervalo.</p>
         <details><summary>Detalle técnico</summary>
           <div class="formula">ℓ ≈ Σ<sub>t=1</sub><sup>Q+1</sup> −log<sub>2</sub> p(x<sub>t</sub> | x<sub>&lt;t</sub>) + 2</div>
@@ -282,54 +252,50 @@ tr.uno td:first-child { font-weight: 600; }
       <article class="paso" data-paso="requisito" hidden>
         <span class="eyebrow">Paso 12</span>
         <h2>Emisor y receptor deben usar la misma red</h2>
-        <p>El receptor descomprime repitiendo las mismas predicciones. Necesita la misma red, con los mismos pesos y la misma configuración: float32 y el mismo tipo de procesador.</p>
+        <p>El receptor necesita la misma red, con los mismos pesos y la misma configuración. Si algo cambia, cambian las predicciones.</p>
+        <p>Descomprime repitiendo las mismas predicciones. La configuración es float32 y el mismo tipo de procesador.</p>
         <p>Una diferencia mínima cambia los subintervalos. En una tarjeta gráfica (GPU) el mismo poema dio <b>174 bytes</b>, no 173.</p>
         <p>La red es pública. Lo secreto es la clave K, que entra en la siguiente etapa.</p>
       </article>
       <div class="mando"></div>
     </div>
     <div class="escena">
+      <div class="co-dato" id="compresion-dato" aria-live="polite"><b></b><span></span></div>
+      <button type="button" class="boton-i co-bi" id="compresion-bi" aria-label="Más sobre la escena" title="Más sobre la escena">i</button>
+
       <!-- Escena 3D principal: la pila de 28 capas (pasos 1, 2, 4, 5, 6 y 12) -->
-      <div class="lienzo" id="compresion-lienzo" role="img" aria-label="Pila de 28 capas de la red, cada una con autoatención y red prealimentada; un token sube por la pila y arriba sale un abanico de probabilidades">
-        <span class="co-contador" id="compresion-contador"></span>
-        <div class="co-flota" id="compresion-f-flujo">
-          <div class="co-mitad"><span class="eyebrow">Entra</span>
-            <div class="co-linea"><span>Poema · 901 caracteres</span><b class="num">928 B</b></div>
-            <div class="co-pista"><i class="gris" style="width:100%"></i></div></div>
-          <ol class="co-ruta"><li>293 tokens + fin</li><li>red neuronal: probabilidades</li><li>codificador aritmético: bits</li></ol>
-          <div class="co-mitad"><span class="eyebrow">Sale</span>
-            <div class="co-linea"><span>Mensaje comprimido</span><b class="num">173 B</b></div>
-            <div class="co-pista"><i style="width:18.64%"></i></div></div>
+      <div class="lienzo" id="compresion-lienzo" role="img" aria-label="Pila de 28 capas de la red, cada una con autoatención y red prealimentada; un token sube por la pila y arriba sale un abanico de probabilidades"></div>
+
+      <!-- Lo que ya no se ve en la escena: lo abre el botón «i» de la escena, según el paso -->
+      <div hidden>
+        <div id="compresion-m-flujo">
+          <dl class="kv"><dt>Entra</dt><dd>Poema · 901 caracteres · 928 B</dd><dt>Luego</dt><dd>293 tokens + fin</dd><dt></dt><dd>red neuronal: probabilidades</dd><dt></dt><dd>codificador aritmético: bits</dd><dt>Sale</dt><dd>Mensaje comprimido · 173 B</dd></dl>
+          <p class="co-pb"><span class="co-pista"><i class="gris" style="width:100%"></i></span><span>928 B</span></p>
+          <p class="co-pb"><span class="co-pista"><i style="width:18.64%"></i></span><span>173 B</span></p>
+          <p class="note">Barras a escala: 173 bytes son el 18.6 % de 928.</p>
         </div>
-        <div class="co-flota" id="compresion-f-tokens" hidden>
-          <span class="eyebrow">Al unir los tokens</span>
-          <div class="co-unido" id="compresion-unido"></div>
-          <div class="co-bytes sec" id="compresion-bytes"></div>
-          <div class="co-mini">
-            <div><b>293</b>tokens en el poema</div>
-            <div><b>+1</b>token de fin</div>
-            <div class="sec"><b>151 665</b>en el vocabulario</div>
-            <div class="sec"><b>151 936</b>salidas (V)</div>
-          </div>
+        <div id="compresion-m-tokens">
+          <p>Al unir los tokens: <b class="mono" id="compresion-unido"></b></p>
+          <p class="co-bytes" id="compresion-bytes"></p>
+          <dl class="kv"><dt>Tokens en el poema</dt><dd>293</dd><dt>Token de fin</dt><dd>+1</dd><dt>En el vocabulario</dt><dd>151 665</dd><dt>Salidas (V)</dt><dd>151 936</dd></dl>
         </div>
-        <div class="co-flota" id="compresion-f-req" hidden>
-          <span class="eyebrow">Misma configuración en los dos lados</span>
-          <p class="co-conf">Qwen2.5-1.5B · mismos pesos · float32 · CPU, 4 hilos</p>
-          <div class="co-res">
-            <div><span>Poema comprimido en CPU</span><span class="pill ok">173 bytes</span></div>
-            <div><span>El mismo poema en GPU</span><span class="pill bad">174 bytes</span></div>
-          </div>
+        <div id="compresion-m-pila">
+          <p>Abajo, en gris, el embedding: el token se vuelve una lista de 1536 números. Encima, las 28 capas; cada una tiene dos losas, autoatención y red prealimentada, y se ilumina la que atraviesa el token. Arriba, la capa lineal + softmax, que da las probabilidades.</p>
         </div>
-        <div class="co-leyenda" id="compresion-leyenda">
-          <span><i style="background:var(--net)"></i>Autoatención</span>
-          <span><i style="background:var(--net);opacity:.45"></i>Red prealimentada</span>
-          <span><i style="background:var(--muted)"></i>Entrada y salida</span>
+        <div id="compresion-m-capa">
+          <p>Autoatención: 12 cabezas de consulta y 2 de clave/valor. Red prealimentada: 1536 → 8960 → 1536 neuronas, dibujadas como 6 → 14 → 6 puntos.</p>
+        </div>
+        <div id="compresion-m-abanico">
+          <p>La barra alta es «ce», con 39.93 %. Las otras 151 935 salidas suman 60.07 %; sus alturas son de ejemplo.</p>
+        </div>
+        <div id="compresion-m-req">
+          <p>Qwen2.5-1.5B · mismos pesos · float32 · CPU, 4 hilos.</p>
+          <dl class="kv"><dt>Poema comprimido en CPU</dt><dd><span class="pill ok">173 bytes</span></dd><dt>El mismo poema en GPU</dt><dd><span class="pill bad">174 bytes</span></dd></dl>
         </div>
       </div>
 
       <!-- 3 · Neurona -->
       <div class="vista" id="compresion-v-neurona" hidden>
-        <h3>Una neurona, con valores de ejemplo</h3>
         <svg id="compresion-nsvg" viewBox="0 0 440 290" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Neurona con tres entradas, sus pesos y una salida">
           <g id="compresion-nlineas"></g>
           <g id="compresion-nnodos"></g>
@@ -340,43 +306,45 @@ tr.uno td:first-child { font-weight: 600; }
           <label>x₂<input type="range" id="compresion-x2" min="-2" max="2" step="0.1" value="0.5"><output id="compresion-o2">0.5</output></label>
           <label>x₃<input type="range" id="compresion-x3" min="-2" max="2" step="0.1" value="-0.5"><output id="compresion-o3">-0.5</output></label>
         </div>
-        <div class="co-calc" id="compresion-ncalc"></div>
-        <p class="note sec">Pesos w = (0.8, −0.6, 1.2) y sesgo b = 0.2: valores de ejemplo. Línea gruesa = peso grande; punteada = peso negativo.</p>
+        <p class="co-pie">valores de ejemplo</p>
+        <div class="co-mas" hidden>
+          <p class="co-calc" id="compresion-ncalc"></p>
+          <p>Pesos w = (0.8, −0.6, 1.2) y sesgo b = 0.2: valores de ejemplo. Línea gruesa = peso grande; punteada = peso negativo. La gráfica pequeña es SiLU y el punto marca dónde cae la suma.</p>
+        </div>
       </div>
 
-      <!-- 7 · Tabla real -->
+      <!-- 7 · Probabilidades reales -->
       <div class="vista" id="compresion-v-tabla" hidden>
-        <h3>Primeros 8 tokens: lo que predijo la red</h3>
-        <table class="data co-tabla">
-          <thead><tr><th>Token</th><th>Probabilidad</th><th class="r">Puesto</th><th class="r">Sh</th></tr></thead>
-          <tbody id="compresion-tbody"></tbody>
-          <tfoot><tr><td colspan="3"><b>Suma de los 8 tokens</b></td><td class="r"><b>68.80</b></td></tr></tfoot>
-        </table>
-        <div class="co-pb" style="grid-template-columns:minmax(0,1fr) auto"><div class="co-pista"><i style="width:38.6%"></i></div><span class="num"><b>113 de 293</b> (38.6 %) en el puesto 1</span></div>
-        <p class="note sec">Puesto: lugar del token correcto en la lista de candidatos, de mayor a menor probabilidad. Sh: información −log<sub>2</sub> p (paso siguiente).</p>
+        <div class="co-probs" id="compresion-probs"></div>
+        <div class="co-mas" hidden>
+          <div class="scroll"><table class="data co-tabla">
+            <thead><tr><th>Token</th><th>Probabilidad</th><th class="r">Puesto</th><th class="r">Sh</th></tr></thead>
+            <tbody id="compresion-tbody"></tbody>
+            <tfoot><tr><td colspan="3"><b>Suma de los 8 tokens</b></td><td class="r"><b>68.80</b></td></tr></tfoot>
+          </table></div>
+          <p>Puesto: lugar del token correcto en la lista de candidatos, de mayor a menor probabilidad. Sh: información −log<sub>2</sub> p (paso siguiente). En negrita, los tokens que la red puso en el primer lugar.</p>
+        </div>
       </div>
 
       <!-- 8 · Información -->
       <div class="vista" id="compresion-v-sh" hidden>
-        <h3>Probabilidad → información</h3>
         <div class="co-medidor">
-          <label class="note" for="compresion-psh">Probabilidad p (escala logarítmica)</label>
+          <div class="co-grande"><span class="valor" id="compresion-shtxt"></span><span class="mono" id="compresion-ptxt"></span></div>
+          <div class="co-pista" style="height:.5rem"><i id="compresion-shbar" style="width:0"></i></div>
+          <label class="co-pie" for="compresion-psh">probabilidad p (escala logarítmica)</label>
           <input type="range" id="compresion-psh" min="-7" max="0" step="0.01" value="-1">
-          <div><span class="mono" id="compresion-ptxt"></span> → <span class="valor" id="compresion-shtxt"></span></div>
-          <div class="co-pista" style="height:1.1rem"><i id="compresion-shbar" style="width:0"></i></div>
-          <span class="note sec">La barra llega al final con 24 Sh, el valor de « dul».</span>
         </div>
         <div class="co-botones" id="compresion-presets">
-          <button type="button" class="ghost" data-p="0.5">p = 1/2</button>
-          <button type="button" class="ghost" data-p="0.25">p = 1/4</button>
-          <button type="button" class="ghost" data-p="0.16666666666666666">dado: 1/6</button>
-          <button type="button" class="ghost" data-p="0.3993">«ce» 39.93 %</button>
-          <button type="button" class="ghost" data-p="0.9729">«ida» 97.29 %</button>
-          <button type="button" class="ghost" data-p="0.000021">«Oh» 0.0021 %</button>
+          <button type="button" class="ghost" data-p="0.5">1/2</button>
+          <button type="button" class="ghost" data-p="0.25">1/4</button>
+          <button type="button" class="ghost" data-p="0.16666666666666666">dado 1/6</button>
+          <button type="button" class="ghost" data-p="0.3993">«ce»</button>
+          <button type="button" class="ghost" data-p="0.9729">«ida»</button>
+          <button type="button" class="ghost" data-p="0.000021">«Oh»</button>
         </div>
-        <div class="co-dado sec">
-          <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="3" width="42" height="42" rx="8" fill="var(--net-soft)" stroke="var(--net)" stroke-width="2"/><g fill="var(--net)"><circle cx="15" cy="14" r="3.5"/><circle cx="33" cy="14" r="3.5"/><circle cx="15" cy="24" r="3.5"/><circle cx="33" cy="24" r="3.5"/><circle cx="15" cy="34" r="3.5"/><circle cx="33" cy="34" r="3.5"/></g></svg>
-          <div>Un lanzamiento: log<sub>2</sub> 6 = <b>2.585 Sh</b>. Cien lanzamientos: 258.5 Sh, que caben en <b>259 bits</b> (con 3 bits por lanzamiento harían falta 300).</div>
+        <div class="co-mas" hidden>
+          <p>La barra llega al final con 24 Sh, el valor de « dul». Los botones ponen p = 1/2, 1/4, 1/6 (un dado), «ce» 39.93 %, «ida» 97.29 % y «Oh» 0.0021 %.</p>
+          <p>Un lanzamiento de dado: log<sub>2</sub> 6 = <b>2.585 Sh</b>. Cien lanzamientos: 258.5 Sh, que caben en <b>259 bits</b> (con 3 bits por lanzamiento harían falta 300).</p>
         </div>
       </div>
 
@@ -386,26 +354,23 @@ tr.uno td:first-child { font-weight: 600; }
           <button id="compresion-play" type="button">▶ Reproducir</button>
           <button id="compresion-sig" type="button" class="ghost">Siguiente token</button>
           <button id="compresion-reini" type="button" class="ghost">Reiniciar</button>
-          <label for="compresion-vel" class="sec">Velocidad
-            <select id="compresion-vel"><option value="0.5">Lenta</option><option value="1" selected>Normal</option><option value="2">Rápida</option></select>
-          </label>
-          <span class="pill" id="compresion-paso">Paso 0 de 5</span>
+          <span class="co-pie" id="compresion-paso">Paso 0 de 5</span>
         </div>
-        <p class="note" style="margin:0">Texto: <span class="mono" id="compresion-texto"></span> · <b>probabilidades de ejemplo</b></p>
-        <div class="co-et sec">Intervalo actual, ampliado al ancho completo y dividido según el token siguiente</div>
         <div class="comp-barra" id="compresion-barra"></div>
-        <div class="comp-ext"><span id="compresion-bajo"></span><span id="compresion-alto"></span></div>
-        <div class="co-et sec">Dónde está dentro de [0, 1) <span class="note">(la línea marca 0.5)</span></div>
         <div class="comp-regla"><span class="comp-sel" id="compresion-sel"></span><span class="comp-mitad"></span></div>
-        <p class="comp-evento" id="compresion-evento"></p>
-        <div class="co-et">Mensaje comprimido</div>
         <div class="comp-cinta bits" id="compresion-cinta"></div>
-        <p class="co-cuentas"><span>Información <b id="compresion-sh"></b></span><span>Bits escritos <b id="compresion-nb"></b></span><span>Pendientes <b id="compresion-pend"></b></span></p>
+        <p class="co-pie"><span class="mono" id="compresion-texto"></span> · probabilidades de ejemplo</p>
+        <div class="co-mas" hidden>
+          <p class="comp-evento" id="compresion-evento"></p>
+          <p class="mono co-bytes"><span id="compresion-bajo"></span><br><span id="compresion-alto"></span></p>
+          <p class="co-cuentas"><span>Información <b id="compresion-sh"></b></span><span>Bits escritos <b id="compresion-nb"></b></span><span>Pendientes <b id="compresion-pend"></b></span></p>
+          <p>Arriba, el intervalo actual, ampliado al ancho completo y dividido según el token siguiente; el resaltado es el token que sigue. Debajo, dónde está ese intervalo dentro de [0, 1) (la línea marca 0.5). Abajo, los bits ya escritos en el mensaje comprimido.</p>
+        </div>
+        <select id="compresion-vel" hidden aria-hidden="true"><option value="1" selected>Normal</option></select>
       </div>
 
       <!-- 10 · Frecuencias enteras -->
       <div class="vista" id="compresion-v-frec" hidden>
-        <h3>Calculadora de frecuencia entera</h3>
         <div class="controls">
           <label for="compresion-p">Probabilidad p<sub>v</sub>
             <input type="text" id="compresion-p" value="0.3" inputmode="decimal">
@@ -413,31 +378,29 @@ tr.uno td:first-child { font-weight: 600; }
           <button type="button" class="ghost" id="compresion-p1">p = 0.3</button>
           <button type="button" class="ghost" id="compresion-p2">p = 1e-9</button>
         </div>
-        <p class="formula co-calc" id="compresion-f"></p>
-        <dl class="kv">
-          <dt>p<sub>v</sub></dt><dd>probabilidad que da la red al token v</dd>
-          <dt>f<sub>v</sub></dt><dd>frecuencia entera del token v</dd>
-          <dt>2<sup>24</sup></dt><dd>16 777 216 unidades para repartir</dd>
-          <dt>V</dt><dd>151 936 salidas; 2<sup>24</sup> − V = 16 625 280</dd>
-          <dt class="sec">⌊·⌋</dt><dd class="sec">redondea hacia abajo: ⌊4 987 584.9⌋ = 4 987 584</dd>
-          <dt class="sec">+1</dt><dd class="sec">ningún token queda con frecuencia 0</dd>
-        </dl>
+        <p class="co-frec" id="compresion-f"></p>
+        <div class="co-mas" hidden>
+          <dl class="kv">
+            <dt>p<sub>v</sub></dt><dd>probabilidad que da la red al token v</dd>
+            <dt>f<sub>v</sub></dt><dd>frecuencia entera del token v</dd>
+            <dt>2<sup>24</sup></dt><dd>16 777 216 unidades para repartir</dd>
+            <dt>V</dt><dd>151 936 salidas; 2<sup>24</sup> − V = 16 625 280</dd>
+            <dt>⌊·⌋</dt><dd>redondea hacia abajo: ⌊4 987 584.9⌋ = 4 987 584</dd>
+            <dt>+1</dt><dd>ningún token queda con frecuencia 0</dd>
+          </dl>
+        </div>
       </div>
 
       <!-- 11 · Resultado -->
       <div class="vista" id="compresion-v-result" hidden>
-        <h3>Tamaño del poema con cada método</h3>
         <div class="co-fila"><span>UTF-8 original</span><div class="co-pista"><i class="ref" style="width:100%"></i></div><b>928 B</b></div>
         <div class="co-fila"><span>LZMA</span><div class="co-pista"><i class="gris" style="width:64.33%"></i></div><b>597 B</b></div>
         <div class="co-fila"><span>bzip2</span><div class="co-pista"><i class="gris" style="width:60.34%"></i></div><b>560 B</b></div>
         <div class="co-fila"><span>zlib</span><div class="co-pista"><i class="gris" style="width:57.65%"></i></div><b>535 B</b></div>
-        <div class="co-fila"><span><b>Red neuronal</b></span><div class="co-pista"><i style="width:18.64%"></i></div><b>173 B</b></div>
-        <p class="note">Barras a escala respecto a los 928 bytes originales.</p>
-        <div class="co-mini">
-          <div><b>1.54</b>bits por carácter con la red</div>
-          <div><b>8.24</b>bits por carácter en UTF-8</div>
-          <div class="sec"><b>53.29 s</b>compresión</div>
-          <div class="sec"><b>56.77 s</b>descompresión</div>
+        <div class="co-fila on"><span>Red neuronal</span><div class="co-pista"><i style="width:18.64%"></i></div><b>173 B</b></div>
+        <div class="co-mas" hidden>
+          <p>Barras a escala respecto a los 928 bytes originales.</p>
+          <dl class="kv"><dt>Con la red</dt><dd>1.54 bits por carácter</dd><dt>En UTF-8</dt><dd>8.24 bits por carácter</dd><dt>Compresión</dt><dd>53.29 s</dd><dt>Descompresión</dt><dd>56.77 s</dd></dl>
         </div>
       </div>
 
@@ -461,7 +424,7 @@ tr.uno td:first-child { font-weight: 600; }
 </main>
 <footer class="pie"></footer>
 <script type="module">
-import { recorrido, animar, sinMovimiento, color } from "./assets/js/guia.js";
+import { recorrido, animar, sinMovimiento, color, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
 
 const $ = id => document.getElementById(id);
@@ -524,6 +487,8 @@ neurona();
 /* ================= Tabla real ================= */
 const FILAS = [["Oh", "0.0021 %", 0.0021, "1587", "15.57"], [" dul", "&lt; 0.0001 %", 0, "40 721", "24.00"], ["ce", "39.93 %", 39.93, "1", "1.32"], [" ni", "0.02 %", 0.02, "563", "12.49"],
   ["ña", "79.17 %", 79.17, "1", "0.34"], [" p", "0.17 %", 0.17, "60", "9.18"], ["ál", "1.72 %", 1.72, "9", "5.86"], ["ida", "97.29 %", 97.29, "1", "0.04"]];
+$("compresion-probs").innerHTML = FILAS.map(([t, ps, p, pos]) =>
+  `<div class="co-prob${pos === "1" ? " uno" : ""}"><span class="mono">«${t.replace(/^ /, "␣")}»</span><span class="co-pista"><i style="width:${p}%"></i></span><b>${ps}</b></div>`).join("");
 $("compresion-tbody").innerHTML = FILAS.map(([t, ps, p, pos, sh]) =>
   `<tr${pos === "1" ? ' class="uno"' : ""}><td class="mono">«${t.replace(/^ /, "␣")}»</td><td><div class="co-pb"><div class="co-pista"><i style="width:${p}%"></i></div><span class="num">${ps}</span></div></td><td class="r">${pos}</td><td class="r">${sh}</td></tr>`).join("");
 
@@ -673,26 +638,28 @@ $("compresion-p2").addEventListener("click", () => { $("compresion-p").value = "
 calc();
 
 /* ================= Escena 3D: la pila de 28 capas ================= */
+// Todo en grises del tema; el morado de la etapa solo en lo que el paso señala (la subcapa que atraviesa el token,
+// la capa abierta, la barra de «ce», el token).
 const lienzo = $("compresion-lienzo");
 const e = escena3d(lienzo, { camara: [7, 7, 14], mirar: [0, 5, 0] });
 let C = e.colores();
 const NL = 28, Y0 = 0.9, DY = 0.3, GAP = 0.13, TOP = Y0 + NL * DY + 0.1, RX = 7.2;
 const geoLosa = new THREE.BoxGeometry(4.4, 0.1, 3.0), geoBorde = new THREE.EdgesGeometry(geoLosa);
-const colorFfn = () => C.net.clone().lerp(C.surface, 0.45);
-function losa(c) {
-  const m = new THREE.Mesh(geoLosa, new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0, transparent: true, opacity: 0.3, depthWrite: false }));
-  m.add(new THREE.LineSegments(geoBorde, new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: 0.5 })));
+function losa() {
+  const m = new THREE.Mesh(geoLosa, new THREE.MeshStandardMaterial({ color: C.muted, emissive: C.net, emissiveIntensity: 0, transparent: true, opacity: 0.16, depthWrite: false }));
+  m.add(new THREE.LineSegments(geoBorde, new THREE.LineBasicMaterial({ color: C.muted, transparent: true, opacity: 0.3 })));
+  m.userData.on = 0;
   e.scene.add(m); return m;
 }
 const subs = [];
-for (let L = 0; L < NL; L++) { subs.push(losa(C.net)); subs.push(losa(colorFfn())); }
-const emb = losa(C.muted), lin = losa(C.muted);
+for (let L = 0; L < NL; L++) { subs.push(losa()); subs.push(losa()); }
+const emb = losa(), lin = losa();
 emb.position.y = 0.35; lin.position.y = TOP + 0.15;
 
 // Detalle de la capa 1: 12 cabezas de consulta y 2 de clave/valor; perceptrón 1536 → 8960 → 1536 (6 → 14 → 6 puntos).
-const matDet = new THREE.MeshStandardMaterial({ color: C.net, emissive: C.net, emissiveIntensity: 0.2 });
+const matDet = new THREE.MeshStandardMaterial({ color: C.net, emissive: C.net, emissiveIntensity: 0.15 });
 const matDet2 = new THREE.MeshStandardMaterial({ color: C.ink });
-const matHilo = new THREE.LineBasicMaterial({ color: C.net, transparent: true, opacity: 0.35 });
+const matHilo = new THREE.LineBasicMaterial({ color: C.net, transparent: true, opacity: 0.3 });
 const detAtt = new THREE.Group(), detFfn = new THREE.Group();
 const bolita = new THREE.SphereGeometry(0.07, 12, 12), bola = new THREE.SphereGeometry(0.13, 16, 16);
 const hilosAtt = [];
@@ -708,19 +675,17 @@ posF.flat().forEach(p => { const m = new THREE.Mesh(bolita, matDet); m.position.
 const hilosF = [];
 for (let r = 0; r < 2; r++) for (const a of posF[r]) for (const b of posF[r + 1]) hilosF.push(a.x, a.y, a.z, b.x, b.y, b.z);
 const gHF = new THREE.BufferGeometry(); gHF.setAttribute("position", new THREE.Float32BufferAttribute(hilosF, 3));
-const matHiloF = matHilo.clone(); matHiloF.opacity = 0.18;
+const matHiloF = matHilo.clone(); matHiloF.opacity = 0.15;
 detFfn.add(new THREE.LineSegments(gHF, matHiloF));
 subs[0].add(detAtt); subs[1].add(detFfn);
 
-// Segunda copia de la red (receptor), para el último paso: mismas losas, mismos colores.
+// Segunda copia de la red (receptor), para el último paso: mismas losas, en gris.
 const receptor = new THREE.Group(); receptor.position.x = RX; receptor.visible = false; e.scene.add(receptor);
-const matRA = new THREE.MeshStandardMaterial({ color: C.net, transparent: true, opacity: 0.28, depthWrite: false });
-const matRF = new THREE.MeshStandardMaterial({ color: colorFfn(), transparent: true, opacity: 0.28, depthWrite: false });
-const matRG = new THREE.MeshStandardMaterial({ color: C.muted, transparent: true, opacity: 0.3, depthWrite: false });
-const matRB = new THREE.LineBasicMaterial({ color: C.net, transparent: true, opacity: 0.45 });
+const matRA = new THREE.MeshStandardMaterial({ color: C.muted, transparent: true, opacity: 0.16, depthWrite: false });
+const matRB = new THREE.LineBasicMaterial({ color: C.muted, transparent: true, opacity: 0.3 });
 for (let s = 0; s < 2 * NL + 2; s++) {
-  const gris = s >= 2 * NL, m = new THREE.Mesh(geoLosa, gris ? matRG : s & 1 ? matRF : matRA);
-  m.position.y = gris ? (s === 2 * NL ? 0.35 : TOP + 0.15) : Y0 + (s >> 1) * DY + (s & 1 ? GAP : 0);
+  const m = new THREE.Mesh(geoLosa, matRA);
+  m.position.y = s >= 2 * NL ? (s === 2 * NL ? 0.35 : TOP + 0.15) : Y0 + (s >> 1) * DY + (s & 1 ? GAP : 0);
   m.add(new THREE.LineSegments(geoBorde, matRB)); receptor.add(m);
 }
 
@@ -728,12 +693,13 @@ for (let s = 0; s < 2 * NL + 2; s++) {
 const NB = 21, R = 1.9;
 const EJ = [0.06, 0.1, 0.05, 0.14, 0.08, 0.22, 0.1, 0.3, 0.16, 0.45], geoBar = new THREE.BoxGeometry(0.19, 1, 0.19);
 const barras = [];
+const matBarra = new THREE.MeshStandardMaterial({ color: C.muted, transparent: true, opacity: 0.55 });
+const matCe = new THREE.MeshStandardMaterial({ color: C.muted });
 for (let k = 0; k < NB; k++) {
   const a = -1.25 + 2.5 * k / (NB - 1), centro = k === (NB - 1) / 2;
   const h = centro ? 39.93 / 100 * 5 : EJ[Math.min(k, NB - 1 - k) % EJ.length];
-  const mat = new THREE.MeshStandardMaterial({ color: centro ? C.net : C.muted });
   for (const padre of [e.scene, receptor]) {
-    const m = new THREE.Mesh(geoBar, mat);
+    const m = new THREE.Mesh(geoBar, centro ? matCe : matBarra);
     m.userData = { h, centro };
     m.position.set(R * Math.sin(a), 0, -R * Math.cos(a) + R * 0.7);
     padre.add(m); barras.push(m);
@@ -744,110 +710,118 @@ function ponerBarras() { barras.forEach(b => { const h = Math.max(0.001, b.userD
 ponerBarras();
 
 // Token que viaja (y su copia en el receptor).
-const matTok = new THREE.MeshStandardMaterial({ color: C.net, emissive: C.net, emissiveIntensity: 0.5 });
+const matTok = new THREE.MeshStandardMaterial({ color: C.net, emissive: C.net, emissiveIntensity: 0.4 });
 const geoTok = new THREE.SphereGeometry(0.2, 20, 20);
 const token = new THREE.Mesh(geoTok, matTok), tokenR = new THREE.Mesh(geoTok, matTok);
-const rotTok = etiqueta("«Oh» « dul»", { color: "net", tam: 0.34 }); rotTok.position.set(1.3, 0.1, 0); token.add(rotTok);
 receptor.add(tokenR); e.scene.add(token);
 
-// Rótulos (más grandes en lienzos angostos).
+// Rótulos: pocos, pequeños y apagados (más grandes en lienzos angostos).
 const rotulos = [];
-const rot = (t, c, x, y, z = 0, tam = 0.34, padre = e.scene) => { const s = etiqueta(t, { color: c, tam }); s.position.set(x, y, z); s.userData.base = s.scale.clone(); padre.add(s); rotulos.push(s); return s; };
-const rCapas = rot("× 28 capas", "net", 4.3, 5.2, 0, 0.75);
-const rEmb = rot("Embedding: token → 1536 números", "muted", 0, -0.2, 1.9, 0.36);
-const rLin = rot("Capa lineal + softmax", "muted", -4.5, TOP + 0.15, 0, 0.42);
-const rCe = rot("«ce» 39.93 %", "net", 0, TOP + 3.15, R * 0.7 - R, 0.4);
-const rOtras = rot("otras 151 935 salidas: 60.07 % (alturas de ejemplo)", "muted", 0, TOP + 2.72, R * 0.7 - R, 0.22);
-const rAtt = rot("Autoatención · 12 cabezas de consulta, 2 de clave/valor", "net", 0, 0, 1.9, 0.24);
-const rFfn = rot("Red prealimentada · 1536 → 8960 → 1536", "net", 0, 0, 1.9, 0.24);
-const rEmisor = rot("Emisor", "ink", 0, TOP + 3.1, 0, 0.6);
-const rReceptor = rot("Receptor", "ink", RX, TOP + 3.1, 0, 0.6);
-const rIgual = rot("misma red · mismos pesos · float32 · CPU", "muted", RX / 2, -0.75, 1.2, 0.42);
-const cola = TOKS.map((t, k) => rot(vis(t), "net", -3.15 + k * 0.9, -1.05, 1.6, 0.46));
+const rot = (t, c, x, y, z = 0, tam = 0.3, padre = e.scene) => { const s = etiqueta(t, { color: c, tam }); s.position.set(x, y, z); s.userData.base = s.scale.clone(); padre.add(s); rotulos.push(s); return s; };
+const rCe = rot("«ce»", "net", 0, TOP + 2.75, R * 0.7 - R, 0.38);
+const rAtt = rot("Autoatención", "muted", 0, 0, 1.9, 0.26);
+const rFfn = rot("Red prealimentada", "muted", 0, 0, 1.9, 0.26);
+const rEmisor = rot("Emisor", "muted", 0, TOP + 3.0, 0, 0.42);
+const rReceptor = rot("Receptor", "muted", RX, TOP + 3.0, 0, 0.42);
+// La fila de tokens: cada uno en gris y una copia morada que se enciende cuando ese token entra a la red.
+const cola = TOKS.map((t, k) => ({ gris: rot(vis(t), "muted", -3.15 + k * 0.9, -1.05, 1.6, 0.42), vivo: rot(vis(t), "net", -3.15 + k * 0.9, -1.05, 1.6, 0.42) }));
 const estrecho = () => lienzo.clientWidth > 0 && lienzo.clientWidth < 560;
 function escalarRotulos() {
-  const k = estrecho() ? 1.3 : 1;
+  const k = estrecho() ? 1.35 : 1;
   rotulos.forEach(s => s.scale.copy(s.userData.base).multiplyScalar(k));
 }
 
 // Estado.
 let modo = "general", abrir = 0;
 const posSub = s => { const L = s >> 1, ffn = s & 1; return Y0 + L * DY + (ffn ? GAP : 0) + (L === 0 ? (ffn ? 0.95 * abrir : 0) : 1.3 * abrir); };
-const contador = $("compresion-contador");
-let ultimoTxt = "";
-const decir = t => { if (t !== ultimoTxt) { contador.textContent = t; ultimoTxt = t; } };
+const datoVivo = { v: "Capa 1 de 28", t: "autoatención" };
 const suave = u => u * u * (3 - 2 * u);
 const subir = ["general", "pila", "req"];
+const cT = new THREE.Color();
+let ultimoT = 0;
 function cuadro(t) {
-  let yTok, xTok = 0, zTok = 0, activa = -1, txt;
+  const dt = Math.min(0.1, Math.max(0, t - ultimoT)); ultimoT = t;
+  const u = sinMovimiento() ? 1 : Math.min(1, dt * 6);
+  let yTok, xTok = 0, zTok = 0, activa = -1, kTok = -1;
   if (subir.includes(modo)) {
-    const u = (t % 9) / 9, y0 = -0.5, y1 = TOP + 0.5;
-    yTok = y0 + u * (y1 - y0);
-    if (yTok < Y0 - 0.12) txt = "Embedding: el token se vuelve una lista de 1536 números";
-    else if (yTok > TOP - 0.05) txt = "Capa lineal + softmax → probabilidades";
+    const q = (t % 9) / 9, y0 = -0.5, y1 = TOP + 0.5;
+    yTok = y0 + q * (y1 - y0);
+    if (yTok < Y0 - 0.12) datoVivo.t = "embedding: token → 1536 números";
+    else if (yTok > TOP - 0.05) datoVivo.t = "capa lineal + softmax";
     else {
       const L = Math.max(0, Math.min(NL - 1, Math.floor((yTok - Y0 + 0.09) / DY)));
       const ffn = yTok - (Y0 + L * DY) > GAP / 2 ? 1 : 0;
       activa = 2 * L + ffn;
-      txt = `Capa ${L + 1} de 28 · ${ffn ? "red prealimentada" : "autoatención"}`;
+      datoVivo.v = `Capa ${L + 1} de 28`; datoVivo.t = ffn ? "red prealimentada" : "autoatención";
     }
   } else if (modo === "tokens") {
-    const k = Math.floor(t / 1.4) % TOKS.length, u = suave(Math.min(1, (t % 1.4) / 1.1));
-    const q = cola[k].position;
-    xTok = q.x * (1 - u); yTok = (q.y + 0.35) * (1 - u) + 0.35 * u; zTok = q.z * (1 - u);
-    cola.forEach((c, j) => c.scale.copy(c.userData.base).multiplyScalar((j === k ? 1.25 : 1) * (lienzo.clientWidth < 560 ? 1.3 : 1)));
-    txt = `Token ${k + 1} de 293 · «${vis(TOKS[k])}» entra a la red`;
+    kTok = Math.floor(t / 1.4) % TOKS.length;
+    const w = suave(Math.min(1, (t % 1.4) / 1.1)), q = cola[kTok].gris.position;
+    xTok = q.x * (1 - w); yTok = (q.y + 0.35) * (1 - w) + 0.35 * w; zTok = q.z * (1 - w);
   } else if (modo === "capa") {
     const ffn = Math.floor(t / 1.6) % 2;
     activa = ffn;
-    const y = posSub(ffn), ant = posSub(1 - ffn), u = Math.min(1, (t % 1.6) / 0.5);
-    yTok = ant + (y - ant) * suave(u);
+    const y = posSub(ffn), ant = posSub(1 - ffn), w = Math.min(1, (t % 1.6) / 0.5);
+    yTok = ant + (y - ant) * suave(w);
     xTok = -2.5;
-    txt = ffn ? "Capa 1 · red prealimentada: 1536 → 8960 → 1536 neuronas" : "Capa 1 · autoatención: 12 cabezas de consulta, 2 de clave/valor";
   } else {
-    yTok = TOP + 0.15; txt = "Salida: 151 936 probabilidades; «ce» recibe 39.93 %";
+    yTok = TOP + 0.15;
   }
   token.position.set(xTok, yTok, zTok);
   tokenR.position.set(0, yTok, 0);
   subs.forEach((m, s) => {
     m.position.y = posSub(s);
     const lejos = modo === "capa" && s > 1;
-    const on = s === activa;
-    m.material.opacity = on ? 0.9 : lejos ? 0.05 : 0.28;
-    m.material.emissiveIntensity = on ? 0.55 : 0;
-    m.children[0].material.opacity = lejos ? 0.08 : 0.5;
+    // Solo la subcapa que atraviesa el token se ilumina (en «capa», las dos de la capa abierta quedan teñidas).
+    const obj = s === activa ? 1 : modo === "capa" && s <= 1 ? 0.45 : 0;
+    m.userData.on += (obj - m.userData.on) * (s === activa ? 1 : u);
+    const on = m.userData.on;
+    m.material.color.copy(cT.copy(C.muted).lerp(C.net, on));
+    m.material.opacity = (lejos ? 0.04 : 0.16) + 0.6 * on;
+    m.material.emissiveIntensity = 0.45 * on;
+    m.children[0].material.color.copy(cT);
+    m.children[0].material.opacity = lejos ? 0.06 : 0.3 + 0.4 * on;
   });
-  lin.material.emissiveIntensity = modo === "abanico" ? 0.5 : 0;
-  lin.material.opacity = modo === "abanico" ? 0.7 : 0.3;
+  const linOn = modo === "abanico" ? 1 : 0;
+  lin.material.color.copy(cT.copy(C.muted).lerp(C.net, 0.5 * linOn)); lin.material.opacity = 0.16 + 0.3 * linOn;
+  matCe.color.copy(modo === "abanico" ? C.net : C.muted);
   detAtt.visible = detFfn.visible = abrir > 0.02;
   detAtt.scale.setScalar(Math.max(0.01, abrir * 1.25)); detFfn.scale.setScalar(Math.max(0.01, abrir * 1.25));
-  matDet.emissiveIntensity = 0.2 + 0.5 * (0.5 + 0.5 * Math.sin(t * 6));
   rAtt.visible = rFfn.visible = abrir > 0.5;
   rAtt.position.y = posSub(0) - 0.42; rFfn.position.set(0, posSub(1) + 0.75, -1.3);
-  rCapas.visible = (modo === "general" || modo === "pila") && !estrecho();
-  rEmb.visible = ["general", "pila", "tokens"].includes(modo);
-  rLin.visible = ["general", "pila"].includes(modo) && !estrecho();
-  rCe.visible = rOtras.visible = modo === "abanico";
-  rotTok.visible = ["general", "pila", "capa"].includes(modo);
-  cola.forEach(c => (c.visible = modo === "general" || modo === "tokens"));
-  receptor.visible = rReceptor.visible = rEmisor.visible = rIgual.visible = modo === "req";
-  tokenR.visible = modo === "req";
-  decir(txt);
+  rCe.visible = modo === "abanico";
+  cola.forEach((c, j) => { const ver = modo === "tokens"; c.gris.visible = ver && j !== kTok; c.vivo.visible = ver && j === kTok; });
+  token.visible = modo !== "abanico";
+  receptor.visible = rReceptor.visible = rEmisor.visible = tokenR.visible = modo === "req";
+  if (modo === "pila") ponerDato(datoVivo, true);
 }
 e.alCuadro((dt, t) => cuadro(t));
 e.alTema(c => {
   C = c;
-  subs.forEach((m, s) => { const col = s & 1 ? colorFfn() : C.net; m.material.color.copy(col); m.material.emissive.copy(col); m.children[0].material.color.copy(col); });
-  [emb, lin].forEach(m => { m.material.color.copy(C.muted); m.material.emissive.copy(C.muted); m.children[0].material.color.copy(C.muted); });
+  [emb, lin].forEach(m => { m.material.color.copy(C.muted); m.children[0].material.color.copy(C.muted); });
+  subs.forEach(m => m.material.emissive.copy(C.net));
   matDet.color.copy(C.net); matDet.emissive.copy(C.net); matDet2.color.copy(C.ink); matHilo.color.copy(C.net); matHiloF.color.copy(C.net);
-  matRA.color.copy(C.net); matRF.color.copy(colorFfn()); matRG.color.copy(C.muted); matRB.color.copy(C.net);
-  barras.forEach(b => b.material.color.copy(b.userData.centro ? C.net : C.muted));
+  matRA.color.copy(C.muted); matRB.color.copy(C.muted); matBarra.color.copy(C.muted);
   matTok.color.copy(C.net); matTok.emissive.copy(C.net);
+  cuadro(ultimoT);
 });
 
+/* ---------- Dato único del paso ---------- */
+const dato = $("compresion-dato");
+let datoTxt = "";
+function ponerDato(d, vivo = false) {
+  const txt = d ? d.v + "|" + d.t : "";
+  if (txt === datoTxt) return;
+  datoTxt = txt;
+  const [b, s] = dato.children;
+  const poner = () => { b.textContent = d?.v || ""; s.textContent = d?.t || ""; dato.classList.toggle("fuera", !d); };
+  if (vivo || sinMovimiento() || !d) return poner();
+  dato.classList.add("fuera"); setTimeout(() => { if (datoTxt === txt) poner(); }, 220);
+}
+
 /* ---------- Cámara: tomas encuadradas según el tamaño real del lienzo ----------
-   Cada toma es una caja que debe caber en pantalla y la dirección desde la que se mira. Las tarjetas
-   flotantes reservan su lado del lienzo. Entre tomas la cámara viaja con un pequeño arco hacia atrás. */
+   Cada toma es una caja que debe caber en pantalla y la dirección desde la que se mira. Arriba queda
+   un margen para el dato del paso. Entre tomas la cámara viaja con un pequeño arco hacia atrás. */
 const tanM = Math.tan(THREE.MathUtils.degToRad(e.camera.fov / 2));
 const V3 = a => new THREE.Vector3(...a);
 const TOMAS = {
@@ -859,19 +833,10 @@ const TOMAS = {
   req:     { min: [-2.3, -1.1, -1.6], max: [RX + 2.3, TOP + 3.4, 1.6], dir: [0.1, 0.25, 1] },
 };
 const ARRIBA = new THREE.Vector3(0, 1, 0);
-// Espacio que ocupan las tarjetas flotantes, como fracción del lienzo. Cada tarjeta puede reservar su lado
-// (izquierda o derecha) o su franja (arriba o abajo): se prueban las dos y gana el encuadre más grande.
 function reservas() {
-  const W = lienzo.clientWidth || 1, H = lienzo.clientHeight || 1, base = lienzo.getBoundingClientRect();
-  let ops = [{ l: 0.02, r: 0.02, t: 0.02, b: 0.02 }];
-  for (const el of lienzo.querySelectorAll(".co-flota:not([hidden]), .co-leyenda:not([hidden])")) {
-    const q = el.getBoundingClientRect(); if (!q.width) continue;
-    const x0 = (q.left - base.left) / W, x1 = (q.right - base.left) / W, y0 = (q.top - base.top) / H, y1 = (q.bottom - base.top) / H;
-    const lado = x0 < 0.5 ? { l: x1 + 0.01 } : { r: 1 - x0 + 0.01 }, franja = y0 < 0.5 ? { t: y1 + 0.01 } : { b: 1 - y0 + 0.01 };
-    const alts = el.classList.contains("co-leyenda") || x1 - x0 > 0.45 ? [franja] : y1 - y0 > 0.45 ? [lado] : [lado, franja];
-    ops = ops.flatMap(o => alts.map(a => { const n = { ...o }; for (const k in a) n[k] = Math.max(n[k], Math.min(0.45, a[k])); return n; }));
-  }
-  return ops;
+  // Margen arriba para el dato del paso y el botón «i» de la escena.
+  const H = lienzo.clientHeight || 1;
+  return [{ l: 0.02, r: 0.02, t: DATOS[pasoActual] ? Math.min(0.22, 76 / H) : 0.06, b: 0.02 }];
 }
 function encuadre(t) { return reservas().map(R0 => encuadreCon(t, R0)).reduce((a, b) => (b.d < a.d ? b : a)); }
 function encuadreCon(t, R0) {
@@ -921,12 +886,8 @@ new ResizeObserver(() => {
 escalarRotulos();
 
 let cancelarAbrir = () => {}, cancelarCrecer = () => {};
-const TARJETA = { general: "flujo", tokens: "tokens", req: "req" };
 function irModo(m, directo) {
   modo = m;
-  lienzo.querySelectorAll(".co-flota").forEach(f => (f.hidden = f.id !== "compresion-f-" + TARJETA[m]));
-  if (TARJETA[m]) lienzo.dataset.tarjeta = ""; else delete lienzo.dataset.tarjeta;
-  $("compresion-leyenda").hidden = !["pila", "capa", "abanico"].includes(m);
   escalarRotulos(); cancelarAbrir(); cancelarCrecer();
   const a0 = abrir, a1 = m === "capa" ? 1 : 0;
   if (directo) abrir = a1; else cancelarAbrir = animar(900, u => (abrir = a0 + (a1 - a0) * u));
@@ -939,23 +900,54 @@ function irModo(m, directo) {
 /* ================= Recorrido ================= */
 const VISTAS = ["3d", "3d", "neurona", "3d", "3d", "3d", "tabla", "sh", "arit", "frec", "result", "3d"];
 const MODOS = { 0: "general", 1: "tokens", 3: "pila", 4: "capa", 5: "abanico", 11: "req" };
+// Un solo dato visible por paso (null: la visualización ya lo dice).
+const DATOS = [
+  { v: "928 → 173 B", t: "el poema, sin perder nada" },
+  { v: "293 tokens", t: "más un token de fin" },
+  null,
+  { v: "Capa 1 de 28", t: "autoatención" },
+  { v: "1536 → 8960 → 1536", t: "neuronas de la red prealimentada" },
+  { v: "39.93 %", t: "para «ce», la opción más probable" },
+  { v: "113 de 293", t: "tokens acertados a la primera" },
+  null, null, null,
+  { v: "1.54 bits", t: "por carácter, frente a 8.24" },
+  { v: "174 B", t: "el mismo poema en GPU, no 173" },
+];
+// Lo que el botón «i» de la escena añade en cada paso (bloques ocultos de la escena).
+const MAS = ["compresion-m-flujo", "compresion-m-tokens", null, "compresion-m-pila", "compresion-m-capa", "compresion-m-abanico", null, null, null, null, null, "compresion-m-req"];
 const NARRA = [
-  "La red completa: 28 capas apiladas. El poema entra por abajo; con el codificador sale en 173 bytes (barras a escala en la tarjeta).",
-  "Los 8 primeros tokens reales, en fila frente a la entrada de la red. Al unirlos aparece «Oh dulce niña pálida».",
-  "El grosor de cada línea es el peso. La neurona suma y aplica SiLU; el punto sobre la curva muestra dónde cae la suma.",
-  "La bolita morada es el token: al subir se ilumina la subcapa por la que pasa. Arriba, en gris, la capa de salida.",
-  "La capa 1 abierta. Abajo, 12 cabezas de consulta (morado) unidas a 2 de clave/valor (negro). Arriba, 6 → 14 → 6 puntos por 1536 → 8960 → 1536 neuronas.",
-  "Una barra por salida. La alta es «ce», con 39.93 %; las grises representan las otras 151 935 (alturas de ejemplo).",
-  "Probabilidades reales de los 8 primeros tokens. En negrita, los que la red puso en el primer lugar.",
-  "Mueve el deslizador o pulsa un botón: con menor probabilidad, la barra de información crece.",
-  "Pulsa «Siguiente token». Arriba, el intervalo dividido; el resaltado es el token que sigue. Abajo, los bits ya escritos.",
-  "Escribe una probabilidad o usa los botones. Incluso p = 1e-9 recibe frecuencia 1.",
-  "Tamaños medidos del poema, a escala. La barra morada es la red neuronal.",
-  "Dos copias de la misma red, una en cada lado. En la tarjeta, lo que pasó al cambiar de CPU a GPU.",
+  "la red completa: 28 capas apiladas, en gris. El token morado entra por abajo y sube; con el codificador, el poema sale en 173 bytes.",
+  "los 8 primeros tokens reales, en fila frente a la entrada de la red. Se ilumina el que entra. Al unirlos aparece «Oh dulce niña pálida».",
+  "el grosor de cada línea es el peso. La neurona suma y aplica SiLU; el punto sobre la curva muestra dónde cae la suma.",
+  "la bolita morada es el token: al subir se ilumina la subcapa por la que pasa. Abajo, el embedding; arriba, la capa de salida.",
+  "la capa 1 abierta. Abajo, 12 cabezas de consulta (morado) unidas a 2 de clave/valor. Arriba, 6 → 14 → 6 puntos por 1536 → 8960 → 1536 neuronas.",
+  "una barra por salida. La morada es «ce», con 39.93 %; las grises representan las otras 151 935 (alturas de ejemplo).",
+  "probabilidades reales de los 8 primeros tokens. En morado, los que la red puso en el primer lugar.",
+  "mueve el deslizador o pulsa un botón: con menor probabilidad, la información crece.",
+  "pulsa «Siguiente token». Arriba, el intervalo dividido; el resaltado es el token que sigue. La línea muestra dónde está dentro de [0, 1). Abajo, los bits ya escritos.",
+  "escribe una probabilidad o usa los botones. Incluso p = 1e-9 recibe frecuencia 1.",
+  "tamaños medidos del poema, a escala. La barra morada es la red neuronal.",
+  "dos copias de la misma red, una en cada lado. Con la misma configuración predicen lo mismo.",
 ];
 const narra = $("compresion-narra");
-let primera = true, vistaActual = null;
+let primera = true, vistaActual = null, pasoActual = 0;
+$("compresion-bi").addEventListener("click", () => {
+  const i = pasoActual, paso = document.querySelectorAll("#recorrido .paso")[i];
+  const nodos = [];
+  if (MAS[i]) nodos.push(...$(MAS[i]).children);
+  const vista = VISTAS[i] === "3d" ? null : $("compresion-v-" + VISTAS[i]);
+  if (vista) nodos.push(...vista.querySelector(".co-mas").children);
+  abrirInfo({
+    eyebrow: `Paso ${i + 1} · la escena`, titulo: paso.querySelector("h2").textContent,
+    secciones: [
+      { titulo: "Qué muestra", html: `<p>${NARRA[i].replace(/^./, c => c.toUpperCase())}</p>` },
+      { titulo: "Los datos", nodos },
+      { titulo: "Con el ratón", html: VISTAS[i] === "3d" ? "<p>Arrastra para girar la escena; la rueda o el pellizco acercan.</p>" : "" },
+    ],
+  });
+});
 recorrido($("recorrido"), (i) => {
+  pasoActual = i;
   const v = VISTAS[i];
   lienzo.hidden = v !== "3d";
   document.querySelectorAll(".escena .vista").forEach(d => (d.hidden = d.id !== "compresion-v-" + v));
@@ -963,6 +955,7 @@ recorrido($("recorrido"), (i) => {
   if (nodo && v !== vistaActual) { nodo.classList.remove("entra"); void nodo.offsetWidth; if (!sinMovimiento()) nodo.classList.add("entra"); }
   if (vistaActual === "arit" && v !== "arit") repA.parar();
   vistaActual = v;
+  ponerDato(DATOS[i]);
   if (MODOS[i]) irModo(MODOS[i], primera || sinMovimiento());
   narra.innerHTML = `<b>Qué estás viendo:</b> ${NARRA[i]}`;
   primera = false;

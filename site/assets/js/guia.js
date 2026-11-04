@@ -39,9 +39,86 @@ export function irAEtapa(delta) {
   if (e) location.href = e.url + (delta < 0 ? "#paso-fin" : "#paso-1");
 }
 
+// Ventana de información (botón «i» o tecla I). Cada paso deja a la vista solo su título y su primera frase;
+// la analogía, los párrafos siguientes y el detalle técnico pasan a esta ventana, ordenados por secciones.
+let ventana;
+function ventanaInfo() {
+  if (ventana) return ventana;
+  ventana = document.createElement("dialog");
+  ventana.className = "info";
+  ventana.innerHTML = `<div class="info-cab"><div><span class="eyebrow"></span><h2></h2></div>
+    <button type="button" class="cerrar" aria-label="Cerrar">✕</button></div><div class="info-cuerpo"></div>`;
+  ventana.querySelector(".cerrar").addEventListener("click", () => ventana.close());
+  ventana.addEventListener("click", e => { if (e.target === ventana) ventana.close(); });
+  document.body.append(ventana);
+  return ventana;
+}
+export function abrirInfo({ eyebrow = "", titulo = "", tituloHtml = "", secciones = [] }) {
+  const v = ventanaInfo();
+  v.querySelector(".eyebrow").textContent = eyebrow;
+  const h2 = v.querySelector("h2");
+  if (tituloHtml) h2.innerHTML = tituloHtml; else h2.textContent = titulo;
+  const cuerpo = v.querySelector(".info-cuerpo");
+  cuerpo.replaceChildren(...secciones.filter(s => s.nodos?.length || s.html).map(s => {
+    const sec = document.createElement("section");
+    sec.className = "info-sec" + (s.clase ? " " + s.clase : "");
+    if (s.titulo) sec.append(Object.assign(document.createElement("h3"), { textContent: s.titulo }));
+    if (s.html) sec.insertAdjacentHTML("beforeend", s.html);
+    s.nodos?.forEach(n => {
+      const copia = n.cloneNode(true);
+      [copia, ...copia.querySelectorAll?.("[id]") ?? []].forEach(x => x.removeAttribute?.("id"));
+      sec.append(copia);
+    });
+    sec.querySelectorAll("[id]").forEach(x => x.removeAttribute("id"));
+    return sec;
+  }));
+  v.showModal();
+  v.querySelector(".info-cuerpo").scrollTop = 0;
+}
+
+function prepararPaso(p, escena) {
+  const titulo = p.querySelector("h2");
+  const eyebrow = p.querySelector(".eyebrow");
+  const hijos = [...p.children].filter(n => n !== titulo && n !== eyebrow);
+  const primera = hijos.find(n => n.tagName === "P" && !n.classList.contains("analogia"));
+  // Lo que la página actualiza por script (ids, controles) se queda a la vista.
+  const vivo = n => n.id || n.matches("button, input, select, .mando") || n.querySelector("[id], button, input, select");
+  const resto = hijos.filter(n => n !== primera && !vivo(n));
+  if (!resto.length || !titulo) return;
+  const guardado = document.createElement("template");
+  guardado.content.append(...resto);
+  const boton = Object.assign(document.createElement("button"), { type: "button", className: "boton-i", textContent: "i" });
+  boton.setAttribute("aria-label", "Más información sobre este paso (tecla I)");
+  boton.title = "Más información (I)";
+  const cab = document.createElement("div");
+  cab.className = "paso-cab";
+  titulo.before(cab); cab.append(titulo, boton);
+  p.abrirInfo = () => {
+    const nodos = [...guardado.content.children];
+    const analogia = nodos.filter(n => n.classList.contains("analogia"));
+    const tecnico = nodos.filter(n => n.tagName === "DETAILS").flatMap(d => [...d.children].filter(x => x.tagName !== "SUMMARY"));
+    const otros = nodos.filter(n => !analogia.includes(n) && n.tagName !== "DETAILS");
+    const narra = escena?.querySelector(".narra");
+    const texto = narra?.innerHTML.replace(/^\s*<b>[^<]*<\/b>\s*/, "").replace(/^\s*([a-záéíóúñ])/, (m, c) => c.toUpperCase());
+    const viendo = texto ? Object.assign(document.createElement("p"), { innerHTML: texto }) : null;
+    abrirInfo({
+      eyebrow: eyebrow?.textContent || "", tituloHtml: titulo?.innerHTML || "",
+      secciones: [
+        { titulo: "En pocas palabras", nodos: otros },
+        { titulo: "Una comparación", nodos: analogia, clase: "comparacion" },
+        { titulo: "Qué muestra la escena", nodos: viendo ? [viendo] : [] },
+        { titulo: "Detalle técnico", nodos: tecnico, clase: "tecnico" },
+      ],
+    });
+  };
+  boton.addEventListener("click", p.abrirInfo);
+}
+
 export function recorrido(raiz, alCambiar) {
   const pasos = [...raiz.querySelectorAll(".paso")];
   const mando = raiz.querySelector(".mando");
+  const escena = raiz.querySelector(".escena");
+  pasos.forEach(p => prepararPaso(p, escena));
   const ant = Object.assign(document.createElement("button"), { className: "ghost", type: "button" });
   const sig = Object.assign(document.createElement("button"), { type: "button" });
   const puntos = Object.assign(document.createElement("div"), { className: "puntos" });
@@ -87,7 +164,7 @@ export function recorrido(raiz, alCambiar) {
   }
   ant.addEventListener("click", () => ir(actual - 1));
   sig.addEventListener("click", () => ir(actual + 1));
-  const control = { ir, get actual() { return actual; }, total: pasos.length };
+  const control = { ir, get actual() { return actual; }, total: pasos.length, info: () => pasos[actual]?.abrirInfo?.() };
   window.__recorrido = control;
 
   const desdeHash = () => {
@@ -106,6 +183,7 @@ addEventListener("keydown", e => {
   if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || esCampo(e.target)) return;
   if (document.querySelector("dialog[open]")) return;
   const r = window.__recorrido;
+  if (e.key.toLowerCase() === "i" && r?.info) { e.preventDefault(); return r.info(); }
   const adelante = ["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key);
   const atras = ["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key);
   if (!adelante && !atras && e.key !== "Home" && e.key !== "End") return;

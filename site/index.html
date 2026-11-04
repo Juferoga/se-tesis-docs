@@ -13,35 +13,25 @@
 <script src="assets/js/modelo.js"></script>
 <script type="module" src="assets/js/sitio.js"></script>
 <style>
-/* Escena: la línea de ensamblaje ocupa todo el lienzo; los tamaños flotan encima. */
+/* Escena minimalista: la línea de ensamblaje sola; un único dato discreto arriba a la izquierda. */
 #ini-lienzo { flex: 1 1 auto; }
-.ini-tablero { position: absolute; z-index: 2; top: .5rem; left: .5rem; right: .5rem; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .35rem; pointer-events: none; }
-.ini-tablero li { padding: .3rem .5rem; border-radius: 8px; background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: blur(4px); border-top: 3px solid var(--line); font-size: .78rem; line-height: 1.2; color: var(--muted); transition: box-shadow .3s, transform .3s, opacity .3s; min-width: 0; opacity: .7; }
-.ini-tablero li b { display: block; font: 600 .95rem/1.2 var(--f-mono); color: var(--ink); white-space: nowrap; }
-.ini-tablero li[data-c="net"] { border-top-color: var(--net); }
-.ini-tablero li[data-c="ciph"] { border-top-color: var(--ciph); }
-.ini-tablero li[data-c="pos"] { border-top-color: var(--pos); }
-.ini-tablero li.on { box-shadow: 0 0 0 2px var(--ink); transform: translateY(1px); opacity: 1; }
-.ini-cifras { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .2rem .8rem; margin: .3rem 0 0; font-size: .95rem; line-height: 1.4; }
+.ini-dato { position: absolute; z-index: 2; left: .4rem; top: .3rem; display: grid; gap: .1rem; pointer-events: none; max-width: calc(100% - 3.5rem); transition: opacity .45s; }
+.ini-dato b { font: 600 clamp(1.25rem, 2.2vw, 1.9rem)/1.1 var(--f-mono); color: var(--ink); letter-spacing: -.01em; }
+.ini-dato span { font-size: .82rem; color: var(--muted); }
+.ini-dato.fuera { opacity: 0; }
+.ini-bi { position: absolute; z-index: 2; right: .4rem; top: .3rem; margin: 0; width: 1.7rem; height: 1.7rem; font-size: .85rem; }
+.ini-tamanos { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .25rem 1rem; margin: 0; }
+.ini-tamanos dt { color: var(--muted); }
+.ini-tamanos dd { margin: 0; font-family: var(--f-mono); }
+.ini-cifras { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .2rem .8rem; margin: 0; line-height: 1.45; }
 .ini-cifras dt { color: var(--muted); }
 .ini-cifras dd { margin: 0; font-variant-numeric: tabular-nums; }
 .paso ul { margin: 0 0 .6rem; padding-left: 1.2rem; }
-.paso li { margin-bottom: .15rem; }
-#ini-narra { font-size: .92rem; padding: .45rem .75rem; }
 @media (max-width: 900px) {
-  .ini-tablero { top: .35rem; left: .35rem; right: .35rem; gap: .25rem; }
-  .ini-tablero li { font-size: .66rem; padding: .2rem .35rem; border-top-width: 2px; }
-  .ini-tablero li b { font-size: .74rem; }
   #ini-lienzo .ayuda3d { display: none; }
-  #ini-narra { font-size: .78rem; line-height: 1.35; padding: .3rem .5rem; }
+  .ini-dato b { font-size: 1.05rem; }
+  .ini-dato span { font-size: .72rem; }
   .cabeza h1 { font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .paso { padding: .6rem .8rem; font-size: .9rem; }
-  .paso h2 { font-size: 1.02rem; margin: .1rem 0 .3rem; }
-  .paso p, .paso li, .ini-cifras { line-height: 1.4; }
-  .paso .analogia { font-size: .84rem; padding: .35rem .55rem; }
-  .paso p { margin-bottom: .45rem; }
-  .paso details { margin-top: .4rem; padding-top: .35rem; }
-  .ini-cifras { font-size: .84rem; gap: .1rem .6rem; }
 }
 .ini-mapa h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0 0 .4rem; }
 .ini-mapa > p { margin: 0 0 1.2rem; color: var(--muted); max-width: 70ch; }
@@ -71,15 +61,15 @@
       <article class="paso" data-paso="problema">
         <span class="eyebrow">Paso 1</span>
         <h2>El problema: mandar un secreto sin que se note</h2>
-        <p>Queremos enviar un texto escondido dentro de un audio. Quien lo escuche oye solo música; quien tiene la clave saca el texto idéntico al original.</p>
+        <p>Queremos esconder un texto dentro de un audio. Quien lo escucha oye solo música; quien tiene la clave saca el texto idéntico al original.</p>
         <p>El emisor hace tres cosas en orden: <b>comprime</b>, <b>cifra</b> y <b>esconde</b>. El receptor las deshace.</p>
         <p class="analogia">Como una nota en clave, doblada y metida entre las páginas de un libro: el libro se ve igual.</p>
       </article>
       <article class="paso" data-paso="comprimir" hidden>
         <span class="eyebrow">Paso 2 · Emisor</span>
         <h2>Primero, comprimir</h2>
-        <p>Una red neuronal adivina qué fragmento del texto viene después, y un codificador aprovecha esas apuestas: lo fácil de adivinar ocupa muy poco.</p>
-        <p>El poema pasa de <b class="num">928</b> a <b class="num">173</b> bytes. Con <b class="num">2</b> bytes que anotan esa longitud quedan <b class="num">175</b>.</p>
+        <p>Una red neuronal adivina qué fragmento del texto viene después. Lo fácil de adivinar ocupa muy poco: el poema pasa de <b class="num">928</b> a <b class="num">173</b> bytes.</p>
+        <p>Un codificador aprovecha esas apuestas de la red. Con <b class="num">2</b> bytes que anotan esa longitud quedan <b class="num">175</b>.</p>
         <p class="analogia">Si alguien dice «Había una vez…», el resto casi no hace falta escribirlo.</p>
         <details><summary>Detalle técnico</summary>
           <p>La red es Qwen2.5-1.5B (pública). El texto se parte en 293 tokens y la red da una probabilidad a cada uno. Un codificador aritmético convierte esas probabilidades en bits: el tamaño final es casi la suma de −log<sub>2</sub> p de cada token. Comprimir antes de esconder reduce las muestras de audio que hay que tocar. Todo está en la <a href="compresion.html">Etapa 1</a>.</p>
@@ -98,7 +88,8 @@
       <article class="paso" data-paso="esconder" hidden>
         <span class="eyebrow">Paso 4 · Emisor</span>
         <h2>Por último, esconder en el audio</h2>
-        <p>Un audio digital es una lista enorme de números llamados muestras. Cada bit cifrado reemplaza el último bit de una muestra: el valor se mueve una unidad entre 65 536 posibles y el oído no lo nota.</p>
+        <p>Cada bit cifrado reemplaza el último bit de un número del audio. Ese número cambia tan poco que el oído no lo nota.</p>
+        <p>Un audio digital es una lista enorme de números llamados muestras. Al cambiar su último bit, el valor se mueve una unidad entre 65 536 posibles.</p>
         <p>Otra secuencia hecha con la clave K elige qué muestras se usan.</p>
         <p class="analogia">Como cambiar de color 1400 granos escogidos en una playa: solo quien tiene el mapa los encuentra.</p>
         <details><summary>Detalle técnico</summary>
@@ -108,7 +99,8 @@
       <article class="paso" data-paso="clave" hidden>
         <span class="eyebrow">Paso 5</span>
         <h2>La clave K: lo único secreto</h2>
-        <p>La clave K son tres números, x<sub>0</sub>, r y N, que emisor y receptor acuerdan antes, como una contraseña. De ella salen el flujo del cifrado y la lista de muestras.</p>
+        <p>La clave K son tres números, x<sub>0</sub>, r y N, que emisor y receptor acuerdan antes, como una contraseña.</p>
+        <p>De ella salen el flujo del cifrado y la lista de muestras.</p>
         <p>La red neuronal, las fórmulas y el programa son públicos.</p>
         <p class="analogia">Como una cerradura comercial: cualquiera puede estudiar el modelo, pero solo tu llave abre tu puerta.</p>
         <details><summary>Detalle técnico</summary>
@@ -118,8 +110,8 @@
       <article class="paso" data-paso="receptor" hidden>
         <span class="eyebrow">Paso 6 · Receptor</span>
         <h2>El receptor deshace todo en orden inverso</h2>
-        <p>Con la misma clave K lee las muestras elegidas y saca los 1400 bits. Con K fabrica el mismo flujo y deshace el cifrado. Con la misma red neuronal descomprime el texto.</p>
-        <p>No necesita el audio original.</p>
+        <p>Con la misma clave K saca los bits del audio y deshace el cifrado. Con la misma red neuronal descomprime el texto.</p>
+        <p>Lee las muestras elegidas por K y saca los 1400 bits. Con K fabrica el mismo flujo y deshace el cifrado. No necesita el audio original.</p>
         <p class="analogia">Como desarmar un paquete: primero se quita lo último que se puso.</p>
         <details><summary>Detalle técnico</summary>
           <p>XOR aplicado dos veces con el mismo flujo devuelve el dato original, por eso el descifrado es la misma operación. La red, con los mismos pesos y la misma configuración, recalcula las mismas probabilidades, y el decodificador aritmético reconstruye los tokens uno por uno hasta el token de fin. Ver <a href="recuperacion.html">Etapa 6</a>.</p>
@@ -128,7 +120,8 @@
       <article class="paso" data-paso="cifras" hidden>
         <span class="eyebrow">Paso 7</span>
         <h2>Las cifras del caso de estudio</h2>
-        <p>El poema «Nocturno» de José Asunción Silva, escondido en una canción:</p>
+        <p>El poema «Nocturno» de José Asunción Silva viaja escondido en una canción y se recupera exacto.</p>
+        <p>Las cifras del caso de estudio:</p>
         <dl class="ini-cifras">
           <dt>Texto</dt><dd><b>901</b> caracteres, <b>928</b> bytes</dd>
           <dt>Comprimido</dt><dd><b>173</b> + <b>2</b> = <b>175</b> bytes = <b>1400</b> bits</dd>
@@ -144,7 +137,8 @@
       <article class="paso" data-paso="uso" hidden>
         <span class="eyebrow">Paso 8</span>
         <h2>Cómo usar este sitio</h2>
-        <p>Cada etapa es una presentación como esta: pasos cortos y una escena que cambia con cada uno. Avanza con las flechas <kbd>←</kbd> <kbd>→</kbd> del teclado o con los botones.</p>
+        <p>Avanza con las flechas <kbd>←</kbd> <kbd>→</kbd> o con los botones. El botón <b>i</b> o la tecla <kbd>I</kbd> abren la explicación completa de cada paso.</p>
+        <p>Cada etapa es una presentación como esta: pasos cortos y una escena que cambia con cada uno.</p>
         <p><kbd>M</kbd> abre el mapa de todo el recorrido; <kbd>E</kbd>, las tablas completas y las demostraciones libres. Las escenas 3D se giran arrastrando.</p>
         <p>Con poco tiempo, ve a la etapa 1 (compresión) y a la 7 (seguridad).</p>
       </article>
@@ -152,12 +146,8 @@
     </div>
     <div class="escena">
       <div class="lienzo" id="ini-lienzo" role="img" aria-label="Línea de ensamblaje del mensaje: texto, compresión, cifrado e inserción en una onda de audio, con la clave conectada al cifrado y a la inserción">
-        <ol class="ini-tablero" id="ini-tablero" aria-label="Tamaño del mensaje en cada estación">
-          <li data-c="ink">Texto<b>928 B</b></li>
-          <li data-c="net">Comprimido<b>175 B</b></li>
-          <li data-c="ciph">Cifrado<b>175 B</b></li>
-          <li data-c="pos">En el audio<b>1400 bits</b></li>
-        </ol>
+        <div class="ini-dato" id="ini-dato" aria-live="polite"><b></b><span></span></div>
+        <button type="button" class="boton-i ini-bi" id="ini-bi" aria-label="Qué muestra la escena" title="Qué muestra la escena">i</button>
       </div>
       <p class="narra" id="ini-narra"><b>Qué estás viendo:</b> …</p>
     </div>
@@ -182,30 +172,32 @@
 </main>
 <footer class="pie"></footer>
 <script type="module">
-import { recorrido, animar, sinMovimiento } from "./assets/js/guia.js";
+import { recorrido, animar, sinMovimiento, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
 
 const lienzo = document.getElementById("ini-lienzo");
 const e = escena3d(lienzo, { camara: [0.3, 4.5, 16], mirar: [0.3, 1.5, 0] });
 let C = e.colores();
 
-/* ---------- Estaciones de la línea de ensamblaje ---------- */
+/* ---------- Estaciones de la línea de ensamblaje ----------
+   Todo va en grises del tema; solo la estación de la que habla el paso toma su color. */
 const X = { texto: -6, comp: -2.8, cif: 0.4, aud: 5 };
 const AUD0 = 2.6, AUD1 = 7.4;
-
-function disco(x, r, nombre) {
-  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.08, 48), new THREE.MeshStandardMaterial({ color: C[nombre], transparent: true, opacity: 0.22 }));
-  m.position.set(x, -0.5, 0); m.userData.c = nombre; e.scene.add(m); return m;
+const bases = {};
+function disco(clave, x, r, rol) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.08, 48), new THREE.MeshStandardMaterial({ color: C.line, transparent: true, opacity: 0.35 }));
+  m.position.set(x, -0.5, 0); m.userData.rol = rol; e.scene.add(m); bases[clave] = m; return m;
 }
-const bases = [disco(X.texto, 1.25, "muted"), disco(X.comp, 1.0, "net"), disco(X.cif, 1.0, "ciph")];
-const placa = new THREE.Mesh(new THREE.BoxGeometry(AUD1 - AUD0 + 0.6, 0.08, 1.6), new THREE.MeshStandardMaterial({ color: C.pos, transparent: true, opacity: 0.18 }));
-placa.position.set((AUD0 + AUD1) / 2, -0.5, 0); placa.userData.c = "pos"; e.scene.add(placa); bases.push(placa);
+disco("texto", X.texto, 1.25, "ink"); disco("comp", X.comp, 1.0, "net"); disco("cif", X.cif, 1.0, "ciph");
+const placa = new THREE.Mesh(new THREE.BoxGeometry(AUD1 - AUD0 + 0.6, 0.08, 1.6), new THREE.MeshStandardMaterial({ color: C.line, transparent: true, opacity: 0.35 }));
+placa.position.set((AUD0 + AUD1) / 2, -0.5, 0); placa.userData.rol = "pos"; e.scene.add(placa); bases.aud = placa;
 // Banda transportadora con rodillos que une las estaciones.
-const banda = new THREE.Mesh(new THREE.BoxGeometry(15.4, 0.06, 2.4), new THREE.MeshStandardMaterial({ color: C.line, transparent: true, opacity: 0.5 }));
-banda.position.set(0.3, -0.6, 0); banda.userData.c = "line"; e.scene.add(banda); bases.push(banda);
-const matRod = new THREE.MeshStandardMaterial({ color: C.muted, transparent: true, opacity: 0.35 });
+const matBanda = new THREE.MeshStandardMaterial({ color: C.line, transparent: true, opacity: 0.35 });
+const banda = new THREE.Mesh(new THREE.BoxGeometry(15.4, 0.06, 2.4), matBanda);
+banda.position.set(0.3, -0.6, 0); e.scene.add(banda);
+const matRod = new THREE.MeshStandardMaterial({ color: C.muted, transparent: true, opacity: 0.18 });
 const rodillos = new THREE.Group();
-for (let x = -7.2; x <= 7.8; x += 0.75) { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.4, 8), matRod); r.rotation.x = Math.PI / 2; r.position.set(x, -0.66, 0); rodillos.add(r); }
+for (let x = -7.2; x <= 7.8; x += 0.75) { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.4, 8), matRod); r.rotation.x = Math.PI / 2; r.position.set(x, -0.66, 0); rodillos.add(r); }
 e.scene.add(rodillos);
 
 /* ---------- Onda de audio: muestras como tallos verticales ---------- */
@@ -218,7 +210,7 @@ for (let i = 0; i < NS; i++) {
   pts.push(x, -0.42, 0, x, y, 0);
 }
 const gT = new THREE.BufferGeometry(); gT.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-const matT = new THREE.LineBasicMaterial({ color: C.muted, transparent: true, opacity: 0.35 });
+const matT = new THREE.LineBasicMaterial({ color: C.muted, transparent: true, opacity: 0.25 });
 e.scene.add(new THREE.LineSegments(gT, matT));
 const curva = new THREE.CatmullRomCurve3(tallos);
 const matOnda = new THREE.MeshStandardMaterial({ color: C.muted });
@@ -246,7 +238,7 @@ const bloques = [...Array(N)].map(() => { const m = new THREE.Mesh(geoB, new THR
 
 /* ---------- La clave K y sus conexiones ---------- */
 const llave = new THREE.Group();
-const matK = new THREE.MeshStandardMaterial({ color: C.key, emissive: C.key, emissiveIntensity: 0 });
+const matK = new THREE.MeshStandardMaterial({ color: C.muted, emissive: C.key, emissiveIntensity: 0 });
 const anillo = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.09, 12, 32), matK); anillo.position.x = -0.55;
 const cana = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.12, 0.12), matK); cana.position.x = 0.2;
 const d1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.22, 0.1), matK); d1.position.set(0.45, -0.15, 0);
@@ -254,33 +246,37 @@ const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.1), matK); d2.posit
 llave.add(anillo, cana, d1, d2);
 const PK = new THREE.Vector3(2.6, 3.4, 0);
 llave.position.copy(PK); e.scene.add(llave);
-const matL = new THREE.MeshStandardMaterial({ color: C.key, transparent: true, opacity: 0.45 });
+const matL = new THREE.MeshStandardMaterial({ color: C.muted, transparent: true, opacity: 0.2 });
+const matChispa = new THREE.MeshStandardMaterial({ color: C.key, emissive: C.key, emissiveIntensity: 0.5 });
 const enlaces = [new THREE.Vector3(X.cif, 1.35, 0), new THREE.Vector3(X.aud, 2.4, 0)].map(fin => {
   const c = new THREE.QuadraticBezierCurve3(PK.clone().add(new THREE.Vector3(0, -0.2, 0)), new THREE.Vector3((PK.x + fin.x) / 2, PK.y + 0.2, 0), fin);
-  e.scene.add(new THREE.Mesh(new THREE.TubeGeometry(c, 40, 0.025, 6, false), matL));
-  const chispa = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), matK); e.scene.add(chispa);
+  e.scene.add(new THREE.Mesh(new THREE.TubeGeometry(c, 40, 0.02, 6, false), matL));
+  const chispa = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), matChispa); e.scene.add(chispa);
   return { c, chispa };
 });
 
-/* ---------- Rótulos (más grandes en pantallas angostas) ---------- */
-const rotulos = [];
-const rot = (t, c, x, y, tam = 0.46) => { const s = etiqueta(t, { color: c, tam }); s.position.set(x, y, 0); s.userData.base = s.scale.clone(); e.scene.add(s); rotulos.push(s); return s; };
-rot("Texto", "ink", X.texto, 2.25);
-rot("1 · Comprimir", "net", X.comp, 1.6);
-rot("2 · Cifrar", "ciph", X.cif, 1.6);
-rot("3 · Esconder en el audio", "pos", X.aud, 2.75);
-rot("Clave K", "key", PK.x, PK.y + 0.6);
-const rEmisor = rot("Emisor  →", "muted", -2.0, 3.6, 0.55);
-const rReceptor = rot("←  Receptor", "key", -2.0, 3.6, 0.55);
-rReceptor.visible = false;
+/* ---------- Rótulos: pequeños y apagados; el de la estación señalada pasa al color de su rol ---------- */
+const rotulos = {};
+function rot(clave, t, rol, x, y) {
+  const g = new THREE.Group(); g.position.set(x, y, 0);
+  const apagado = etiqueta(t, { color: "muted", tam: 0.34, peso: 600 }), vivo = etiqueta(t, { color: rol, tam: 0.34, peso: 700 });
+  [apagado, vivo].forEach(s => { s.userData.base = s.scale.clone(); g.add(s); });
+  vivo.material.opacity = 0;
+  e.scene.add(g); rotulos[clave] = { apagado, vivo, on: 0 };
+}
+rot("texto", "Texto", "ink", X.texto, 2.15);
+rot("comp", "Comprimir", "net", X.comp, 1.45);
+rot("cif", "Cifrar", "ciph", X.cif, 1.45);
+rot("aud", "Esconder en el audio", "pos", X.aud, 2.6);
+rot("clave", "Clave K", "key", PK.x, PK.y + 0.55);
 function escalarRotulos() {
-  const k = lienzo.clientWidth && lienzo.clientWidth < 560 ? 1.35 : 1;
-  rotulos.forEach(s => s.scale.copy(s.userData.base).multiplyScalar(k));
+  const k = lienzo.clientWidth && lienzo.clientWidth < 560 ? 1.45 : 1;
+  Object.values(rotulos).forEach(r => [r.apagado, r.vivo].forEach(s => s.scale.copy(s.userData.base).multiplyScalar(k)));
 }
 
 /* ---------- Estado: f va de 0 (texto) a 3 (en el audio) ---------- */
-let f = 0, claveActiva = 0;
-const tmp = new THREE.Vector3(), cA = new THREE.Color(), cB = new THREE.Color();
+let f = 0, claveObj = 0, clave = 0, tinteObj = 0, tinte = 0, acento = [], todos = true;
+const tmp = new THREE.Vector3(), cA = new THREE.Color(), cB = new THREE.Color(), cT = new THREE.Color();
 const colorDe = k => [C.muted, C.net, C.ciph, C.pos][k];
 const suave = t => t * t * (3 - 2 * t);
 function pintar(tiempo = 0) {
@@ -293,28 +289,45 @@ function pintar(tiempo = 0) {
     b.position.copy(tmp);
     b.scale.setScalar(TAM[k] + (TAM[k + 1] - TAM[k]) * ti);
     cA.copy(colorDe(k)); cB.copy(colorDe(k + 1));
-    b.material.color.copy(cA.lerp(cB, ti));
+    b.material.color.copy(cA.lerp(cB, ti).lerp(C.muted, 1 - tinte));
     const giro = w2 * (1 + 0.25 * Math.sin(tiempo * 1.5 + i));
     b.rotation.set(ROT[i].x * giro, ROT[i].y * giro, ROT[i].z * giro);
   });
 }
+// Colores de estaciones, llave y rótulos: se acercan poco a poco a su destino (u = 1 los fija de inmediato).
+function tonos(u) {
+  tinte += (tinteObj - tinte) * u; clave += (claveObj - clave) * u;
+  for (const [k, m] of Object.entries(bases)) {
+    const on = acento.includes(k);
+    cT.copy(on ? C[m.userData.rol] : C.line); m.material.color.lerp(cT, u);
+    m.material.opacity += ((on ? 0.3 : 0.35) - m.material.opacity) * u;
+  }
+  for (const [k, r] of Object.entries(rotulos)) {
+    r.on += ((acento.includes(k) ? 1 : 0) - r.on) * u;
+    // En las tomas cercanas solo queda el rótulo de lo que el paso señala.
+    r.ver = (r.ver ?? 1) + ((todos ? 1 : 0) - (r.ver ?? 1)) * u;
+    r.vivo.material.opacity = r.on; r.apagado.material.opacity = (1 - r.on) * r.ver;
+  }
+  cT.copy(C.muted).lerp(C.key, clave); matK.color.copy(cT);
+  matL.color.copy(cT); matL.opacity = 0.2 + 0.3 * clave;
+}
 e.alCuadro((dt, tiempo) => {
+  tonos(Math.min(1, dt * 4));
   pintar(tiempo);
-  llave.rotation.y = Math.sin(tiempo * 0.8) * 0.35;
-  matK.emissiveIntensity = claveActiva * (0.35 + 0.25 * Math.sin(tiempo * 4));
+  llave.rotation.y = Math.sin(tiempo * 0.8) * 0.3;
+  matK.emissiveIntensity = clave * 0.25;
   enlaces.forEach((en, j) => {
-    en.chispa.visible = claveActiva > 0.5;
-    en.c.getPoint(((tiempo * 0.45) + j * 0.5) % 1, en.chispa.position);
+    en.chispa.visible = claveObj > 0.5;
+    en.c.getPoint(((tiempo * 0.35) + j * 0.5) % 1, en.chispa.position);
   });
 });
 e.alTema(c => {
   C = c;
-  bases.forEach(b => b.material.color.copy(C[b.userData.c]));
-  matT.color.copy(C.muted); matOnda.color.copy(C.muted); matRod.color.copy(C.muted);
-  matK.color.copy(C.key); matK.emissive.copy(C.key); matL.color.copy(C.key);
-  pintar();
+  matBanda.color.copy(C.line); matT.color.copy(C.muted); matOnda.color.copy(C.muted); matRod.color.copy(C.muted);
+  matK.emissive.copy(C.key); matChispa.color.copy(C.key); matChispa.emissive.copy(C.key);
+  tonos(1); pintar();
 });
-pintar();
+tonos(1); pintar();
 enlaces.forEach(en => (en.chispa.visible = false));
 
 /* ---------- Cámara: tomas encuadradas según el tamaño real del lienzo ----------
@@ -332,11 +345,11 @@ const TOMAS = {
 };
 const ESTACION = ["texto", "comp", "cif", "aud"];
 const ARRIBA = new THREE.Vector3(0, 1, 0);
-// Distancia y centro para que la caja de la toma quepa en el lienzo, dejando arriba el espacio de la franja de tamaños.
+// Distancia y centro para que la caja de la toma quepa en el lienzo, dejando arriba un margen para el dato del paso.
 function encuadre(t) {
   const W = lienzo.clientWidth || 1, H = lienzo.clientHeight || 1, asp = W / H;
-  const ft = Math.min(0.24, 62 / H), fb = 0.03, fx = 0.04;
-  const dir = V3(asp < 1.25 && t.dirM ? t.dirM : t.dir).normalize();
+  const ft = Math.min(0.2, 84 / H), fb = 0.03, fx = 0.04;
+  const dir = V3(asp < 1.05 && t.dirM ? t.dirM : t.dir).normalize();
   const der = new THREE.Vector3().crossVectors(ARRIBA, dir).normalize(), arr = new THREE.Vector3().crossVectors(dir, der);
   const a = V3(t.min), b = V3(t.max), c = a.clone().add(b).multiplyScalar(0.5);
   const esq = [0, 1, 2, 3, 4, 5, 6, 7].map(k => new THREE.Vector3(k & 1 ? b.x : a.x, k & 2 ? b.y : a.y, k & 4 ? b.z : a.z));
@@ -393,37 +406,53 @@ function irF(destino, ms) {
   cancelarF = animar(ms ?? Math.max(600, Math.abs(destino - f0) * 1500), u => { f = f0 + (destino - f0) * u; if (sinMovimiento()) pintar(); });
 }
 
-const tablero = [...document.querySelectorAll("#ini-tablero li")];
+
+/* ---------- Un dato por paso y la ventana «i» de la escena ---------- */
+const dato = document.getElementById("ini-dato");
+function ponerDato(d) {
+  const [b, s] = dato.children;
+  const poner = () => { b.textContent = d?.v || ""; s.textContent = d?.t || ""; dato.classList.toggle("fuera", !d); };
+  if (sinMovimiento() || !d) return poner();
+  dato.classList.add("fuera"); setTimeout(poner, 220);
+}
+document.getElementById("ini-bi").addEventListener("click", () => abrirInfo({
+  eyebrow: "Panorama · la escena", titulo: "La línea de ensamblaje del mensaje",
+  secciones: [
+    { titulo: "Tamaño del mensaje en cada estación", html: `<dl class="ini-tamanos"><dt>Texto</dt><dd>928 B</dd><dt>Comprimido</dt><dd>175 B</dd><dt>Cifrado</dt><dd>175 B</dd><dt>En el audio</dt><dd>1400 bits</dd></dl>` },
+    { titulo: "Cómo leerla", html: `<p>Los 27 bloques representan el mensaje; no están a escala. De izquierda a derecha: el texto, la compresión, el cifrado y la onda del audio, cuyas muestras son los tallos verticales. La llave es la clave K: se conecta solo al cifrado y a la inserción.</p><p>Cada estación toma su color cuando el paso habla de ella: morado para la compresión, verde para el cifrado, naranja para el audio y azul para la clave.</p>` },
+    { titulo: "Con el ratón", html: `<p>Arrastra para girar la escena; la rueda o el pellizco acercan.</p>` },
+  ],
+}));
+
 const narra = document.getElementById("ini-narra");
 const PASOS = [
-  { cam: "general", f: 0, on: [0], k: 0, txt: "La línea del emisor: el poema (bloques grises) a la izquierda, las tres estaciones y la onda del audio a la derecha." },
-  { cam: "comp", f: 1, on: [1], k: 0, txt: "El bloque del texto se encoge y se vuelve morado: 928 bytes quedan en 175." },
-  { cam: "cif", f: 2, on: [2], k: 1, txt: "Los bloques se revuelven y se vuelven verdes al mezclarse con el flujo que fabrica la clave K (azul). El tamaño no cambia." },
-  { cam: "aud", f: 3, on: [3], k: 1, txt: "Cada bloque, ahora naranja, cae en una muestra de la onda elegida con la clave. No a escala: en el caso real se usa el 0.006 % de las muestras." },
-  { cam: "clave", f: 3, on: [2, 3], k: 1, txt: "La llave azul se conecta solo al cifrado y a la inserción. Sin K no se sabe qué muestras leer ni cómo descifrarlas." },
-  { cam: "general", f: 0, on: [3, 2, 1, 0], k: 1, rec: true, txt: "Camino de vuelta: la cámara sigue al mensaje desde la onda, por el descifrado (verde) y la descompresión (morado), hasta el texto." },
-  { cam: "general", f: 0, on: [0, 1, 2, 3], k: 0, txt: "La línea completa con los tamaños del caso real en cada estación." },
-  { cam: "general", f: 0, on: [], k: 0, giro: true, txt: "La escena gira sola. Arrástrala para girarla tú; la rueda o el pellizco acercan." },
+  { cam: "general", f: 0, ac: [], k: 0, t: 0, dato: null, txt: "la línea del emisor: el poema (bloques) a la izquierda, las tres estaciones en el centro y la onda del audio a la derecha. Todo en gris: cada paso ilumina la estación de la que habla." },
+  { cam: "comp", f: 1, ac: ["comp"], k: 0, t: 1, dato: { v: "928 → 173 B", t: "el poema comprimido" }, txt: "el bloque del texto se encoge y se vuelve morado: 928 bytes quedan en 173, y con los 2 bytes de longitud, en 175." },
+  { cam: "cif", f: 2, ac: ["cif", "clave"], k: 1, t: 1, dato: { v: "175 B", t: "mismo tamaño, ahora ilegible" }, txt: "los bloques se revuelven y se vuelven verdes al mezclarse con el flujo que fabrica la clave K (azul). El tamaño no cambia." },
+  { cam: "aud", f: 3, ac: ["aud", "clave"], k: 1, t: 1, dato: { v: "0.006 %", t: "de las muestras cambia" }, txt: "cada bloque, ahora naranja, cae en una muestra de la onda elegida con la clave. No está a escala: en el caso real se usan 1400 de 25 143 552 muestras." },
+  { cam: "clave", f: 3, ac: ["clave"], k: 1, t: 0, dato: { v: "K = (x₀, r, N)", t: "lo único secreto" }, txt: "la llave azul se conecta solo al cifrado y a la inserción. Sin K no se sabe qué muestras leer ni cómo descifrarlas." },
+  { cam: "general", f: 0, ac: ["clave"], k: 1, t: 1, rec: true, dato: { v: "← receptor", t: "el mismo camino, al revés" }, txt: "camino de vuelta: la cámara sigue al mensaje desde la onda, por el descifrado (verde) y la descompresión (morado), hasta el texto." },
+  { cam: "general", f: 0, ac: [], k: 0, t: 0, dato: { v: "exacta", t: "recuperación, comprobada con SHA-256" }, txt: "la línea completa. El botón «i» de la escena muestra el tamaño del mensaje en cada estación." },
+  { cam: "general", f: 0, ac: [], k: 0, t: 0, giro: true, dato: null, txt: "la escena gira sola. Arrástrala para girarla tú; la rueda o el pellizco acercan." },
 ];
-let primera = true;
+let primera = true, recibiendo = false;
 recorrido(document.getElementById("recorrido"), (i, nombre, dir) => {
   const p = PASOS[i];
   narra.innerHTML = `<b>Qué estás viendo:</b> ${p.txt}`;
-  tablero.forEach((li, k) => li.classList.toggle("on", p.on.includes(k)));
-  claveActiva = p.k;
-  rEmisor.visible = !p.rec; rReceptor.visible = !!p.rec;
+  acento = p.ac; todos = p.cam === "general"; claveObj = p.k; tinteObj = p.t; recibiendo = !!p.rec;
+  ponerDato(p.dato);
   if (primera || sinMovimiento()) {
     // Al abrir la página (o un enlace #paso-N) se muestra el estado final del paso sin animar.
-    primera = false; cancelarF(); cancelarCam(); f = p.f; pintar();
+    primera = false; cancelarF(); cancelarCam(); f = p.f; tonos(1); pintar();
     toma = TOMAS[p.cam]; aplicar(encuadre(toma));
   } else if (p.rec) {
     // El receptor arranca con el mensaje dentro del audio y la cámara lo acompaña de estación en estación.
     cancelarF(); f = 3; pintar();
     viajar("aud", 700, 0.1);
     setTimeout(() => {
-      if (!rReceptor.visible) return;
+      if (!recibiendo) return;
       irF(0, 5200);
-      seguir(5200, () => { if (rReceptor.visible) viajar("general", 1500, 0.05); });
+      seguir(5200, () => { if (recibiendo) viajar("general", 1500, 0.05); });
     }, 750);
   } else {
     irF(p.f, dir < 0 ? 900 : undefined);

@@ -12,44 +12,33 @@
 <script src="assets/js/modelo.js"></script>
 <script type="module" src="assets/js/sitio.js"></script>
 <style>
-/* Escena: la rejilla 3D llena la escena; los datos van en una tarjeta flotante compacta sobre el lienzo. */
-#clave-lienzo .clave-panel { position: absolute; left: 10px; bottom: 10px; z-index: 2; max-width: min(460px, calc(100% - 20px)); display: grid; gap: .3rem; font-size: .84rem; line-height: 1.35;
-  background: color-mix(in srgb, var(--surface) 90%, transparent); border: 1px solid var(--line); border-radius: 8px; padding: .5rem .7rem; box-shadow: 0 4px 18px rgb(0 0 0 / .12); backdrop-filter: blur(4px); }
-#clave-lienzo .clave-panel:empty { display: none; }
-#clave-lienzo .clave-panel.entra { animation: clave-tarjeta .45s cubic-bezier(.2, 0, 0, 1) both; }
-@keyframes clave-tarjeta { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+/* Escena minimalista: solo la rejilla 3D y, abajo a la izquierda, un dato discreto con su botón «i». */
 #clave-lienzo .ayuda3d { bottom: auto; top: .5rem; }
-.clave-panel .ct { font: 600 .7rem/1.2 var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-.clave-panel .mono { font-size: .82rem; }
-.clave-panel .note { margin: 0; font-size: .74rem; }
-.clave-panel .bits { font-size: .76rem; line-height: 1.45; }
-.clave-panel .g { display: inline-block; padding: .1rem .3rem; border-radius: 4px; margin: 0 .2rem .2rem 0; background: var(--key-soft); color: var(--key); overflow-wrap: anywhere; }
-.clave-panel .g b { color: var(--muted); font-weight: 600; margin-right: .3rem; }
-.clave-panel .g.c { background: var(--ciph-soft); color: var(--ciph); }
-.clave-panel .g.p { background: var(--pos-soft); color: var(--pos); }
-.clave-panel .g.n { background: var(--soft); color: var(--muted); }
-.clave-panel .flow { gap: .35rem; }
-.clave-panel .flow .step { padding: .25rem .45rem; font-size: .8rem; }
-.clave-sha { display: inline-block; font: 700 .9rem/1 var(--f-display); padding: .3rem .5rem; border-radius: 6px; background: var(--hash); color: var(--surface); }
-.clave-barras { display: grid; gap: .3rem; min-width: min(380px, 70vw); }
-.clave-barra { display: grid; grid-template-columns: minmax(0, 8.5rem) minmax(0, 1fr); gap: .5rem; align-items: center; font-size: .78rem; }
-.clave-barra .pista { position: relative; height: .8rem; background: var(--soft); border-radius: 4px; overflow: hidden; }
-.clave-barra .pista i { position: absolute; inset: 0 auto 0 0; background: var(--key); border-radius: 4px; transition: width .8s ease-out; }
-.clave-barra .pista i.gris { background: var(--hash); }
-.clave-barra .pista i.ver { background: var(--ciph); }
+.clave-dato { position: absolute; right: 6px; bottom: 6px; justify-content: flex-end; text-align: right; z-index: 2; display: flex; align-items: center; gap: .55rem; max-width: calc(100% - 12px); color: var(--muted); font-size: .85rem; line-height: 1.3; }
+.clave-dato:not(:has(> :not([hidden]))) { display: none; }
+.clave-dato .v { font: 600 1.05rem/1.2 var(--f-mono); color: var(--ink); overflow-wrap: anywhere; }
+.clave-dato .v.grande { font: 700 1.5rem/1.1 var(--f-display); color: var(--key); }
+.clave-dato .t { max-width: 22ch; }
+.clave-dato .boton-i { margin: 0; width: 1.6rem; height: 1.6rem; font-size: .85rem; }
+.clave-dato button[data-eps] { padding: .35rem .8rem; border-radius: 999px; font-size: .85rem; }
+.clave-dato.entra { animation: clave-entra .45s cubic-bezier(.2, 0, 0, 1) both; }
+@keyframes clave-entra { from { opacity: 0; transform: translateY(6px); } }
+.clave-info .g { display: inline-block; padding: .1rem .35rem; border-radius: 4px; margin: 0 .25rem .25rem 0; background: var(--soft); font-family: var(--f-mono); font-size: .85rem; overflow-wrap: anywhere; }
+.clave-info .g b { color: var(--muted); font-weight: 600; margin-right: .35rem; }
+.clave-info .hex { font: .85rem/1.55 var(--f-mono); overflow-wrap: anywhere; }
+.clave-info table.data td { font-family: var(--f-mono); font-size: .88rem; white-space: nowrap; }
+.clave-barras { display: grid; gap: .4rem; }
+.clave-barra { display: grid; grid-template-columns: minmax(0, 8.5rem) minmax(0, 1fr); gap: .6rem; align-items: center; font-size: .85rem; }
+.clave-barra .pista { position: relative; height: .7rem; background: var(--line); border-radius: 4px; overflow: hidden; }
+.clave-barra .pista i { position: absolute; inset: 0 auto 0 0; background: var(--muted); border-radius: 4px; }
+.clave-barra .pista i.ver { background: var(--key); }
 .clave-barra .pista s { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--ink); }
-.clave-grande { font: 700 1.3rem/1 var(--f-display); color: var(--key); }
-.clave-fila { display: flex; flex-wrap: wrap; gap: .2rem .9rem; align-items: baseline; }
-.clave-panel .movil { display: none; }
 @media (max-width: 900px) {
-  #clave-lienzo .clave-panel { left: 6px; right: 6px; bottom: 6px; max-width: none; padding: .3rem .5rem; font-size: .72rem; gap: .15rem; }
-  .clave-panel .sec, #clave-lienzo .ayuda3d { display: none !important; }
-  .clave-panel .movil { display: inline; }
-  .clave-panel .mono, .clave-panel .bits { font-size: .68rem; }
-  .clave-barras { min-width: 0; }
-  .clave-barra { grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr); font-size: .68rem; }
-  .clave-grande { font-size: 1rem; }
-  #clave-narra { font-size: .78rem; line-height: 1.3; padding: 0 .55rem; border-block: .35rem solid transparent; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .recorrido { grid-template-columns: minmax(0, 1fr); gap: 8px; } /* el bloque minimalista de base.css pisa la columna única del teléfono */
+  #clave-lienzo .ayuda3d { display: none !important; }
+  .clave-dato { font-size: .75rem; gap: .4rem; }
+  .clave-dato .v { font-size: .85rem; }
+  .clave-dato .v.grande { font-size: 1.15rem; }
 }
 #clave-explora { margin-top: 2.5rem; display: grid; gap: 1rem; }
 #clave-explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
@@ -60,6 +49,7 @@
 #clave-explora .dif { background: var(--key); color: var(--surface); border-radius: 2px; }
 #clave-explora .g { display: inline-block; padding: .15rem .35rem; border-radius: 4px; margin: 0 .25rem .25rem 0; background: var(--key-soft); color: var(--key); overflow-wrap: anywhere; }
 #clave-explora .g b { color: var(--muted); font-weight: 600; margin-right: .35rem; }
+#clave-explora .note { margin: .4rem 0 0; }
 </style>
 </head>
 <body>
@@ -77,75 +67,78 @@
       <article class="paso" data-paso="clave">
         <span class="eyebrow">Paso 1</span>
         <h2>La clave K: tres números secretos</h2>
-        <p>K = (x0, r, N). En el caso de estudio: x0 = 0.123456, r = 3.999952 y N = 6173. No se usan directamente: primero pasan por SHA-512.</p>
+        <p>Emisor y receptor comparten tres números secretos, la clave K = (x0, r, N). No se usan directamente: primero pasan por SHA-512.</p>
+        <p>En el caso de estudio: x0 = 0.123456, r = 3.999952 y N = 6173.</p>
         <p class="analogia">Como la contraseña de una cuenta: solo la conocen emisor y receptor.</p>
         <details><summary>Detalle técnico</summary><p>Rangos permitidos: x0 ∈ [0.001, 0.999], r ∈ [3.99, 4) y N entero en [100, 10 000]. Contando solo las combinaciones dentro de esos rangos hay 2^112.91 claves válidas.</p></details>
       </article>
       <article class="paso" data-paso="memoria" hidden>
         <span class="eyebrow">Paso 2</span>
         <h2>Cómo se guarda la clave en memoria</h2>
-        <p>Un computador guarda cada número como una fila de bits (ceros y unos). x0 y r ocupan 64 bits cada uno y N ocupa 16: en total, 144 bits.</p>
+        <p>En memoria, la clave es una fila de 144 bits (ceros y unos): 64 para x0, 64 para r y 16 para N.</p>
         <p>Esos 144 bits forman 18 bytes (un byte son 8 bits). En la escena, cada cubito alto es un 1 y cada cubito bajo es un 0.</p>
         <details><summary>Detalle técnico</summary><p>x0 y r se guardan en float64 (IEEE 754 binary64: 1 bit de signo, 11 de exponente y 52 de fracción). N es un entero sin signo de 16 bits. Se empaquetan con el formato <code>&gt;ddH</code>: big-endian, es decir, el byte más significativo primero. Así N = 6173 = 0x181D queda como los bytes 18 y 1D. Son 8 + 8 + 2 = 18 bytes.</p></details>
       </article>
       <article class="paso" data-paso="hash" hidden>
         <span class="eyebrow">Paso 3</span>
         <h2>Qué es una función hash</h2>
-        <p>Recibe datos de cualquier tamaño y devuelve una cadena de tamaño fijo: misma entrada, misma salida, y de la salida no se recupera la entrada. SHA-512 da siempre 512 bits, no una secuencia.</p>
+        <p>SHA-512 recibe datos de cualquier tamaño y devuelve siempre una cadena fija de 512 bits. De la salida no se recupera la entrada.</p>
+        <p>Una función hash da la misma salida para la misma entrada. SHA-512 produce una cadena fija, no una secuencia.</p>
         <p class="analogia">Como una licuadora: del jugo no se sacan las frutas.</p>
         <details><summary>Detalle técnico</summary><p>SHA-512 está publicada por el NIST en el estándar FIPS 180-4. Su salida tiene 512 bits, que son 64 bytes. Si cambia una sola fresa, el jugo sale distinto: eso es el efecto avalancha del paso 9.</p></details>
       </article>
       <article class="paso" data-paso="salida" hidden>
         <span class="eyebrow">Paso 4</span>
         <h2>El hash real de la clave del caso</h2>
-        <p>Con la clave del caso, SHA-512 devuelve 512 bits. Escritos en hexadecimal empiezan por 6faf8aec24b71098.</p>
+        <p>Con la clave del caso, SHA-512 devuelve 512 bits que, escritos en hexadecimal, empiezan por 6faf8aec24b71098.</p>
         <p>Cada fila de la escena tiene 64 bits. Hay 8 filas, así que se ven los 512 bits completos.</p>
         <details><summary>Detalle técnico</summary><p>El hexadecimal escribe los números en base 16 (0 a 9 y a a f). Cada dígito equivale a 4 bits, así que los 512 bits son 128 dígitos hexadecimales.</p></details>
       </article>
       <article class="paso" data-paso="bloques" hidden>
         <span class="eyebrow">Paso 5</span>
         <h2>Ocho bloques de 64 bits</h2>
-        <p>La cadena de 512 bits se parte en ocho bloques, h1 a h8, de 64 bits cada uno. Cada bloque tiene una tarea.</p>
+        <p>La cadena de 512 bits se parte en ocho bloques de 64 bits, h1 a h8. Cada bloque tiene una tarea.</p>
         <p>h1 a h4 (verde) son para las dos secuencias del cifrado, h5 y h6 (naranja) son para la secuencia que elige las posiciones en el audio, y h7 y h8 (gris) no se usan.</p>
       </article>
       <article class="paso" data-paso="uniforme" hidden>
         <span class="eyebrow">Paso 6</span>
         <h2>Cada bloque se vuelve un número entre 0 y 1</h2>
-        <p>Cada bloque se lee como un número entero. Se le quitan los 11 bits del final, que en la escena se apagan, y quedan 53 bits.</p>
-        <p>Ese entero se divide por 2^53. El resultado u_j queda siempre entre 0 y 1 (puede ser 0, nunca llega a 1).</p>
+        <p>Cada bloque se convierte en un número u_j entre 0 y 1: se le quitan los 11 bits del final y el resto se divide por 2^53.</p>
+        <p>El bloque se lee como un número entero. Los 11 bits del final se apagan en la escena y quedan 53 bits. El resultado u_j puede ser 0, pero nunca llega a 1.</p>
         <details><summary>Detalle técnico</summary><p class="formula">u_j = (entero(h_j) ≫ 11) / 2^53 ∈ [0, 1)</p><p>El bloque se lee como entero sin signo de 64 bits en orden big-endian. El desplazamiento ≫ 11 deja 53 bits porque esa es la precisión de la mantisa de float64; así la división por 2^53 es exacta.</p></details>
       </article>
       <article class="paso" data-paso="escalado" hidden>
         <span class="eyebrow">Paso 7</span>
         <h2>Escalado a los rangos de trabajo</h2>
-        <p>Cada u_j se estira al rango que necesita su parámetro. Los valores iniciales quedan en [0.001, 0.999] y los parámetros r quedan cerca de 4, donde el mapa logístico es caótico.</p>
-        <p>En la escena, cada bloque muestra su parámetro. Np = N + 1000 = 7173 no sale del hash; u7 y u8 no se usan.</p>
+        <p>Cada u_j se estira al rango de su parámetro: los valores iniciales quedan en [0.001, 0.999] y los parámetros r cerca de 4, donde el mapa logístico es caótico.</p>
+        <p>En la escena, cada bloque usado lleva el nombre de su parámetro. Np = N + 1000 = 7173 no sale del hash; u7 y u8 no se usan.</p>
         <details><summary>Detalle técnico</summary><p>Con la clave del caso: x(1) = 0.436400, r(1) = 3.991783, x(2) = 0.671569, r(2) = 3.998479, xp = 0.843506, rp = 3.996021.</p><p>x(1) = 0.001 + 0.998·u1, r(1) = 3.99 + 0.01·u2, x(2) = 0.001 + 0.998·u3, r(2) = 3.99 + 0.01·u4, xp = 0.001 + 0.998·u5, rp = 3.99 + 0.0099·u6. Np es el transitorio de la secuencia de posiciones.</p></details>
       </article>
       <article class="paso" data-paso="porque" hidden>
         <span class="eyebrow">Paso 8</span>
         <h2>Por qué usar SHA-512</h2>
-        <p>Antes, los tres números se usaban directamente: N solo desplazaba el arranque de la misma secuencia y el espacio de claves real era ≈ 2^89.7, menor que el mínimo de 2^100. Con SHA-512, un cambio mínimo en la clave cambia las tres secuencias.</p>
+        <p>Con SHA-512, un cambio mínimo en la clave cambia las tres secuencias, y el espacio de claves pasa de ≈ 2^89.7 a 2^112.91.</p>
+        <p>Antes, los tres números se usaban directamente: N solo desplazaba el arranque de la misma secuencia y el espacio de claves real era ≈ 2^89.7, menor que el mínimo de 2^100.</p>
         <p class="analogia">Antes, cambiar N era leer el mismo libro desde otra página; ahora cada clave da otro libro.</p>
       </article>
       <article class="paso" data-paso="avalancha" hidden>
         <span class="eyebrow">Paso 9</span>
         <h2>Efecto avalancha</h2>
-        <p>Pulsa el botón de la escena: x0 cambia en 10⁻¹⁵, unos 72 números representables (ulp). Giran los cubitos del hash que cambian.</p>
-        <p>Cambian 243 de los 512 bits del hash (47.46 %) y el 48.71 % del flujo de clave: cerca del 50 %, como al azar.</p>
+        <p>Un cambio diminuto en x0 cambia casi la mitad de los bits del hash, como al azar. Pulsa el botón de la escena para verlo.</p>
+        <p>El botón cambia x0 en 10⁻¹⁵, unos 72 números representables (ulp), y giran los cubitos del hash que cambian. Cambian 243 de los 512 bits del hash (47.46 %) y el 48.71 % del flujo de clave: cerca del 50 %.</p>
         <details><summary>Detalle técnico</summary><p>Una ulp (<em>unit in the last place</em>) es la distancia entre un float64 y el siguiente número representable. Cerca de 0.123456 vale 2^−56 ≈ 1.39·10⁻¹⁷. El flujo de clave son los 1400 bits que cifran los 175 bytes del mensaje (etapa 4).</p></details>
       </article>
       <article class="paso" data-paso="validez" hidden>
         <span class="eyebrow">Paso 10</span>
         <h2>Cuándo una clave es válida</h2>
-        <p>El exponente de Lyapunov mide qué tan rápido se separan dos arranques casi iguales. Si es positivo, la secuencia es caótica.</p>
-        <p>La clave es válida solo si los exponentes de r(1), r(2) y rp son positivos. Con el caso valen 0.6483, 0.6748 y 0.6576. El máximo, en r = 4, es ln 2 ≈ 0.6931.</p>
+        <p>La clave es válida solo si las tres secuencias son caóticas, es decir, si sus exponentes de Lyapunov son positivos.</p>
+        <p>El exponente de Lyapunov mide qué tan rápido se separan dos arranques casi iguales. Se calcula para r(1), r(2) y rp. Con el caso valen 0.6483, 0.6748 y 0.6576. El máximo, en r = 4, es ln 2 ≈ 0.6931.</p>
         <details><summary>Detalle técnico</summary><p>λ = promedio de ln|r·(1 − 2x_i)| a lo largo de una secuencia larga (aquí 4000 valores tras 20 000 de transitorio). La etapa 3 lo explica con más detalle.</p></details>
       </article>
       <div class="mando"></div>
     </div>
     <div class="escena">
-      <div class="lienzo" id="clave-lienzo"><div class="clave-panel" id="clave-panel" aria-live="polite"></div></div>
+      <div class="lienzo" id="clave-lienzo"><div class="clave-dato" id="clave-dato" aria-live="polite"><span class="v" hidden></span><span class="t" hidden></span><span class="b" hidden></span><button type="button" class="boton-i" hidden aria-label="Más datos de la escena" title="Más datos de la escena">i</button></div></div>
       <p class="narra" id="clave-narra"><b>Qué estás viendo:</b> los 144 bits de la clave K.</p>
     </div>
   </div>
@@ -174,7 +167,7 @@
     <div class="grid2">
       <div class="card">
         <span class="eyebrow">Entrada de SHA-512 · 18 bytes</span>
-        <div class="bits clave-panel" id="clave-x-in"></div>
+        <div class="bits" id="clave-x-in"></div>
       </div>
       <div class="card">
         <span class="eyebrow">Diferencia con la clave del caso</span>
@@ -202,7 +195,7 @@
 </main>
 <footer class="pie"></footer>
 <script type="module">
-import { recorrido, animar, sinMovimiento } from "./assets/js/guia.js";
+import { recorrido, animar, sinMovimiento, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
 
 const M = window.Modelo, C = M.CASO, NB = 175;
@@ -222,7 +215,7 @@ let conEps = false;      // avalancha aplicada
 const vis = () => (conEps ? eps : ref);
 
 /* ---------- Escena 3D ---------- */
-const lz = $("clave-lienzo"), tarjeta = $("clave-panel");
+const lz = $("clave-lienzo"), tarjeta = $("clave-dato");
 const FOV = 45;
 const e = escena3d(lz, { camara: [-0.3, 7.5, 4.6], mirar: [-0.3, 0.1, 0], fov: FOV });
 let col = e.colores();
@@ -239,7 +232,7 @@ for (let i = 0; i < 512; i++) mHash.setColorAt(i, col.hash);
 for (let i = 0; i < 144; i++) mClave.setColorAt(i, col.key);
 const caja = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.9, 1.0), new THREE.MeshStandardMaterial({ color: col.hash, transparent: true, opacity: 0, roughness: 0.4 }));
 caja.position.copy(CENTRO);
-const rotCaja = etiqueta("SHA-512", { tam: 0.32, color: "hash", peso: 700 });
+const rotCaja = etiqueta("SHA-512", { tam: 0.26, color: "muted", peso: 700 });
 rotCaja.position.set(0, 1.2, 0);
 e.scene.add(mHash, mClave, caja, rotCaja);
 
@@ -249,40 +242,40 @@ for (let i = 0; i < 144; i++) {
   const fila = i < 64 ? 0 : i < 128 ? 1 : 2, c = fila === 2 ? i - 128 + 24 : i - 64 * fila;
   clavePos.push([gx(c), zClave(fila)]);
 }
-// Rótulos fijos y rótulos con datos (estos se rehacen si cambia la clave)
+// Pocos rótulos, pequeños y en gris; los datos completos van en la ventana «i» de la escena
 const IZQ = gx(0) - 0.15, DER = gx(63) + 0.15;
-function rot(txt, x, z, c = "ink", tam = 0.24, lado = "izq") {
+function rot(txt, x, z, c = "muted", tam = 0.19, lado = "izq") {
   const s = etiqueta(txt, { tam, color: c }); s.material.depthTest = false; s.renderOrder = 5; s.position.set(x, 0.25, z); s.center.set(lado === "izq" ? 1 : 0, 0.5); e.scene.add(s); return s;
 }
 const USO = ["ciph", "ciph", "ciph", "ciph", "pos", "pos", "hash", "hash"];
 const PAR = ["x(1)", "r(1)", "x(2)", "r(2)", "xp", "rp", "sin uso", "sin uso"];
 const fmt = (d, j) => [d.x1, d.r1, d.x2, d.r2, d.xp, d.rp][j]?.toFixed(6) ?? "·";
-const rotH = [...Array(8)].map((_, j) => rot("h" + (j + 1), IZQ, zFila(j), USO[j]));
-const rot512 = rot("512 bits", IZQ, 0, "hash", 0.26);
-const rot11 = etiqueta("11 bits que se quitan", { tam: 0.2, color: "muted" });
-rot11.position.set(gx(58), 0.3, zFila(0) - 0.55);
+const rotH = [...Array(8)].map((_, j) => rot("h" + (j + 1), IZQ, zFila(j)));
+const rot512 = rot("512 bits", IZQ, 0, "muted", 0.2);
+const rot11 = etiqueta("11 bits que se quitan", { tam: 0.17, color: "muted" });
+rot11.position.set(gx(58), 0.3, zFila(0) - 0.5);
 e.scene.add(rot11);
-const sets = { clave: [], h: rotH, p: [], u: [], lam: [], uno: [rot512], once: [rot11], caja: [rotCaja] };
+const rotG = [["cifrado", 1.5, "ciph"], ["posiciones", 4.5, "pos"], ["sin uso", 6.5, "muted"]].map(([s, j, c]) => rot(s, DER, (j - 3.5) * 0.72, c, 0.19, "der"));
+const rotP = PAR.slice(0, 6).map((n, j) => rot(n, IZQ, zFila(j)));
+const sets = { clave: [], h: rotH, p: rotP, g: rotG, u: [], uno: [rot512], once: [rot11], caja: [rotCaja] };
 function quitar(arr) { arr.forEach(s => { e.scene.remove(s); s.material.map.dispose(); s.material.dispose(); }); }
 function rotulosDatos() {
-  quitar([...sets.clave, ...sets.p, ...sets.u, ...sets.lam]);
-  const d = ref.d, k = ref.k;
-  sets.clave = [[`x0 = ${k.x0} · 64 bits`, 0, 0], [`r = ${k.r} · 64 bits`, 0, 1], [`N = ${k.N} · 16 bits`, 24, 2]].map(([t, c, j]) => { const s = rot(t, gx(c) - 0.05, zClave(j) - 0.3, "key", 0.22, "der"); s.position.y = 0.05; return s; });
-  sets.p = [...Array(8)].map((_, j) => rot(j < 6 ? `h${j + 1} → ${PAR[j]} = ${fmt(d, j)}` : `h${j + 1} · sin uso`, IZQ, zFila(j), USO[j], 0.22));
-  sets.u = d.u.map((u, j) => rot(`u${j + 1} = ${u.toFixed(10)}`, DER, zFila(j), USO[j], 0.2, "der"));
-  sets.lam = [[1, d.r1, "r(1)"], [3, d.r2, "r(2)"], [5, d.rp, "rp"]].map(([j, r, n]) => rot(`λ(${n}) = ${M.lyapunov(r).toFixed(4)}`, DER, zFila(j), USO[j], 0.24, "der"));
+  quitar([...sets.clave, ...sets.u]);
+  const d = ref.d;
+  sets.clave = [["x0 · 64 bits", 0, 0], ["r · 64 bits", 0, 1], ["N · 16 bits", 24, 2]].map(([s, c, j]) => { const sp = rot(s, gx(c) - 0.05, zClave(j) - 0.28, "muted", 0.17, "der"); sp.position.y = 0.05; return sp; });
+  sets.u = [rot(`u1 = ${d.u[0].toFixed(6)}`, DER, zFila(0), "key", 0.2, "der")];
 }
 rotulosDatos();
 
 /* Encuadre de cámara por paso (como Prezi): centro (x, z) en el suelo, medio ancho w y medio fondo d que deben verse,
-   elevación y giro en grados. La tarjeta de datos reserva la franja de abajo y la vista se corre hacia arriba. */
+   elevación y giro en grados. El dato de abajo reserva su franja y la vista se corre hacia arriba. */
 const VISTAS = [
   { c: [0, -0.15], w: 4.55, d: 1.3, el: 60, az: 0 },  // 1 clave
   { c: [0, -0.1], w: 4.55, d: 1.3, el: 36, az: -8 },  // 2 memoria: más bajo para ver las alturas
   { c: [0, 0], w: 4.9, d: 2.9, el: 58, az: 0 },        // 3 caja SHA-512
   { c: [-0.2, 0], w: 4.9, d: 2.7, el: 64, az: 0 },     // 4 los 512 bits
-  { c: [-0.4, 0], w: 5.0, d: 2.7, el: 54, az: 8 },     // 5 bloques
-  { c: [3.9, -0.25], w: 2.5, d: 2.9, el: 60, az: 0 },   // 6 de cerca: final de cada bloque y u_j
+  { c: [0.3, 0], w: 5.3, d: 2.7, el: 54, az: 6 },      // 5 bloques, con los rótulos de tarea a la derecha
+  { c: [3.9, -0.1], w: 2.5, d: 3.1, el: 60, az: 0 },   // 6 de cerca: final de cada bloque y u_j
   { c: [-3.3, -0.7], w: 3.3, d: 1.95, el: 58, az: 0 }, // 7 parámetros a la izquierda
   { c: [0, 0], w: 5.4, d: 2.9, el: 70, az: 0 },        // 8 contexto
   { c: [-0.2, 0], w: 4.9, d: 2.7, el: 48, az: -8 },    // 9 avalancha
@@ -291,7 +284,7 @@ const VISTAS = [
 const R = Math.PI / 180;
 function objetivo(p) {
   const v = VISTAS[p], W = lz.clientWidth || 600, H = lz.clientHeight || 400;
-  const res = tarjeta.innerHTML ? Math.min(H * 0.5, tarjeta.offsetHeight + 14) : 0;
+  const res = tarjeta.offsetHeight ? Math.min(H * 0.3, tarjeta.offsetHeight + 10) : 0;
   const t = Math.tan(FOV * R / 2), tv = t * Math.max(60, H - res) / H, th = t * W / H, el = v.el * R;
   // la fila más cercana se ve más ancha: su distancia a la cámara es dist − d·cos(el)
   const dist = Math.max((v.d * Math.sin(el) + 0.35 * Math.cos(el)) / tv + 0.25 * v.d * Math.cos(el), v.w / th + v.d * Math.cos(el)) * 1.02;
@@ -330,19 +323,22 @@ function estado(p) {
     s.kh.push(p === 0 ? 0.18 : b ? 0.32 : 0.05);
     s.kc.push(p === 0 ? col.key.clone() : b ? col.key.clone() : mezcla("key", 0.65));
   }
+  const gris = b => (b ? col.hash.clone() : mezcla("hash", 0.72));
   for (let k = 0; k < 512; k++) {
     const j = k >> 6, i = k & 63, b = hb[k];
-    let h = b ? 0.32 : 0.05, c;
+    let h = b ? 0.32 : 0.05, c = gris(b);
     if (p <= 2) { h = 0.16; c = col.hash.clone(); }
-    else if (p === 3) c = b ? col.hash.clone() : mezcla("hash", 0.7);
-    else c = b ? col[USO[j]].clone() : mezcla(USO[j], 0.72);
+    if (p === 4) c = b ? col[USO[j]].clone() : mezcla(USO[j], 0.72);                   // el único paso con colores por tarea
+    if (p === 5 && j === 0) c = b ? col.key.clone() : mezcla("key", 0.65);               // se resalta un bloque
+    if (p === 5 && j > 0) c.lerp(col.bg, 0.45);
+    if (p === 6) c = j < 6 ? (b ? col.key.clone() : mezcla("key", 0.65)) : col.line.clone();
     if ((p === 5 || p === 6) && i >= 53) { h = 0.03; c = col.line.clone(); }
-    if (p === 6 && j >= 6) { h = 0.03; c = col.line.clone(); }
-    if (p === 9 && j !== 1 && j !== 3 && j !== 5) c.lerp(col.bg, 0.7);
+    if (p === 6 && j >= 6) h = 0.03;
     if (p === 8 && hb[k] !== ref.hb[k]) c = col.key.clone();
+    if (p === 9) c = j === 1 || j === 3 || j === 5 ? (b ? col.key.clone() : mezcla("key", 0.65)) : c.lerp(col.bg, 0.55);
     s.h.push(h); s.c.push(c);
   }
-  s.vis = { clave: p <= 1, h: p === 4 || p === 5 || p === 7 || p >= 8, p: p === 6, u: p === 5, lam: p === 9, uno: p === 2 || p === 3, once: p === 5, caja: p === 2 };
+  s.vis = { clave: p <= 1, h: p === 4 || p === 5 || p === 9, p: p === 6, g: p === 4, u: p === 5, uno: p === 2 || p === 3, once: p === 5, caja: p === 2 };
   s.hb = hb;
   return s;
 }
@@ -406,57 +402,72 @@ function ir(p) {
 e.alTema(c => { col = c; caja.material.color.copy(c.hash); if (act) { act = estado(paso); pintar(act); } });
 e.alCuadro((dt, t) => { if (caja.visible) caja.rotation.y = Math.sin(t * 1.3) * 0.25; });
 
-/* ---------- Tarjeta de datos y narración ---------- */
+/* ---------- Dato visible y ventana «i» de la escena ---------- */
 const NARRA = [
   "los 144 bits de la clave en tres filas: x0, r y N. Por ahora todos se ven iguales.",
   "cada cubito es un bit de la clave en memoria: alto = 1, bajo = 0.",
   "los 144 bits de la clave entran a la caja SHA-512 y salen 512 bits en 8 filas de 64.",
   "los 512 bits reales del hash de la clave: alto = 1, bajo = 0.",
   "las 8 filas son los bloques h1 a h8: verde para el cifrado, naranja para las posiciones, gris sin uso.",
-  "de cerca, el final de cada bloque: se apagan los 11 últimos bits y a la derecha queda el número u_j.",
-  "cada bloque con su parámetro ya escalado. h7 y h8 se apagan porque no se usan.",
-  "el hash completo y, en la tarjeta, el espacio de claves antes y después de SHA-512.",
-  "pulsa el botón de la tarjeta: los cubitos que giran y se pintan de azul son los bits que cambiaron.",
-  "resaltadas h2, h4 y h6, de donde salen r(1), r(2) y rp, con su exponente de Lyapunov.",
+  "de cerca, el final de cada bloque: se apagan los 11 últimos bits. Se resalta h1, que da u1; los demás bloques hacen lo mismo.",
+  "los bloques h1 a h6 con el nombre de su parámetro. h7 y h8 se apagan porque no se usan.",
+  "el hash completo y, abajo, el espacio de claves antes y después de SHA-512.",
+  "pulsa el botón de abajo a la derecha: los cubitos que giran y se pintan de azul son los bits que cambiaron.",
+  "resaltadas h2, h4 y h6, de donde salen r(1), r(2) y rp, los tres parámetros cuyo exponente de Lyapunov debe ser positivo.",
 ];
-const USOC = ["c", "c", "c", "c", "p", "p", "n", "n"];
+const TIT = ["La clave K", "La clave en memoria", "SHA-512", "El hash de la clave", "Ocho bloques", "De bloque a número", "Los parámetros", "Espacio de claves", "Efecto avalancha", "Validez de la clave"];
 function barra(rot, frac, cls = "", marca) {
   return `<div class="clave-barra"><span>${rot}</span><span class="pista"><i class="${cls}" style="width:${(frac * 100).toFixed(1)}%"></i>${marca != null ? `<s style="left:${(marca * 100).toFixed(1)}%"></s>` : ""}</span></div>`;
 }
-function panel(p) {
+const tabla = (cab, filas) => `<div class="scroll"><table class="data"><thead><tr>${cab.map(c => `<th>${c}</th>`).join("")}</tr></thead><tbody>${filas.map(f => `<tr>${f.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+// Para cada paso: v (dato), t (rótulo corto), grande, b (botón) e info (secciones de la ventana «i»)
+function dato(p) {
   const V = vis(), d = V.d, inHex = M.hex(d.input), hx = M.hex(d.hash);
-  const nota = ref === CASO ? "" : `<p class="note sec">Clave de «Para explorar»: x0 = ${ref.k.x0}, r = ${ref.k.r}, N = ${ref.k.N}.</p>`;
-  let h = "";
-  if (p === 0) h = `<span class="ct">Clave K del caso</span><div class="clave-fila mono"><span>x0 = ${V.k.x0}</span><span>r = ${V.k.r}</span><span>N = ${V.k.N}</span></div>`;
-  if (p === 1) h = `<span class="ct">18 bytes en memoria (hex)</span><div class="bits"><span class="g"><b>x0</b>${inHex.slice(0, 16)}</span><span class="g"><b>r</b>${inHex.slice(16, 32)}</span><span class="g"><b>N</b>${inHex.slice(32)}</span></div>`;
-  if (p === 2) h = `<div class="flow"><span class="step mono">144 bits</span><span class="arrow">→</span><span class="clave-sha">SHA-512</span><span class="arrow">→</span><span class="step mono">512 bits</span></div><p class="note sec">Con cualquier entrada, corta o larga, la salida tiene 512 bits.</p>`;
-  if (p === 3) { const ln = hx.match(/.{32}/g); h = `<span class="ct">SHA-512(K) · 128 dígitos hex</span><div class="bits"><div>${ln[0]}<span class="movil">…</span></div>${ln.slice(1).map(s => `<div class="sec">${s}</div>`).join("")}</div>`; }
-  if (p === 4) h = `<div class="bits"><span class="g c">h1–h4 · cifrado</span><span class="g p">h5–h6 · posiciones</span><span class="g n">h7–h8 · sin uso</span></div>`;
-  if (p === 5) h = `<div class="mono">u_j = (entero(h_j) ≫ 11) / 2^53</div><p class="note sec">Quedan 53 bits; u_j ∈ [0, 1).</p>`;
-  if (p === 6) h = `<div class="clave-fila mono"><span>Np = N + 1000 = ${d.Np}</span><span>u7, u8: sin uso</span></div><p class="note sec">Valores iniciales en [0.001, 0.999]; parámetros r cerca de 4.</p>`;
-  if (p === 7) h = `<span class="ct">Espacio de claves (exponente de 2)</span><div class="clave-barras">${barra("Antes: ≈ 2^89.7", 89.7 / 120, "gris", 100 / 120)}${barra("Mínimo: 2^100", 100 / 120, "gris")}${barra("Ahora: 2^112.91", 112.91 / 120, "ver", 100 / 120)}</div><p class="note sec">Escala de 0 a 120. La raya vertical marca el mínimo recomendado, 2^100. SHA-512 se agregó en la revisión del artículo.</p>`;
+  const nota = ref === CASO ? "" : `<p>Clave de «Para explorar»: x0 = ${ref.k.x0}, r = ${ref.k.r}, N = ${ref.k.N}.</p>`;
+  const o = {};
+  if (p === 0) o.info = `<p>x0 = ${V.k.x0}, r = ${V.k.r}, N = ${V.k.N}.</p>`;
+  if (p === 1) { o.v = "144 bits"; o.t = "18 bytes"; o.info = `<p>Los 18 bytes en hexadecimal (x0 y r en float64, N en 16 bits):</p><p><span class="g"><b>x0</b>${inHex.slice(0, 16)}</span><span class="g"><b>r</b>${inHex.slice(16, 32)}</span><span class="g"><b>N</b>${inHex.slice(32)}</span></p>`; }
+  if (p === 3) { o.v = hx.slice(0, 16) + "…"; o.t = "en hexadecimal"; o.info = `<p>SHA-512(K), 128 dígitos hexadecimales:</p><p class="hex">${hx.match(/.{32}/g).join("<br>")}</p>`; }
+  if (p === 4) o.info = `<p>h1 a h4: secuencias del cifrado. h5 y h6: secuencia de posiciones. h7 y h8: sin uso.</p>` + tabla(["Bloque", "h_j (hex)"], d.bloques.map((b, j) => [`h${j + 1}`, M.hex(b)]));
+  if (p === 5) o.info = `<p class="formula">u_j = (entero(h_j) ≫ 11) / 2^53 ∈ [0, 1)</p>` + tabla(["Bloque", "u_j"], d.u.map((u, j) => [`h${j + 1}`, `u${j + 1} = ${u.toFixed(10)}`]));
+  if (p === 6) o.info = tabla(["Bloque", "Parámetro", "Valor"], [...d.u.map((u, j) => [`h${j + 1}`, PAR[j], fmt(d, j)]), ["·", "Np = N + 1000", String(d.Np)]]) + `<p>Valores iniciales en [0.001, 0.999]; parámetros r cerca de 4.</p>`;
+  if (p === 7) { o.v = "2^89.7 → 2^112.91"; o.t = "espacio de claves"; o.grande = true;
+    o.info = `<div class="clave-barras">${barra("Antes: ≈ 2^89.7", 89.7 / 120, "", 100 / 120)}${barra("Mínimo: 2^100", 100 / 120, "")}${barra("Ahora: 2^112.91", 112.91 / 120, "ver", 100 / 120)}</div><p>Escala del exponente de 0 a 120. La raya vertical marca el mínimo recomendado, 2^100. SHA-512 se agregó en la revisión del artículo.</p>`; }
   if (p === 8) {
     const dh = cuentaDif(V.hb, ref.hb), df = cuentaDif(V.f.bits, ref.f.bits);
-    h = conEps
-      ? `<div class="clave-fila"><span><span class="clave-grande">${dh}</span> de 512 bits del hash · ${pct(dh / 512)}</span><span><span class="clave-grande">${df}</span> de 1400 del flujo · ${pct(df / 1400)}</span></div><p class="note sec mono">x0 nuevo = ${eps.k.x0}</p>`
-      : `<span class="sec">Clave sin cambiar (x0 = ${ref.k.x0}).</span>`;
-    h += `<span><button type="button" data-eps>${conEps ? "Volver a la clave sin cambio" : "Cambiar x0 en 10⁻¹⁵"}</button></span>`;
+    o.b = `<button type="button" data-eps>${conEps ? "Volver" : "Cambiar x0 en 10⁻¹⁵"}</button>`;
+    if (conEps) { o.v = `${dh} / 512`; o.t = "bits del hash cambian"; o.grande = true;
+      o.info = `<p>x0 nuevo = ${eps.k.x0}.</p><p>Hash: ${dh} de 512 bits distintos (${pct(dh / 512)}). Flujo de clave: ${df} de 1400 bits distintos (${pct(df / 1400)}).</p>`; }
   }
   if (p === 9) {
-    const L = [["λ(r(1))", M.lyapunov(d.r1)], ["λ(r(2))", M.lyapunov(d.r2)], ["λ(rp)", M.lyapunov(d.rp)]];
-    const ok = L.every(x => x[1] > 0);
-    h = `<p class="note sec">Los tres exponentes están junto a sus filas. Máximo posible, en r = 4: ln 2 ≈ 0.6931.</p><span><span class="pill ${ok ? "ok" : "bad"}">${ok ? "clave válida: los tres exponentes son positivos" : "clave no válida: algún exponente no es positivo"}</span></span>`;
+    const L = [["r(1)", d.r1], ["r(2)", d.r2], ["rp", d.rp]].map(([n, r]) => [n, r, M.lyapunov(r)]), ok = L.every(x => x[2] > 0);
+    o.v = ok ? "clave válida" : "clave no válida"; o.t = ok ? "los tres λ son positivos" : "algún λ no es positivo";
+    o.info = tabla(["Parámetro", "Valor", "λ"], L.map(([n, r, l]) => [n, r.toFixed(6), l.toFixed(4)])) + `<p>Máximo posible, en r = 4: ln 2 ≈ 0.6931.</p>`;
   }
-  const nuevo = h + nota;
-  if (tarjeta.innerHTML !== nuevo) {
-    tarjeta.innerHTML = nuevo;
+  if (o.info) o.info += nota;
+  return o;
+}
+let infoAct = "";
+function panel(p) {
+  const o = dato(p), [v, tt, bb, bi] = tarjeta.children;
+  const firma = JSON.stringify([o.v, o.t, o.b]);
+  v.hidden = !o.v; v.textContent = o.v || ""; v.classList.toggle("grande", !!o.grande);
+  tt.hidden = !o.t; tt.textContent = o.t || "";
+  bb.hidden = !o.b; bb.innerHTML = o.b || "";
+  bi.hidden = !o.info; infoAct = o.info || "";
+  if (tarjeta.dataset.firma !== firma) {
+    tarjeta.dataset.firma = firma;
     tarjeta.classList.remove("entra"); void tarjeta.offsetWidth; if (!sinMovimiento()) tarjeta.classList.add("entra");
   }
   $("clave-narra").innerHTML = "<b>Qué estás viendo:</b> " + NARRA[p];
 }
 
 let paso = 0;
-tarjeta.addEventListener("click", ev => { if (!ev.target.closest("[data-eps]")) return; conEps = !conEps; ir(paso); panel(paso); tarjeta.querySelector("[data-eps]")?.focus(); });
+tarjeta.addEventListener("click", ev => {
+  if (ev.target.closest(".boton-i")) return abrirInfo({ eyebrow: `Paso ${paso + 1} · datos de la escena`, titulo: TIT[paso], secciones: [{ html: `<div class="clave-info">${infoAct}</div>` }] });
+  if (!ev.target.closest("[data-eps]")) return;
+  conEps = !conEps; ir(paso); panel(paso); tarjeta.querySelector("[data-eps]")?.focus();
+});
 
 let primero = true;
 recorrido($("recorrido"), i => {

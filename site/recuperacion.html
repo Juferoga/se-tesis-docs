@@ -12,47 +12,41 @@
 <script src="assets/js/modelo.js"></script>
 <script type="module" src="assets/js/sitio.js"></script>
 <style>
-/* Tarjeta flotante sobre el lienzo 3D */
-.rec-tar { position: absolute; left: 10px; top: 10px; z-index: 2; max-width: min(48%, 380px); display: grid; gap: .35rem; background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: blur(4px); border: 1px solid var(--line); border-radius: 10px; padding: .6rem .75rem; font-size: .86rem; line-height: 1.35; box-shadow: 0 4px 16px rgb(0 0 0 / .06); pointer-events: none; }
-.rec-tar:empty { display: none; }
-.rec-tar.entra { animation: rec-entra .45s ease-out; }
-@keyframes rec-entra { from { opacity: 0; transform: translateY(-6px); } }
-.rec-tar .t { font: 700 .98rem/1.2 var(--f-display); }
-.rec-tar .big { font: 700 1.55rem/1.1 var(--f-display); font-variant-numeric: tabular-nums; }
-.rec-tar .big.ok { color: var(--ok); }
-.rec-tar .note { font-size: .76rem; }
-.rec-tar .chips { display: flex; flex-wrap: wrap; gap: .3rem; }
-.rec-tar .hash { font: 400 .7rem/1.35 var(--f-mono); color: var(--muted); overflow-wrap: anywhere; }
-.rec-mini { border-collapse: collapse; font: 400 .76rem/1.3 var(--f-mono); }
-.rec-mini td { padding: .08rem .45rem .08rem 0; white-space: nowrap; }
-.rec-mini td:first-child { font-family: var(--f-body); color: var(--muted); }
-.rec-xor { display: grid; grid-template-columns: max-content max-content max-content; gap: .1rem .6rem; font: 400 .8rem/1.3 var(--f-mono); }
-.rec-xor .et { font-family: var(--f-body); color: var(--muted); }
-.rec-xor .res { color: var(--key); font-weight: 600; }
-.rec-int { display: grid; gap: .2rem; min-width: 15rem; }
-.rec-fila { display: grid; grid-template-columns: 3.1rem minmax(0, 1fr); gap: .4rem; align-items: center; }
-.rec-fila .et { font: 600 .68rem/1 var(--f-mono); color: var(--muted); }
-.rec-barra { position: relative; display: flex; height: 1.15rem; }
-.rec-barra span { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; font: 400 .62rem/1 var(--f-mono); background: var(--soft); border: 1px solid var(--line); color: var(--muted); min-width: 0; }
-.rec-barra span.sel { background: var(--net); color: var(--surface); border-color: var(--net); font-weight: 600; }
-.rec-barra i { position: absolute; top: -3px; bottom: -3px; width: 3px; margin-left: -1.5px; background: var(--ink); border-radius: 2px; }
-.rec-fila.pend { visibility: hidden; }
-.escena .narra { font-size: .9rem; padding: .45rem .75rem; }
+/* Dato clave de la escena: una cifra discreta y un botón «i» con el resto */
+.rec-dato { position: absolute; left: 4px; top: 2px; z-index: 2; display: flex; align-items: flex-start; gap: .55rem; max-width: calc(100% - 8px); pointer-events: none; }
+.rec-dato:empty { display: none; }
+.rec-dato.entra { animation: rec-entra .45s ease-out; }
+@keyframes rec-entra { from { opacity: 0; transform: translateY(-4px); } }
+.rec-dato .v { display: block; font: 700 clamp(1.25rem, 2vw, 1.8rem)/1.05 var(--f-display); font-variant-numeric: tabular-nums; color: var(--ink); }
+.rec-dato .v.mono { font: 600 clamp(.9rem, 1.3vw, 1.1rem)/1.2 var(--f-mono); }
+.rec-dato .e { display: block; font-size: .82rem; color: var(--muted); margin-top: .2rem; }
+.rec-dato .boton-i { pointer-events: auto; width: 1.55rem; height: 1.55rem; margin-top: .1rem; font-size: .8rem; }
 @media (max-width: 900px) {
-  .rec-tar { left: 6px; top: 6px; max-width: 64%; font-size: .72rem; padding: .35rem .5rem; gap: .2rem; border-radius: 8px; }
-  .rec-tar .sec { display: none; }
-  .rec-tar .t { font-size: .8rem; }
-  .rec-tar .big { font-size: 1.05rem; }
-  .rec-mini, .rec-xor { font-size: .66rem; }
-  .escena .narra { font-size: .78rem; padding: .3rem .5rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow: clip; overflow-clip-margin: content-box; }
+  .rec-dato .v { font-size: 1.05rem; } .rec-dato .v.mono { font-size: .78rem; } .rec-dato .e { font-size: .7rem; }
   .escena .ayuda3d { display: none; }
 }
+/* Datos de la escena (dentro de la ventana «i») */
+.rec-chips { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .5rem; }
+.rec-hash { font: 400 .75rem/1.4 var(--f-mono); color: var(--muted); overflow-wrap: anywhere; }
+.rec-mini { border-collapse: collapse; font: 400 .82rem/1.35 var(--f-mono); margin: .4rem 0; }
+.rec-mini td { padding: .1rem .6rem .1rem 0; }
+.rec-mini td:first-child { font-family: var(--f-body); color: var(--muted); white-space: nowrap; }
+.rec-xor { display: grid; grid-template-columns: max-content max-content max-content; gap: .1rem .7rem; font: 400 .82rem/1.35 var(--f-mono); margin: .4rem 0; overflow-x: auto; }
+.rec-xor .et { font-family: var(--f-body); color: var(--muted); }
+.rec-xor .res { color: var(--key); font-weight: 600; }
+.rec-int { display: grid; gap: .25rem; margin: .4rem 0; }
+.rec-fila { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: .4rem; align-items: center; }
+.rec-fila .et { font: 600 .68rem/1 var(--f-mono); color: var(--muted); }
+.rec-barra { position: relative; display: flex; height: 1.2rem; }
+.rec-barra span { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; font: 400 .64rem/1 var(--f-mono); background: var(--soft); border: 1px solid var(--line); color: var(--muted); min-width: 0; }
+.rec-barra span.sel { background: var(--key); color: var(--surface); border-color: var(--key); font-weight: 600; }
+.rec-barra i { position: absolute; top: -3px; bottom: -3px; width: 3px; margin-left: -1.5px; background: var(--ink); border-radius: 2px; }
 .rec-explora { display: grid; gap: 1rem; }
 .rec-explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
 .rec-t { display: grid; grid-template-columns: minmax(7.5rem, max-content) minmax(0, 1fr) 4.4rem; gap: .35rem .6rem; align-items: center; font-size: .88rem; }
 .rec-t .v { text-align: right; font: 400 .82rem/1 var(--f-mono); }
-.rec-t .b { height: .8rem; border-radius: 3px; background: var(--key); min-width: 2px; }
-.rec-t .b.red { background: var(--net); }
+.rec-t .b { height: .8rem; border-radius: 3px; background: var(--muted); min-width: 2px; opacity: .6; }
+.rec-t .b.red { background: var(--key); opacity: 1; }
 .rec-t .tot { font-weight: 600; border-top: 1px solid var(--line); padding-top: .35rem; }
 </style>
 </head>
@@ -70,44 +64,50 @@
       <article class="paso" data-paso="tiene">
         <span class="eyebrow">Paso 1 · Punto de partida</span>
         <h2>Qué tiene el receptor</h2>
-        <p>Tiene el estegoaudio, la clave K = (x0, r, N), recibida antes por un canal seguro, y la misma red neuronal del emisor, que es pública. No sabe cuántos bits hay escondidos ni dónde: lo calcula con la clave.</p>
+        <p>Tiene el estegoaudio, la clave K = (x0, r, N) y la misma red neuronal del emisor.</p>
+        <p>La clave la recibió antes por un canal seguro; la red es pública. No sabe cuántos bits hay escondidos ni dónde: lo calcula con la clave.</p>
         <p class="analogia">Como un cofre por correo: cualquiera lo ve, solo quien tiene la llave lo abre.</p>
       </article>
       <article class="paso" data-paso="deriva">
         <span class="eyebrow">Paso 2 · Deriva los parámetros</span>
         <h2>SHA-512 da los mismos parámetros</h2>
-        <p>Aplica SHA-512 a la clave: sale la misma cadena fija de 512 bits que obtuvo el emisor. De ella toma las condiciones iniciales y los parámetros de las secuencias.</p>
+        <p>Aplica SHA-512 a la clave y obtiene la misma cadena fija de 512 bits que el emisor.</p>
+        <p>De ella toma las condiciones iniciales y los parámetros de las secuencias, los mismos que usó el emisor.</p>
         <p class="analogia">Como una receta: siempre sale el mismo plato.</p>
         <details><summary>Detalle técnico</summary><p>La entrada son 18 bytes: x0 y r como float64 big-endian y N como entero de 16 bits. De la salida se toman 8 bloques de 8 bytes; cada bloque se lee como entero, se desplaza 11 bits a la derecha y se divide entre 2<sup>53</sup> para obtener u ∈ [0, 1). Luego x = 0.001 + 0.998·u y r = 3.99 + 0.01·u (3.99 + 0.0099·u en la secuencia de posiciones).</p></details>
       </article>
       <article class="paso" data-paso="cabecera">
         <span class="eyebrow">Paso 3 · Lee la cabecera</span>
         <h2>Lee el último bit de 16 muestras</h2>
-        <p>Regenera las 16 primeras posiciones y en cada muestra lee el último bit (LSB): impar da 1, par da 0. Esos 16 bits cifrados guardan la longitud del mensaje.</p>
+        <p>Regenera las 16 primeras posiciones y lee el último bit (LSB) de cada muestra: impar da 1, par da 0.</p>
+        <p>Esos 16 bits cifrados guardan la longitud del mensaje.</p>
         <p class="analogia">Como leer primero la etiqueta de una caja.</p>
         <details><summary>Detalle técnico</summary><p class="formula">w<sub>i</sub> = s′[p<sub>i</sub>] ∧ 1</p><p>∧ es el Y bit a bit con la máscara 1, que deja solo el último bit. En complemento a dos, el último bit también indica si un número negativo es par o impar, así que la regla vale para todas las muestras int16.</p></details>
       </article>
       <article class="paso" data-paso="longitud">
         <span class="eyebrow">Paso 4 · Obtiene la longitud</span>
         <h2>La longitud es 173 bytes</h2>
-        <p>Genera los dos primeros bytes del flujo de clave y aplica XOR a los 16 bits leídos: sale 0x00AD, que es 173.</p>
+        <p>Aplica XOR a los 16 bits leídos con los dos primeros bytes del flujo de clave: sale 0x00AD, que es 173.</p>
         <p>Con los 2 bytes de la longitud, el mensaje cifrado tiene n = 175 bytes: L = 175 × 8 = 1400 bits.</p>
       </article>
       <article class="paso" data-paso="bits">
         <span class="eyebrow">Paso 5 · Lee todos los bits</span>
         <h2>Regenera las 1400 posiciones y lee 1400 bits</h2>
-        <p>Ahora que conoce L, sigue iterando la secuencia de posiciones hasta tener 1400, las mismas que eligió el emisor. En cada una lee el último bit de la muestra: son los 1400 bits del mensaje cifrado.</p>
+        <p>Regenera las 1400 posiciones, las mismas del emisor, y lee el último bit de cada muestra.</p>
+        <p>Ahora que conoce L, sigue iterando la secuencia de posiciones hasta tener 1400. Los bits leídos son los 1400 bits del mensaje cifrado.</p>
       </article>
       <article class="paso" data-paso="xor">
         <span class="eyebrow">Paso 6 · Descifra</span>
         <h2>Agrupa en bytes y aplica XOR</h2>
-        <p>Agrupa los bits de 8 en 8 (175 bytes), regenera el flujo de clave y aplica XOR. Dos XOR con el mismo valor se anulan: sale el mensaje comprimido.</p>
+        <p>Agrupa los bits en 175 bytes y les aplica XOR con el flujo de clave: sale el mensaje comprimido.</p>
+        <p>Agrupa los bits de 8 en 8 y regenera el flujo de clave. Dos XOR con el mismo valor se anulan.</p>
         <p class="analogia">Como un interruptor: pulsarlo dos veces deja la luz igual.</p>
         <details><summary>Detalle técnico</summary><p class="formula">(m ⊕ k) ⊕ k = m ⊕ (k ⊕ k) = m ⊕ 0 = m</p><p>m es un byte del mensaje comprimido, k el byte del flujo de clave en la misma posición y ⊕ la XOR bit a bit.</p></details>
       </article>
       <article class="paso" data-paso="red">
         <span class="eyebrow">Paso 7 · Descomprime con la red</span>
         <h2>La red da las mismas probabilidades</h2>
+        <p>La red da las mismas probabilidades que en la compresión, así que el decodificador elige los mismos tokens.</p>
         <p>Los bits comprimidos forman un número entre 0 y 1, el valor recibido. Con las mismas probabilidades de la compresión, el token es el del subintervalo donde cae ese valor.</p>
         <p class="analogia">Mismas pistas que el emisor, misma respuesta.</p>
         <details><summary>Detalle técnico</summary><p>El decodificador divide el intervalo en subintervalos, mira en cuál cae el valor recibido, agrega ese token al texto y repite hasta el token de fin. Usa las mismas frecuencias enteras f<sub>v</sub> = ⌊p<sub>v</sub>(2<sup>24</sup> − V)⌋ + 1 que el codificador, así que los subintervalos coinciden exactamente. Para eso emisor y receptor deben usar la misma red, en float32 y en el mismo tipo de dispositivo. En GPU el mismo poema dio 174 bytes en vez de 173.</p></details>
@@ -115,26 +115,28 @@
       <article class="paso" data-paso="verifica">
         <span class="eyebrow">Paso 8 · Verificación</span>
         <h2>El texto recuperado es idéntico al original</h2>
-        <p>Coincide byte a byte con el original y su resumen SHA-256 es idéntico. Se comprobó en un proceso separado, que solo recibió el estegoaudio y la clave, y en otra máquina.</p>
+        <p>El texto recuperado coincide byte a byte con el original y su resumen SHA-256 es idéntico.</p>
+        <p>Se comprobó en un proceso separado, que solo recibió el estegoaudio y la clave, y en otra máquina.</p>
         <details><summary>Detalle técnico</summary><p>SHA-256 convierte cualquier archivo en una cadena fija de 256 bits. Si cambia un solo bit del archivo, el resumen cambia por completo. Dos resúmenes iguales prueban que los textos son idénticos.</p></details>
       </article>
       <article class="paso" data-paso="casos">
         <span class="eyebrow">Paso 9 · Más casos</span>
         <h2>16 combinaciones, 16 recuperaciones exactas</h2>
-        <p>En Colab con GPU se probaron 4 textos con 4 audios y las 16 combinaciones se recuperaron exactamente.</p>
+        <p>En Colab con GPU se probaron 4 textos con 4 audios: las 16 combinaciones se recuperaron exactamente.</p>
         <p>El soneto 18 de Shakespeare se comprimió a 9 bytes: la red lo conoce y casi cada token era el esperado.</p>
       </article>
       <article class="paso" data-paso="tiempos">
         <span class="eyebrow">Paso 10 · Tiempos</span>
         <h2>Casi todo el tiempo lo usa la red</h2>
-        <p>La ida y vuelta completa tomó 113.47 s; compresión y descompresión suman 110.06 s. Cifrar, insertar y extraer tarda milésimas de segundo.</p>
+        <p>La ida y vuelta completa tomó 113.47 s, y casi todo ese tiempo lo usa la red neuronal.</p>
+        <p>Compresión y descompresión suman 110.06 s. Cifrar, insertar y extraer tarda milésimas de segundo.</p>
         <p>Las barras están a escala: lo que no usa la red casi no se ve.</p>
       </article>
       <div class="mando"></div>
     </div>
     <div class="escena">
       <div class="lienzo" id="rec-lienzo" role="img" aria-label="Línea de ensamblaje en reversa: del estegoaudio al texto, con la clave K, SHA-512, la XOR y la red neuronal">
-        <div class="rec-tar" id="rec-tar" aria-live="polite"></div>
+        <div class="rec-dato" id="rec-dato" aria-live="polite"></div>
       </div>
       <p class="narra" id="rec-narra"><b>Qué estás viendo:</b> …</p>
     </div>
@@ -161,13 +163,13 @@
     </div>
     <h2>Tiempo de cada etapa</h2>
     <div class="card"><div class="rec-t" id="rec-tiempos"></div>
-      <p class="note" style="margin:.6rem 0 0">Barras moradas: etapas que usan la red neuronal. Barras azules: etapas sin red.</p></div>
+      <p class="note" style="margin:.6rem 0 0">Barras azules: etapas que usan la red neuronal. Barras grises: etapas sin red.</p></div>
   </section>
   <nav class="siguiente-etapa" aria-label="Etapas"></nav>
 </main>
 <footer class="pie"></footer>
 <script type="module">
-import { recorrido, animar, color, sinMovimiento } from "./assets/js/guia.js";
+import { recorrido, animar, sinMovimiento, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
 const Mo = window.Modelo, C = Mo.CASO, M = C.M, L = 1400, FS = 44100;
 const $ = id => document.getElementById(id);
@@ -185,19 +187,22 @@ const W16 = bitsDe(CAB), K16 = bitsDe([fl.bytes[0], fl.bytes[1]]), R16 = W16.map
 const T = [["Carga del audio", 0.018], ["Carga de la red", 3.34, 1], ["Compresión", 53.29, 1], ["Flujo de clave + XOR", 0.001], ["Inserción LSB", 0.008], ["Guardado", 0.043], ["Extracción LSB", 0.002], ["Descifrado", 0.001], ["Descompresión", 56.77, 1]];
 
 /* ============ Escena 3D: la línea de ensamblaje del panorama, recorrida en reversa ============ */
+// Todo en grises del tema; solo lo que el paso señala toma el color de la clave (acento).
 const lienzo = $("rec-lienzo");
 const e = escena3d(lienzo, { camara: [0.6, 4.6, 14.5], mirar: [0.6, 0.7, 0] });
 let Co = e.colores();
-const okC = () => new THREE.Color(color("ok") || "#2f7d3a");
-const temas = [];                                   // [material, nombre de color]
-const mat = (n, o = {}, Tipo = THREE.MeshStandardMaterial) => { const m = new Tipo({ color: Co[n], ...o }); temas.push([m, n]); return m; };
-const rot = (t, c, x, y, tam = 0.42, z = 0, alin = 0.5) => { const s = etiqueta(t, { color: c, tam }); s.position.set(x, y, z); s.center.set(alin, 0.5); e.scene.add(s); return s; };
+const temas = [];                                   // [material, color base, grupo]
+let foco = new Set();                               // grupos resaltados en el paso actual
+const tono = (n, g) => (g && foco.has(g) ? Co.key : Co[n]);
+const mat = (n, o = {}, Tipo = THREE.MeshStandardMaterial, g = null) => { const m = new Tipo({ color: tono(n, g), ...o }); temas.push([m, n, g]); return m; };
+const recolorear = () => temas.forEach(([m, n, g]) => m.color.copy(tono(n, g)));
+const rot = (t, x, y, tam = 0.24, z = 0, alin = 0.5) => { const s = etiqueta(t, { color: "muted", tam, peso: 500 }); s.position.set(x, y, z); s.center.set(alin, 0.5); e.scene.add(s); return s; };
 
 const X = { texto: -6, comp: -2.8, cif: 0.4, aud: 5 };
 const AUD0 = 2.6, AUD1 = 7.4;
-const disco = (x, r, n) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.08, 48), mat(n, { transparent: true, opacity: 0.22 })); m.position.set(x, -0.5, 0); e.scene.add(m); return m; };
-const baseTexto = disco(X.texto, 1.25, "muted"); disco(X.comp, 1.0, "net"); disco(X.cif, 1.0, "ciph");
-const placa = new THREE.Mesh(new THREE.BoxGeometry(AUD1 - AUD0 + 0.6, 0.08, 1.6), mat("pos", { transparent: true, opacity: 0.18 }));
+const disco = (x, r) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.08, 48), mat("muted", { transparent: true, opacity: 0.14 })); m.position.set(x, -0.5, 0); e.scene.add(m); return m; };
+disco(X.texto, 1.25); disco(X.comp, 1.0); disco(X.cif, 1.0);
+const placa = new THREE.Mesh(new THREE.BoxGeometry(AUD1 - AUD0 + 0.6, 0.08, 1.6), mat("muted", { transparent: true, opacity: 0.12 }));
 placa.position.set((AUD0 + AUD1) / 2, -0.5, 0); e.scene.add(placa);
 
 // Onda del estegoaudio: muestras como tallos verticales
@@ -206,76 +211,70 @@ const xDe = p => AUD0 + (AUD1 - AUD0) * p / (M - 1);
 const NS = 260, tallos = [], pts = [];
 for (let i = 0; i < NS; i++) { const x = AUD0 + (AUD1 - AUD0) * i / (NS - 1), y = onda(x) + 0.4; tallos.push(new THREE.Vector3(x, y, 0)); pts.push(x, -0.42, 0, x, y, 0); }
 const gT = new THREE.BufferGeometry(); gT.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-e.scene.add(new THREE.LineSegments(gT, mat("muted", { transparent: true, opacity: 0.3 }, THREE.LineBasicMaterial)));
-e.scene.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tallos), 400, 0.03, 6, false), mat("muted")));
+e.scene.add(new THREE.LineSegments(gT, mat("muted", { transparent: true, opacity: 0.25 }, THREE.LineBasicMaterial)));
+e.scene.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tallos), 400, 0.03, 6, false), mat("muted", {}, THREE.MeshStandardMaterial, "audio")));
 
 // Las 1400 posiciones reales (calculadas con la clave) como marcas sobre la onda
 const pm = [];
 for (const p of pos.P) { const x = xDe(p); pm.push(x, -0.44, 0.02, x, onda(x) + 0.46, 0.02); }
 const gM = new THREE.BufferGeometry(); gM.setAttribute("position", new THREE.Float32BufferAttribute(pm, 3));
-const marcas = new THREE.LineSegments(gM, mat("key", { transparent: true, opacity: 0.75 }, THREE.LineBasicMaterial));
+const marcas = new THREE.LineSegments(gM, mat("muted", { transparent: true, opacity: 0.7 }, THREE.LineBasicMaterial, "marcas"));
 e.scene.add(marcas);
 const ponerMarcas = k => { marcas.geometry.setDrawRange(0, 2 * k); marcas.visible = k > 0; };
 
 // Cabecera: tres filas de 16 cubos (bits leídos, flujo de clave y resultado de la XOR)
 const HX = i => 2.95 + i * 0.27 + (i >= 8 ? 0.16 : 0), HY = [2.3, 2.7, 3.15];
-const FILAS = [[W16, "pos"], [K16, "ciph"], [R16, "key"]];
+const FILAS = [[W16, "leidos"], [K16, "flujo"], [R16, "resultado"]];
 const geoC = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-const filas = FILAS.map(([bits, n], f) => bits.map((b, i) => {
-  const m = new THREE.Mesh(geoC, b ? mat(n) : mat(n, { transparent: true, opacity: 0.2 }));
+const filas = FILAS.map(([bits, g], f) => bits.map((b, i) => {
+  const m = new THREE.Mesh(geoC, b ? mat("muted", {}, THREE.MeshStandardMaterial, g) : mat("muted", { transparent: true, opacity: 0.2 }, THREE.MeshStandardMaterial, g));
   m.position.set(HX(i), HY[f], 0); m.scale.setScalar(b ? 1 : 0.7); m.visible = false; e.scene.add(m); return m;
 }));
 const lc = []; for (let i = 0; i < 16; i++) { const x = xDe(pos.P[i]); lc.push(x, onda(x) + 0.46, 0.02, HX(i), HY[0] - 0.12, 0); }
 const gL = new THREE.BufferGeometry(); gL.setAttribute("position", new THREE.Float32BufferAttribute(lc, 3));
-const lineasCab = new THREE.LineSegments(gL, mat("pos", { transparent: true, opacity: 0.55 }, THREE.LineBasicMaterial));
+const lineasCab = new THREE.LineSegments(gL, mat("muted", { transparent: true, opacity: 0.35 }, THREE.LineBasicMaterial));
 e.scene.add(lineasCab);
-const rotFilas = [
-  [rot("bits leídos", "pos", 2.75, HY[0], 0.2, 0, 1), rot("0x" + Mo.hex(CAB), "pos", 7.45, HY[0], 0.22, 0, 0)],
-  [rot("flujo de clave", "ciph", 2.75, HY[1], 0.2, 0, 1), rot("0x" + Mo.hex(fl.bytes.slice(0, 2)), "ciph", 7.45, HY[1], 0.22, 0, 0)],
-  [rot("XOR", "key", 2.75, HY[2], 0.22, 0, 1), rot("0x00ad = 173 bytes", "key", 7.45, HY[2], 0.26, 0, 0)],
-];
+const rotFilas = [rot("leídos", 2.75, HY[0], 0.2, 0, 1), rot("flujo", 2.75, HY[1], 0.2, 0, 1), rot("XOR", 2.75, HY[2], 0.2, 0, 1)];
 
 // Clave K, SHA-512 y conexiones
 const llave = new THREE.Group();
-const matK = mat("key", { emissive: Co.key, emissiveIntensity: 0 });
+const matK = mat("muted", {}, THREE.MeshStandardMaterial, "clave");
 const anillo = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.09, 12, 32), matK); anillo.position.x = -0.55;
 const cana = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.12, 0.12), matK); cana.position.x = 0.2;
 const d1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.22, 0.1), matK); d1.position.set(0.45, -0.15, 0);
 const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.1), matK); d2.position.set(0.6, -0.12, 0);
 llave.add(anillo, cana, d1, d2); llave.position.set(1.1, 4.35, 0); e.scene.add(llave);
-const matH = mat("hash", { emissive: Co.hash, emissiveIntensity: 0 });
+const matH = mat("muted", {}, THREE.MeshStandardMaterial, "hash");
 const hash = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), matH); hash.position.set(1.1, 3.1, 0); e.scene.add(hash);
 const XORX = -1.2;
-const tubo = (a, b, alto, n) => {
+const tubo = (a, b, alto) => {
   const c = new THREE.QuadraticBezierCurve3(new THREE.Vector3(...a), new THREE.Vector3((a[0] + b[0]) / 2, Math.max(a[1], b[1]) + alto, 0), new THREE.Vector3(...b));
-  const m = mat(n, { transparent: true, opacity: 0.25 });
+  const m = mat("muted", { transparent: true, opacity: 0.2 }, THREE.MeshStandardMaterial, "tubos");
   e.scene.add(new THREE.Mesh(new THREE.TubeGeometry(c, 40, 0.03, 6, false), m));
-  const chispa = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), mat(n)); chispa.visible = false; e.scene.add(chispa);
+  const chispa = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), mat("muted", {}, THREE.MeshStandardMaterial, "tubos")); chispa.visible = false; e.scene.add(chispa);
   return { c, m, chispa, on: 0 };
 };
-const tK = tubo([1.1, 4.1, 0], [1.1, 3.42, 0], 0, "key");
-const tP = tubo([1.42, 3.1, 0], [2.8, 2.5, 0], 0.2, "pos");
-const tC1 = tubo([0.8, 2.95, 0], [XORX, 1.62, 0], 0.15, "ciph");
-const tC2 = tubo([0.85, 2.82, 0.05], [XORX + 0.05, 1.62, 0.05], 0.05, "ciph");
+const tK = tubo([1.1, 4.1, 0], [1.1, 3.42, 0], 0);
+const tP = tubo([1.42, 3.1, 0], [2.8, 2.5, 0], 0.2);
+const tC1 = tubo([0.8, 2.95, 0], [XORX, 1.62, 0], 0.15);
+const tC2 = tubo([0.85, 2.82, 0.05], [XORX + 0.05, 1.62, 0.05], 0.05);
 const tubos = [tK, tP, tC1, tC2];
-rot("Clave K", "key", 1.95, 4.35, 0.32, 0, 0);
-rot("SHA-512", "hash", 1.55, 3.1, 0.28, 0, 0);
+rot("clave K", 1.9, 4.35, 0.24, 0, 0);
+rot("SHA-512", 1.65, 3.1, 0.22, 0, 0);
 
 // XOR: anillo por el que pasan los bytes; red: 28 capas por las que pasan hacia el texto
-const matX = mat("ciph", { emissive: Co.ciph, emissiveIntensity: 0 });
+const matX = mat("muted", {}, THREE.MeshStandardMaterial, "xor");
 const aro = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.06, 12, 48), matX); aro.rotation.y = Math.PI / 2; aro.position.set(XORX, 0.75, 0); e.scene.add(aro);
-rot("⊕ XOR", "ciph", XORX, 1.95, 0.32);
-const matCapa = mat("net", { transparent: true, opacity: 0.1, depthWrite: false });
-const capas = []; for (let k = 0; k < 28; k++) { const c = new THREE.Mesh(new THREE.BoxGeometry(0.018, 2.1, 1.6), matCapa); c.position.set(-4.95 + k * 0.045, 0.75, 0); e.scene.add(c); capas.push(c); }
-rot("Red · 28 capas", "net", -4.35, 2.15, 0.32);
+rot("XOR", XORX, 1.95, 0.24);
+const matCapa = mat("muted", { transparent: true, opacity: 0.08, depthWrite: false }, THREE.MeshStandardMaterial, "red");
+for (let k = 0; k < 28; k++) { const c = new THREE.Mesh(new THREE.BoxGeometry(0.018, 2.1, 1.6), matCapa); c.position.set(-4.95 + k * 0.045, 0.75, 0); e.scene.add(c); }
+rot("red · 28 capas", -4.35, 2.15, 0.24);
 
-// Rótulos de las estaciones (debajo, para dejar libre la parte de arriba)
-rot("estegoaudio", "pos", X.aud, -0.95, 0.36);
-rot("175 bytes cifrados", "ciph", X.cif, -0.95, 0.3);
-rot("173 bytes comprimidos", "net", X.comp, -0.95, 0.3);
-const rTexto = rot("texto · 293 tokens", "muted", X.texto, -0.95, 0.34);
-const rOk = rot("SHA-256 idéntico ✓", "ink", X.texto, 2.75, 0.42); rOk.visible = false;
-rot("←  Receptor", "key", 0.6, -1.65, 0.42);
+// Rótulos de las estaciones, pequeños y apagados
+rot("estegoaudio", X.aud, -0.95, 0.26);
+rot("cifrado", X.cif, -0.95, 0.24);
+rot("comprimido", X.comp, -0.95, 0.24);
+rot("texto", X.texto, -0.95, 0.26);
 
 // El mensaje: 27 bloques que viajan del audio al texto (los mismos estados del panorama)
 const N = 27; let semilla = 7;
@@ -291,22 +290,19 @@ for (let i = 0; i < N; i++) {
   ROT.push(new THREE.Euler(azar() * 3, azar() * 3, azar() * 3));
 }
 const geoB = new THREE.BoxGeometry(1, 1, 1);
-const bloques = [...Array(N)].map(() => { const m = new THREE.Mesh(geoB, new THREE.MeshStandardMaterial({ color: Co.muted, roughness: 0.6 })); e.scene.add(m); return m; });
-let f = 3, verde = 0;
-const tmp = new THREE.Vector3(), cA = new THREE.Color(), cB = new THREE.Color();
-const colorDe = k => [Co.muted, Co.net, Co.ciph, Co.pos][k];
+const matB = mat("muted", { roughness: 0.6 }, THREE.MeshStandardMaterial, "mensaje");
+const bloques = [...Array(N)].map(() => { const m = new THREE.Mesh(geoB, matB); e.scene.add(m); return m; });
+let f = 3;
+const tmp = new THREE.Vector3();
 const suave = t => t * t * (3 - 2 * t);
-function pintar(tiempo = 0) {
-  const k = Math.min(2, Math.floor(f)), t = f - k, w2 = Math.max(0, 1 - Math.abs(f - 2)), okc = okC();
+function pintar() {
+  const k = Math.min(2, Math.floor(f)), t = f - k, giro = Math.max(0, 1 - Math.abs(f - 2));
   bloques.forEach((b, i) => {
     const ti = suave(Math.max(0, Math.min(1, t * 1.6 - (i / N) * 0.6)));
     tmp.lerpVectors(S[k][i], S[k + 1][i], ti);
     tmp.y += Math.sin(Math.PI * ti) * (k === 2 ? 1.1 : 0.45);
     b.position.copy(tmp);
     b.scale.setScalar(TAM[k] + (TAM[k + 1] - TAM[k]) * ti);
-    cA.copy(colorDe(k)); cB.copy(colorDe(k + 1));
-    b.material.color.copy(cA.lerp(cB, ti)).lerp(okc, verde);
-    const giro = w2 * (1 + 0.25 * Math.sin(tiempo * 1.5 + i));
     b.rotation.set(ROT[i].x * giro, ROT[i].y * giro, ROT[i].z * giro);
   });
 }
@@ -320,45 +316,38 @@ for (let t = 0; t < 4; t++) for (let a = 0; a < 4; a++) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.82, 0.14), new THREE.MeshStandardMaterial({ color: Co.soft }));
   m.position.set(CX - 1.5 + a, 2.6 - t, 0); casos.add(m);
   const b = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), matCasoBorde); b.position.copy(m.position); casos.add(b);
-  const v = etiqueta("✓", { color: "surface", tam: 0.5, peso: 700 }); v.position.set(m.position.x, m.position.y, 0.12); v.visible = false; casos.add(v);
+  const v = etiqueta("✓", { color: "surface", tam: 0.42, peso: 700 }); v.position.set(m.position.x, m.position.y, 0.12); v.visible = false; casos.add(v);
   tejas.push({ m, v });
 }
-for (let k = 0; k < 4; k++) {
-  const a = etiqueta(`Audio ${k + 1}`, { color: "muted", tam: 0.26 }); a.position.set(CX - 1.5 + k, 3.3, 0); casos.add(a);
-  const t = etiqueta(`Texto ${k + 1}`, { color: "muted", tam: 0.26 }); t.center.set(1, 0.5); t.position.set(CX - 2.1, 2.6 - k, 0); casos.add(t);
-}
-const r16 = etiqueta("16 / 16 exactas", { color: "ink", tam: 0.5, peso: 700 }); r16.position.set(CX - 0.3, 4.05, 0); casos.add(r16);
-function ponerCasos(k) { const okc = okC(); tejas.forEach(({ m, v }, i) => { m.material.color.copy(i < k ? okc : Co.soft); v.visible = i < k; }); }
+const ra = etiqueta("4 audios", { color: "muted", tam: 0.26, peso: 500 }); ra.position.set(CX, 3.3, 0); casos.add(ra);
+const rt = etiqueta("4 textos", { color: "muted", tam: 0.26, peso: 500 }); rt.center.set(1, 0.5); rt.position.set(CX - 2.1, 1.1, 0); casos.add(rt);
+function ponerCasos(k) { tejas.forEach(({ m, v }, i) => { m.material.color.copy(i < k ? Co.key : Co.soft); v.visible = i < k; }); }
 
 // Tiempos: barras horizontales a escala (la red frente a todo lo demás)
 const TX = 24.2, TB = [["Carga de la red", 3.34, 1], ["Compresión", 53.29, 1], ["Descompresión", 56.77, 1], ["Lo demás (6 etapas)", +(T.filter(t => !t[2]).reduce((s, t) => s + t[1], 0)).toFixed(3), 0]];
 const tiempos = new THREE.Group(); e.scene.add(tiempos);
 const barrasT = TB.map(([n, s, red], i) => {
   const y = 2.2 - i * 1.15, largo = Math.max(0.03, s / 56.77 * 5.2);
-  const m = new THREE.Mesh(new THREE.BoxGeometry(1, 0.42, 0.4), mat(red ? "net" : "key")); m.position.set(TX, y, 0); tiempos.add(m);
-  const a = etiqueta(n, { color: "ink", tam: 0.34 }); a.center.set(0, 0.5); a.position.set(TX, y + 0.47, 0); tiempos.add(a);
-  const v = etiqueta(`${s} s`, { color: red ? "net" : "key", tam: 0.36, peso: 700 }); v.center.set(0, 0.5); tiempos.add(v);
+  const m = new THREE.Mesh(new THREE.BoxGeometry(1, 0.42, 0.4), red ? mat("muted", {}, THREE.MeshStandardMaterial, "redT") : mat("muted", { transparent: true, opacity: 0.5 })); m.position.set(TX, y, 0); tiempos.add(m);
+  const a = etiqueta(n, { color: "muted", tam: 0.3, peso: 500 }); a.center.set(0, 0.5); a.position.set(TX, y + 0.45, 0); tiempos.add(a);
+  const v = etiqueta(`${s} s`, { color: "muted", tam: 0.3, peso: 600 }); v.center.set(0, 0.5); tiempos.add(v);
   return { m, v, largo, y };
 });
-const tTot = etiqueta("Total: 113.47 s", { color: "ink", tam: 0.38, peso: 700 }); tTot.position.set(TX + 2.6, -1.35, 0); tiempos.add(tTot);
 function ponerTiempos(u) { barrasT.forEach(({ m, v, largo, y }) => { const l = Math.max(0.03, largo * u); m.scale.x = l; m.position.x = TX + l / 2; v.position.set(TX + l + 0.15, y, 0); }); }
 
-e.alTema(c => {
-  Co = c; temas.forEach(([m, n]) => { m.color.copy(c[n]); if (m.emissive && (m === matK || m === matH || m === matX)) m.emissive.copy(c[n]); });
-  ponerCasos(estado.casos); pintar();
-});
+e.alTema(c => { Co = c; recolorear(); ponerCasos(estado.casos); });
 
 /* ---------- Cámara: encuadre por paso según el tamaño real del lienzo ---------- */
 // v = { c: centro, w: medio ancho, h: medio alto, dir: dirección desde el centro hacia la cámara }
 const VISTAS = {
   general: { c: [0.3, 1.3, 0], w: 7.5, h: 3.0, d: 1.0, dir: [0, 0.32, 1], angosto: { dir: [0, 0.8, 1] } },
   clave:   { c: [1.4, 3.3, 0], w: 1.8, h: 1.3, d: 0.4, dir: [0.15, 0.2, 1] },
-  cabeza:  { c: [5.7, 1.4, 0], w: 4.1, h: 1.9, d: 0.6, dir: [0.1, 0.22, 1] },
+  cabeza:  { c: [5.4, 1.4, 0], w: 3.6, h: 1.9, d: 0.6, dir: [0.1, 0.22, 1] },
   audio:   { c: [3.5, 0.4, 0], w: 4.2, h: 1.4, d: 0.8, dir: [-0.1, 0.35, 1] },
   xor:     { c: [-1.2, 0.6, 0], w: 2.6, h: 1.5, d: 0.6, dir: [0.35, 0.3, 1] },
   red:     { c: [-4.6, 0.6, 0], w: 2.5, h: 1.7, d: 0.8, dir: [0.35, 0.3, 1] },
-  casos:   { c: [CX - 0.4, 1.8, 0], w: 2.5, h: 2.4, d: 0.2, dir: [0, 0.1, 1] },
-  tiempos: { c: [TX + 3.0, 0.75, 0], w: 3.1, h: 2.55, d: 0.2, dir: [0, 0.1, 1] },
+  casos:   { c: [CX - 0.4, 1.8, 0], w: 2.5, h: 2.2, d: 0.2, dir: [0, 0.1, 1] },
+  tiempos: { c: [TX + 3.0, 0.75, 0], w: 3.1, h: 2.3, d: 0.2, dir: [0, 0.1, 1] },
 };
 let vista = VISTAS.general, cancelarCam = () => {};
 const camTmp = new THREE.PerspectiveCamera();
@@ -366,8 +355,8 @@ function calcular(v) {
   const W = lienzo.clientWidth || 600, H = lienzo.clientHeight || 400;
   const angosto = W < 600;
   if (angosto && v.angosto) v = { ...v, ...v.angosto };
-  const sY = angosto ? 0.1 : 0.07, sX = angosto ? 0 : 0.04;   // deja sitio para la tarjeta (arriba a la izquierda)
-  e.camera.setViewOffset(1000, 1000, -sX * 1000, -sY * 1000, 1000, 1000);
+  const sY = angosto ? 0.09 : 0.06;   // deja sitio para el dato (arriba a la izquierda)
+  e.camera.setViewOffset(1000, 1000, 0, -sY * 1000, 1000, 1000);
   e.camera.aspect = W / H; e.camera.updateProjectionMatrix();
   // Distancia mínima a la que la caja del tramo (centro ± [w, h, d]) cabe entera en la vista
   const c = new THREE.Vector3(...v.c), D = new THREE.Vector3(...v.dir).normalize(), m = [v.w, v.h, v.d ?? 0.8];
@@ -395,30 +384,26 @@ function irF(destino, ms) {
   cancelarF = animar(ms ?? Math.max(700, Math.abs(destino - f0) * 1700), u => { f = f0 + (destino - f0) * u; pintar(); });
 }
 function filasHasta(n0, n1) { filas[0].forEach((m, i) => (m.visible = i < n0)); [1, 2].forEach(k => filas[k].forEach((m, i) => (m.visible = i < n1))); }
+// Movimiento mínimo: solo una chispa lenta en las conexiones que el paso señala.
 e.alCuadro((dt, tiempo) => {
-  pintar(tiempo);
-  llave.rotation.y = Math.sin(tiempo * 0.8) * 0.35;
-  hash.rotation.y += dt * (tP.on || tC1.on ? 0.9 : 0.15);
-  tubos.forEach((tb, j) => { tb.chispa.visible = tb.on > 0.5; if (tb.on) tb.c.getPoint(((tiempo * 0.5) + j * 0.3) % 1, tb.chispa.position); });
-  const pulso = 0.35 + 0.25 * Math.sin(tiempo * 4);
-  matH.emissiveIntensity = hash.userData.on ? pulso : 0; matX.emissiveIntensity = aro.userData.on ? pulso : 0;
-  matCapa.opacity = capas.userData?.on ? 0.14 + 0.08 * Math.sin(tiempo * 3) : 0.1;
+  tubos.forEach((tb, j) => { tb.chispa.visible = tb.on > 0.5; if (tb.on) tb.c.getPoint(((tiempo * 0.35) + j * 0.3) % 1, tb.chispa.position); });
 });
 
+// foco: grupos que toman el color de acento en cada paso
 const PASOS = [
-  { v: "general", f: 3, tubos: [], narra: "la línea del panorama en reversa. El mensaje (bloques naranjas) está dentro del estegoaudio; arriba, la clave K. El receptor lo llevará de derecha a izquierda hasta el texto." },
-  { v: "clave", f: 3, tubos: [tK, tP, tC1, tC2], hash: 1, narra: "la clave entra en SHA-512 y salen tres conexiones: la naranja da la secuencia de posiciones; las dos verdes, las secuencias del cifrado." },
-  { v: "cabeza", f: 3, tubos: [tP], marcas: 16, cab: 1, narra: "las 16 primeras posiciones calculadas con la clave (rayas azules sobre la onda). De cada muestra sube su último bit a la fila naranja: cubo lleno es 1, tenue es 0." },
-  { v: "cabeza", f: 3, tubos: [tP, tC1], marcas: 16, cab: 2, narra: "a los 16 bits leídos (naranja) se les aplica XOR con el flujo de clave (verde). El resultado (azul) es 0000 0000 1010 1101 = 173." },
-  { v: "audio", f: 2, tubos: [tP], marcas: L, narra: "las 1400 rayas azules son las posiciones reales, repartidas por toda la canción. Los bits leídos se agrupan en los 175 bytes cifrados (verdes)." },
-  { v: "xor", f: 1, tubos: [tC1, tC2], xor: 1, narra: "los bytes cifrados (verdes) atraviesan el anillo de la XOR, alimentado por las dos secuencias de cifrado, y salen morados: el mensaje comprimido." },
-  { v: "red", f: 0, tubos: [], red: 1, narra: "los 173 bytes atraviesan las 28 capas de la red, que da en cada paso las mismas probabilidades que en la compresión, y vuelven a ser el texto de 293 tokens." },
-  { v: "general", f: 0, tubos: [], ok: 1, narra: "el camino completo, del estegoaudio al texto. El texto recuperado se vuelve verde: su SHA-256 coincide con el del original." },
-  { v: "casos", f: 0, tubos: [], casos: 16, narra: "la mesa de 4 textos por 4 audios probada en Colab con GPU. Cada casilla verde es una recuperación exacta." },
-  { v: "tiempos", f: 0, tubos: [], tiempos: 1, narra: "el tiempo de ida y vuelta en barras a escala. Las moradas usan la red y ocupan casi todo; las seis etapas sin red suman 0.073 s." },
+  { v: "general", f: 3, tubos: [], foco: ["clave"], narra: "la línea del panorama en reversa. El mensaje (bloques grises) está dentro del estegoaudio, a la derecha; arriba, en azul, la clave K. El receptor lo llevará de derecha a izquierda hasta el texto." },
+  { v: "clave", f: 3, tubos: [tK, tP, tC1, tC2], foco: ["hash", "tubos"], narra: "la clave entra en SHA-512 (el cubo) y salen tres conexiones: una da la secuencia de posiciones y las otras dos, las secuencias del cifrado." },
+  { v: "cabeza", f: 3, tubos: [tP], marcas: 16, cab: 1, foco: ["marcas", "leidos"], narra: "las 16 primeras posiciones calculadas con la clave (rayas azules sobre la onda). De cada muestra sube su último bit a la fila de cubos: cubo lleno es 1, tenue es 0." },
+  { v: "cabeza", f: 3, tubos: [tP, tC1], marcas: 16, cab: 2, foco: ["resultado"], narra: "a los 16 bits leídos (fila de abajo) se les aplica XOR con el flujo de clave (fila del medio). El resultado, en azul, es 0000 0000 1010 1101 = 173." },
+  { v: "audio", f: 2, tubos: [tP], marcas: L, foco: ["marcas"], narra: "las 1400 rayas azules son las posiciones reales, repartidas por toda la canción. Los bits leídos se agrupan en los 175 bytes cifrados." },
+  { v: "xor", f: 1, tubos: [tC1, tC2], xor: 1, foco: ["xor", "tubos", "mensaje"], narra: "los bytes cifrados atraviesan el anillo de la XOR, alimentado por las dos secuencias de cifrado, y salen como el mensaje comprimido." },
+  { v: "red", f: 0, tubos: [], foco: ["red", "mensaje"], narra: "los 173 bytes atraviesan las 28 capas de la red, que da en cada paso las mismas probabilidades que en la compresión, y vuelven a ser el texto de 293 tokens." },
+  { v: "general", f: 0, tubos: [], foco: ["mensaje"], narra: "el camino completo, del estegoaudio al texto. El texto recuperado, en azul, tiene el mismo SHA-256 que el original." },
+  { v: "casos", f: 0, tubos: [], casos: 16, foco: [], narra: "la mesa de 4 textos por 4 audios probada en Colab con GPU. Cada casilla azul con ✓ es una recuperación exacta." },
+  { v: "tiempos", f: 0, tubos: [], tiempos: 1, foco: ["redT"], narra: "el tiempo de ida y vuelta en barras a escala. Las azules usan la red y ocupan casi todo; las seis etapas sin red suman 0.073 s." },
 ];
 
-/* ---------- Tarjetas flotantes ---------- */
+/* ---------- Dato clave por paso y, tras la «i» de la escena, el resto de los datos ---------- */
 const filaX = (et, bits, hx, cl = "") => `<span class="et">${et}</span><span class="${cl}">${bits.join("").replace(/(.{8})/, "$1 ")}</span><span class="${cl}">0x${hx}</span>`;
 const EJ = [
   { obs: "noche", ps: [["noche", .5], ["luna", .3], ["otros", .2]] },
@@ -430,47 +415,60 @@ const EJ = [
 const ivs = []; { let lo = 0, hi = 1; for (const x of EJ) { ivs.push([lo, hi]); let a = lo; for (const [t, q] of x.ps) { const b = a + (hi - lo) * q; if (t === x.obs) { lo = a; hi = b; break; } a = b; } } ivs.push([lo, hi]); }
 const [fLo, fHi] = ivs[EJ.length];
 let VAL = 0; { for (let m = 1; m < 40; m++) { const q = 2 ** m, k = Math.ceil(fLo * q); if (k / q < fHi) { VAL = k / q; break; } } }
-const TARJ = [
-  () => `<span class="t">Lo que tiene el receptor</span><div class="chips"><span class="pill pos">estegoaudio</span><span class="pill key">clave K</span><span class="pill net">la misma red</span></div>
-    <span class="mono">K = (${C.x0}, ${C.r}, ${C.N})</span><span class="note sec">WAV de ${fmtN(M)} muestras · Qwen2.5-1.5B en float32. No recibe la longitud ni las posiciones.</span>`,
-  () => `<span class="t">SHA-512(K) → 6 valores</span><span class="hash sec">${Mo.hex(d.hash).slice(0, 64)}…</span>
-    <table class="rec-mini"><tr><td>cifrado 1</td><td>x = ${p6(d.x1)}</td><td>r = ${p6(d.r1)}</td></tr><tr><td>cifrado 2</td><td>x = ${p6(d.x2)}</td><td>r = ${p6(d.r2)}</td></tr><tr><td>posiciones</td><td>x = ${p6(d.xp)}</td><td>r = ${p6(d.rp)}</td></tr></table>
-    <span class="note sec">Calculado en tu navegador. Son los mismos valores que usó el emisor.</span>`,
-  () => `<span class="t">16 posiciones → 16 bits</span><span class="mono sec">p₁ = ${fmtN(pos.P[0])} · p₂ = ${fmtN(pos.P[1])} · …</span>
-    <div class="rec-xor">${filaX("leídos", W16, Mo.hex(CAB))}</div>`,
-  () => `<span class="t">Longitud del mensaje</span><div class="rec-xor">${filaX("leídos", W16, Mo.hex(CAB))}${filaX("flujo", K16, Mo.hex(fl.bytes.slice(0, 2)))}${filaX("XOR", R16, "00ad", "res")}</div>
-    <span class="num">173 + 2 = <b>175 bytes</b> · L = <b>1400 bits</b></span>`,
-  () => `<span class="t">Posiciones leídas</span><span class="big">${fmtN(L)} <small class="note">de ${fmtN(L)}</small></span>
-    <span class="note sec">Iteraciones usadas: ${fmtN(pos.iter)} · colisiones: ${fmtN(pos.iter - L)}. Primera posición en ${fmtT(Math.floor(pos.P[0] / 2) / FS)} del audio.</span>`,
-  () => `<span class="t">175 bytes ⊕ flujo de clave</span>
-    <table class="rec-mini"><tr><td>byte 1</td><td>${Mo.hex([CAB[0]])} ⊕ ${Mo.hex([fl.bytes[0]])} = <b>00</b></td></tr><tr><td>byte 2</td><td>${Mo.hex([CAB[1]])} ⊕ ${Mo.hex([fl.bytes[1]])} = <b>ad</b></td></tr><tr><td>3 a 175</td><td>⊕ ${Mo.hex(fl.bytes.slice(2, 5)).replace(/(..)/g, "$1 ")}…</td></tr></table>
-    <span class="note sec">Flujo de clave calculado en tu navegador con las dos secuencias de cifrado.</span>`,
-  () => `<span class="t">Decodificación (valores de ejemplo)</span><div class="rec-int sec">${EJ.map((x, i) => {
-      const [lo, hi] = ivs[i], u = (VAL - lo) / (hi - lo);
-      return `<div class="rec-fila pend" data-i="${i}"><span class="et">token ${i + 1}</span><div class="rec-barra">${x.ps.map(([t, q]) => `<span class="${t === x.obs ? "sel" : ""}" style="width:${q * 100}%">${t}</span>`).join("")}<i style="left:${(u * 100).toFixed(2)}%"></i></div></div>`; }).join("")}</div>
-    <span class="mono" id="rec-texto">Texto: </span><span class="note sec">La raya negra es el valor recibido. Probabilidades inventadas; la red real reparte entre 151 936 salidas.</span>`,
-  () => `<span class="big ok">SHA-256 idéntico ✓</span><table class="rec-mini sec"><tr><td>emisor</td><td>Intel Core i5-10300H · Python 3.12 · PyTorch 2.5</td></tr><tr><td>receptor</td><td>Intel Xeon 2.20 GHz · Python 3.13 · PyTorch 2.11</td></tr></table>
-    <span class="note">Proceso separado que solo recibió el estegoaudio y la clave.</span>`,
-  () => `<span class="big ok">16 / 16</span><span>recuperaciones exactas</span><span class="note">Soneto 18 de Shakespeare: <b>9 bytes</b> comprimido.</span>`,
-  () => `<span class="big">113.47 s</span><span>ida y vuelta completa</span><span class="note sec">Con la red: 3.34 + 53.29 + 56.77 s. Sin la red: milésimas. Detalle completo en «Explorar».</span>`,
+const tmaxT = Math.max(...T.map(t => t[1]));
+const tablaT = () => `<div class="rec-t">${T.map(([n, t, red]) => `<span>${n}</span><div class="b${red ? " red" : ""}" style="width:${(t / tmaxT * 100).toFixed(3)}%"></div><span class="v">${String(t)} s</span>`).join("")}<span class="tot">Total</span><span class="tot"></span><span class="v tot">113.47 s</span></div>`;
+const DATOS = [
+  { v: `${C.x0} · ${C.r} · ${C.N}`, mono: 1, e: "clave K del caso de estudio",
+    info: () => `<div class="rec-chips"><span class="pill pos">estegoaudio</span><span class="pill key">clave K</span><span class="pill net">la misma red</span></div>
+      <p class="mono">K = (${C.x0}, ${C.r}, ${C.N})</p><p>WAV de ${fmtN(M)} muestras · Qwen2.5-1.5B en float32. No recibe la longitud ni las posiciones.</p>` },
+  { v: "512 bits", e: "SHA-512(K), igual que el emisor",
+    info: () => `<p class="rec-hash">${Mo.hex(d.hash).slice(0, 64)}…</p>
+      <table class="rec-mini"><tr><td>cifrado 1</td><td>x = ${p6(d.x1)}</td><td>r = ${p6(d.r1)}</td></tr><tr><td>cifrado 2</td><td>x = ${p6(d.x2)}</td><td>r = ${p6(d.r2)}</td></tr><tr><td>posiciones</td><td>x = ${p6(d.xp)}</td><td>r = ${p6(d.rp)}</td></tr></table>
+      <p>Calculado en tu navegador. Son los mismos valores que usó el emisor.</p>` },
+  { v: "16 bits", e: "leídos de 16 muestras",
+    info: () => `<p class="mono">p₁ = ${fmtN(pos.P[0])} · p₂ = ${fmtN(pos.P[1])} · …</p><div class="rec-xor">${filaX("leídos", W16, Mo.hex(CAB))}</div>` },
+  { v: "173 bytes", e: "longitud: 0x00ad",
+    info: () => `<div class="rec-xor">${filaX("leídos", W16, Mo.hex(CAB))}${filaX("flujo", K16, Mo.hex(fl.bytes.slice(0, 2)))}${filaX("XOR", R16, "00ad", "res")}</div>
+      <p>173 + 2 = <b>175 bytes</b> · L = <b>1400 bits</b></p>` },
+  { v: "1400 bits", e: "uno por posición",
+    info: () => `<p>Iteraciones usadas: ${fmtN(pos.iter)} · colisiones: ${fmtN(pos.iter - L)}. Primera posición en ${fmtT(Math.floor(pos.P[0] / 2) / FS)} del audio.</p>` },
+  { v: "175 bytes", e: "descifrados con XOR",
+    info: () => `<table class="rec-mini"><tr><td>byte 1</td><td>${Mo.hex([CAB[0]])} ⊕ ${Mo.hex([fl.bytes[0]])} = <b>00</b></td></tr><tr><td>byte 2</td><td>${Mo.hex([CAB[1]])} ⊕ ${Mo.hex([fl.bytes[1]])} = <b>ad</b></td></tr><tr><td>3 a 175</td><td>⊕ ${Mo.hex(fl.bytes.slice(2, 5)).replace(/(..)/g, "$1 ")}…</td></tr></table>
+      <p>Flujo de clave calculado en tu navegador con las dos secuencias de cifrado.</p>` },
+  { v: "293 tokens", e: "texto recuperado",
+    info: () => `<p><b>Decodificación (valores de ejemplo).</b> La raya negra es el valor recibido; en azul, el subintervalo donde cae. Probabilidades inventadas; la red real reparte entre 151 936 salidas.</p>
+      <div class="rec-int">${EJ.map((x, i) => { const [lo, hi] = ivs[i], u = (VAL - lo) / (hi - lo);
+        return `<div class="rec-fila"><span class="et">token ${i + 1}</span><div class="rec-barra">${x.ps.map(([t, q]) => `<span class="${t === x.obs ? "sel" : ""}" style="width:${q * 100}%">${t}</span>`).join("")}<i style="left:${(u * 100).toFixed(2)}%"></i></div></div>`; }).join("")}</div>
+      <p class="mono">Texto: ${EJ.map(x => x.obs).join(" ")}</p>` },
+  { v: "SHA-256 ✓", e: "idéntico al original",
+    info: () => `<table class="rec-mini"><tr><td>emisor</td><td>Intel Core i5-10300H · Python 3.12 · PyTorch 2.5</td></tr><tr><td>receptor</td><td>Intel Xeon 2.20 GHz · Python 3.13 · PyTorch 2.11</td></tr></table>
+      <p>Proceso separado que solo recibió el estegoaudio y la clave.</p>` },
+  { v: "16 / 16", e: "recuperaciones exactas",
+    info: () => `<p>Soneto 18 de Shakespeare: <b>9 bytes</b> comprimido.</p>` },
+  { v: "113.47 s", e: "ida y vuelta completa",
+    info: () => `<p>Con la red: 3.34 + 53.29 + 56.77 s. Sin la red: milésimas. En azul, las etapas que usan la red.</p>${tablaT()}` },
 ];
 
 /* ---------- Recorrido ---------- */
-const tar = $("rec-tar"), narra = $("rec-narra");
-let primera = true;
+const dato = $("rec-dato"), narra = $("rec-narra");
+let primera = true, actual = 0;
+function infoEscena() {
+  const paso = document.querySelectorAll("#recorrido .paso")[actual];
+  abrirInfo({ eyebrow: "La escena · " + (paso?.querySelector(".eyebrow")?.textContent || ""), titulo: DATOS[actual].v + " · " + DATOS[actual].e,
+    secciones: [{ titulo: "Qué muestra la escena", html: `<p>${PASOS[actual].narra.replace(/^./, c => c.toUpperCase())}</p>` }, { titulo: "Datos", html: DATOS[actual].info() }] });
+}
 function mostrar(i, dir) {
-  cancelarA(); cancelarA = () => {};
-  const P = PASOS[i];
-  tar.innerHTML = TARJ[i]();
-  tar.classList.remove("entra"); void tar.offsetWidth; if (!sinMovimiento() && !primera) tar.classList.add("entra");
+  cancelarA(); cancelarA = () => {}; actual = i;
+  const P = PASOS[i], D = DATOS[i];
+  dato.innerHTML = `<div><span class="v${D.mono ? " mono" : ""}">${D.v}</span><span class="e">${D.e}</span></div><button type="button" class="boton-i" aria-label="Datos de la escena" title="Datos de la escena">i</button>`;
+  dato.querySelector("button").addEventListener("click", infoEscena);
+  dato.classList.remove("entra"); void dato.offsetWidth; if (!sinMovimiento() && !primera) dato.classList.add("entra");
   narra.innerHTML = "<b>Qué estás viendo:</b> " + P.narra;
-  tubos.forEach(t => { t.on = P.tubos.includes(t) ? 1 : 0; t.m.opacity = t.on ? 0.85 : 0.22; t.chispa.visible = false; });
-  hash.userData.on = !!P.hash; aro.userData.on = !!P.xor; capas.userData = { on: !!P.red };
-  matH.emissiveIntensity = P.hash ? 0.4 : 0; matX.emissiveIntensity = P.xor ? 0.4 : 0;
+  foco = new Set(P.foco); recolorear(); ponerCasos(estado.casos);
+  tubos.forEach(t => { t.on = P.tubos.includes(t) ? 1 : 0; t.m.opacity = t.on ? 0.7 : 0.18; t.chispa.visible = false; });
   lineasCab.visible = !!P.cab;
-  rotFilas[0].forEach(s => (s.visible = !!P.cab)); rotFilas[1].concat(rotFilas[2]).forEach(s => (s.visible = P.cab === 2));
+  rotFilas[0].visible = !!P.cab; rotFilas[1].visible = rotFilas[2].visible = P.cab === 2;
   ponerMarcas(P.marcas || (i >= 4 && i <= 7 ? L : 0));
-  rOk.visible = !!P.ok; verde = P.ok ? 1 : 0;
   casos.visible = i === 8; tiempos.visible = i === 9;
   // Animaciones propias del paso
   if (P.cab === 1) { filasHasta(0, 0); cancelarA = animar(1600, u => filasHasta(Math.round(u * 16), 0)); }
@@ -479,11 +477,6 @@ function mostrar(i, dir) {
   if (i === 4) { ponerMarcas(16); f = 3; pintar(); cancelarA = animar(1800, u => ponerMarcas(16 + Math.round((L - 16) * u * u)), () => irF(2)); }
   else if (primera) { cancelarF(); f = P.f; pintar(); }
   else irF(P.f, dir < 0 ? 900 : undefined);
-  if (i === 6) {
-    const fs = [...tar.querySelectorAll(".rec-fila")], tx = $("rec-texto");
-    const pon = k => { fs.forEach((x, j) => x.classList.toggle("pend", j >= k)); tx.textContent = "Texto: " + EJ.slice(0, k).map(x => x.obs).join(" "); };
-    const c1 = animar(2600, u => pon(Math.min(EJ.length, Math.ceil(u * EJ.length)))); const c0 = cancelarA; cancelarA = () => { c0(); c1(); };
-  }
   if (i === 8) { estado.casos = 0; ponerCasos(0); cancelarA = animar(1500, u => { estado.casos = Math.round(u * 16); ponerCasos(estado.casos); }); }
   if (i === 9) { ponerTiempos(0); cancelarA = animar(1300, u => ponerTiempos(Math.max(0.02, u))); }
   if (primera) { primera = false; vista = VISTAS[P.v]; encuadrarYa(); } else mover(VISTAS[P.v]);
