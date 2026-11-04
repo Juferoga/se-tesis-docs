@@ -13,20 +13,36 @@
 <script src="assets/js/modelo.js"></script>
 <script type="module" src="assets/js/sitio.js"></script>
 <style>
-.ini-tablero { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .4rem; }
-.ini-tablero li { position: relative; padding: .45rem .5rem; border-radius: 8px; background: var(--soft); border-top: 3px solid var(--line); font-size: .82rem; line-height: 1.25; transition: box-shadow .3s, transform .3s; min-width: 0; }
-.ini-tablero li b { display: block; font: 600 .95rem/1.2 var(--f-mono); }
+/* Escena: la línea de ensamblaje ocupa todo el lienzo; los tamaños flotan encima. */
+#ini-lienzo { flex: 1 1 auto; }
+.ini-tablero { position: absolute; z-index: 2; top: .5rem; left: .5rem; right: .5rem; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .35rem; pointer-events: none; }
+.ini-tablero li { padding: .3rem .5rem; border-radius: 8px; background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: blur(4px); border-top: 3px solid var(--line); font-size: .78rem; line-height: 1.2; color: var(--muted); transition: box-shadow .3s, transform .3s, opacity .3s; min-width: 0; opacity: .7; }
+.ini-tablero li b { display: block; font: 600 .95rem/1.2 var(--f-mono); color: var(--ink); white-space: nowrap; }
 .ini-tablero li[data-c="net"] { border-top-color: var(--net); }
 .ini-tablero li[data-c="ciph"] { border-top-color: var(--ciph); }
 .ini-tablero li[data-c="pos"] { border-top-color: var(--pos); }
-.ini-tablero li.on { box-shadow: 0 0 0 2px var(--ink); transform: translateY(-2px); background: var(--surface); }
-.ini-sentido { font: 600 var(--s-1)/1.2 var(--f-mono); color: var(--muted); margin: 0; }
-.ini-sentido b { color: var(--key); }
-.ini-cifras { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .3rem .9rem; margin: .5rem 0 0; font-size: .95rem; }
+.ini-tablero li.on { box-shadow: 0 0 0 2px var(--ink); transform: translateY(1px); opacity: 1; }
+.ini-cifras { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .2rem .8rem; margin: .3rem 0 0; font-size: .95rem; line-height: 1.4; }
 .ini-cifras dt { color: var(--muted); }
 .ini-cifras dd { margin: 0; font-variant-numeric: tabular-nums; }
-@media (max-width: 480px) { .ini-cifras { grid-template-columns: minmax(0, 1fr); } .ini-cifras dd { margin-bottom: .35rem; } .ini-tablero li { font-size: .74rem; } .ini-tablero li b { font-size: .82rem; } }
-.ini-mapa { margin-top: 3rem; }
+.paso ul { margin: 0 0 .6rem; padding-left: 1.2rem; }
+.paso li { margin-bottom: .15rem; }
+#ini-narra { font-size: .92rem; padding: .45rem .75rem; }
+@media (max-width: 900px) {
+  .ini-tablero { top: .35rem; left: .35rem; right: .35rem; gap: .25rem; }
+  .ini-tablero li { font-size: .66rem; padding: .2rem .35rem; border-top-width: 2px; }
+  .ini-tablero li b { font-size: .74rem; }
+  #ini-lienzo .ayuda3d { display: none; }
+  #ini-narra { font-size: .78rem; line-height: 1.35; padding: .3rem .5rem; }
+  .cabeza h1 { font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .paso { padding: .6rem .8rem; font-size: .9rem; }
+  .paso h2 { font-size: 1.02rem; margin: .1rem 0 .3rem; }
+  .paso p, .paso li, .ini-cifras { line-height: 1.4; }
+  .paso .analogia { font-size: .84rem; padding: .35rem .55rem; }
+  .paso p { margin-bottom: .45rem; }
+  .paso details { margin-top: .4rem; padding-top: .35rem; }
+  .ini-cifras { font-size: .84rem; gap: .1rem .6rem; }
+}
 .ini-mapa h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0 0 .4rem; }
 .ini-mapa > p { margin: 0 0 1.2rem; color: var(--muted); max-width: 70ch; }
 .ini-tarjeta { display: grid; gap: .35rem; text-decoration: none; color: var(--ink); border-top: 4px solid var(--line); transition: transform .2s, box-shadow .2s; }
@@ -39,8 +55,6 @@
 .ini-tarjeta[data-c="ciph"] { border-top-color: var(--ciph); } .ini-tarjeta[data-c="ciph"] .n { background: var(--ciph-soft); color: var(--ciph); }
 .ini-tarjeta[data-c="pos"] { border-top-color: var(--pos); } .ini-tarjeta[data-c="pos"] .n { background: var(--pos-soft); color: var(--pos); }
 .ini-tarjeta[data-c="ink"] { border-top-color: var(--ink); }
-.paso ul { margin: 0 0 .75rem; padding-left: 1.2rem; }
-.paso li { margin-bottom: .25rem; }
 </style>
 </head>
 <body>
@@ -57,16 +71,16 @@
       <article class="paso" data-paso="problema">
         <span class="eyebrow">Paso 1</span>
         <h2>El problema: mandar un secreto sin que se note</h2>
-        <p>Queremos enviar un texto a otra persona dentro de un archivo de audio. Quien escuche el audio debe oír solo música. Quien tenga la clave debe poder sacar el texto y leerlo idéntico al original.</p>
-        <p>Para lograrlo, el emisor hace tres cosas en orden: <b>comprime</b> el texto, lo <b>cifra</b> y lo <b>esconde</b> en el audio. El receptor hace lo contrario.</p>
-        <p class="analogia">Es como escribir una nota en clave, doblarla muy pequeña y meterla entre las páginas de un libro: el libro se ve igual, y solo quien sabe dónde buscar y cómo leerla la encuentra.</p>
+        <p>Queremos enviar un texto escondido dentro de un audio. Quien lo escuche oye solo música; quien tiene la clave saca el texto idéntico al original.</p>
+        <p>El emisor hace tres cosas en orden: <b>comprime</b>, <b>cifra</b> y <b>esconde</b>. El receptor las deshace.</p>
+        <p class="analogia">Como una nota en clave, doblada y metida entre las páginas de un libro: el libro se ve igual.</p>
       </article>
       <article class="paso" data-paso="comprimir" hidden>
         <span class="eyebrow">Paso 2 · Emisor</span>
         <h2>Primero, comprimir</h2>
-        <p>El texto se escribe con menos bits sin perder nada. Una red neuronal adivina qué fragmento viene después, y un codificador aprovecha esas apuestas: lo fácil de adivinar ocupa muy poco.</p>
-        <p>El poema del ejemplo pasa de <b class="num">928</b> bytes a <b class="num">173</b> bytes. Se le agregan <b class="num">2</b> bytes que anotan esa longitud, para un total de <b class="num">175</b> bytes.</p>
-        <p class="analogia">Si alguien te dice «Había una vez…», el resto de la frase casi no necesita escribirse: ya lo adivinas.</p>
+        <p>Una red neuronal adivina qué fragmento del texto viene después, y un codificador aprovecha esas apuestas: lo fácil de adivinar ocupa muy poco.</p>
+        <p>El poema pasa de <b class="num">928</b> a <b class="num">173</b> bytes. Con <b class="num">2</b> bytes que anotan esa longitud quedan <b class="num">175</b>.</p>
+        <p class="analogia">Si alguien dice «Había una vez…», el resto casi no hace falta escribirlo.</p>
         <details><summary>Detalle técnico</summary>
           <p>La red es Qwen2.5-1.5B (pública). El texto se parte en 293 tokens y la red da una probabilidad a cada uno. Un codificador aritmético convierte esas probabilidades en bits: el tamaño final es casi la suma de −log<sub>2</sub> p de cada token. Comprimir antes de esconder reduce las muestras de audio que hay que tocar. Todo está en la <a href="compresion.html">Etapa 1</a>.</p>
         </details>
@@ -74,9 +88,9 @@
       <article class="paso" data-paso="cifrar" hidden>
         <span class="eyebrow">Paso 3 · Emisor</span>
         <h2>Luego, cifrar con la clave</h2>
-        <p>Los 175 bytes comprimidos se mezclan con una lista de bits que solo se puede fabricar con la clave K. El resultado parece ruido: aunque alguien lo sacara del audio, no podría leerlo.</p>
-        <p>Esa lista de bits sale de dos secuencias del mapa logístico, una fórmula muy simple cuyos resultados cambian por completo con un cambio mínimo en el punto de partida.</p>
-        <p class="analogia">Es como un candado de combinación: el mismo candado sirve a todos, pero solo abre con la combinación correcta.</p>
+        <p>Los 175 bytes se mezclan con una lista de bits que solo se puede fabricar con la clave K. El resultado parece ruido.</p>
+        <p>Esa lista sale de dos secuencias del mapa logístico, una fórmula simple muy sensible a su punto de partida.</p>
+        <p class="analogia">Como un candado de combinación: el modelo es el mismo para todos, pero abre solo con la combinación correcta.</p>
         <details><summary>Detalle técnico</summary>
           <p>Cada valor de las secuencias se convierte en un bit: si es mayor que 0.5 da 1; si es menor o igual que 0.5 da 0. Los bits de las dos secuencias se combinan con XOR (da 1 si son distintos y 0 si son iguales) y forman el flujo de clave. Cada bit del mensaje se combina con XOR con un bit de ese flujo. Ver <a href="caos.html">Etapa 3</a> y <a href="cifrado.html">Etapa 4</a>.</p>
         </details>
@@ -84,9 +98,9 @@
       <article class="paso" data-paso="esconder" hidden>
         <span class="eyebrow">Paso 4 · Emisor</span>
         <h2>Por último, esconder en el audio</h2>
-        <p>Un audio digital es una lista enorme de números, llamados muestras. Cada bit cifrado reemplaza el último bit de una muestra, el que menos pesa. Ese cambio mueve la muestra una sola unidad entre 65 536 posibles: el oído no lo nota.</p>
-        <p>Otra secuencia, también fabricada con la clave K, decide qué muestras se usan. Sin la clave no se sabe dónde buscar.</p>
-        <p class="analogia">Es como cambiar por un grano de otro color 1400 granos de arena escogidos en una playa: nadie los distingue, salvo quien tiene el mapa.</p>
+        <p>Un audio digital es una lista enorme de números llamados muestras. Cada bit cifrado reemplaza el último bit de una muestra: el valor se mueve una unidad entre 65 536 posibles y el oído no lo nota.</p>
+        <p>Otra secuencia hecha con la clave K elige qué muestras se usan.</p>
+        <p class="analogia">Como cambiar de color 1400 granos escogidos en una playa: solo quien tiene el mapa los encuentra.</p>
         <details><summary>Detalle técnico</summary>
           <p>Ese último bit se llama bit menos significativo (LSB). Se insertan L = 1400 bits en un audio de M = 25 143 552 muestras, es decir, se modifica el 0.006 % de las muestras. Las posiciones salen de una tercera secuencia del mapa logístico y no se repiten. Ver <a href="insercion.html">Etapa 5</a>.</p>
         </details>
@@ -94,9 +108,9 @@
       <article class="paso" data-paso="clave" hidden>
         <span class="eyebrow">Paso 5</span>
         <h2>La clave K: lo único secreto</h2>
-        <p>La clave K son tres números, x<sub>0</sub>, r y N, que emisor y receptor acuerdan antes, como una contraseña. De ella salen el flujo de bits del cifrado y la lista de muestras del audio.</p>
-        <p>Todo lo demás es público: la red neuronal, las fórmulas y el programa. Aunque alguien los conozca, sin K no puede encontrar los bits ni descifrarlos.</p>
-        <p class="analogia">Como en una cerradura comercial: cualquiera puede comprar el mismo modelo y estudiarlo, pero solo tu llave abre tu puerta.</p>
+        <p>La clave K son tres números, x<sub>0</sub>, r y N, que emisor y receptor acuerdan antes, como una contraseña. De ella salen el flujo del cifrado y la lista de muestras.</p>
+        <p>La red neuronal, las fórmulas y el programa son públicos.</p>
+        <p class="analogia">Como una cerradura comercial: cualquiera puede estudiar el modelo, pero solo tu llave abre tu puerta.</p>
         <details><summary>Detalle técnico</summary>
           <p>En el caso de estudio, K = (x<sub>0</sub> = 0.123456, r = 3.999952, N = 6173). Esos números no se iteran directamente: se pasan por SHA-512, que produce una cadena fija de 512 bits. De esa cadena se toman las condiciones iniciales y los parámetros de las tres secuencias. La clave ocupa 144 bits en memoria y hay 2<sup>112.91</sup> claves válidas. Ver <a href="clave.html">Etapa 2</a> y <a href="seguridad.html">Etapa 7</a>.</p>
         </details>
@@ -104,13 +118,9 @@
       <article class="paso" data-paso="receptor" hidden>
         <span class="eyebrow">Paso 6 · Receptor</span>
         <h2>El receptor deshace todo en orden inverso</h2>
-        <p>El receptor recibe el audio con el mensaje y tiene la misma clave K. No necesita el audio original.</p>
-        <ul>
-          <li>Con K sabe qué muestras leer y saca de ellas los 1400 bits.</li>
-          <li>Con K fabrica el mismo flujo de bits y deshace el cifrado.</li>
-          <li>Con la misma red neuronal descomprime y obtiene el texto.</li>
-        </ul>
-        <p class="analogia">Como desarmar un paquete: se quita primero lo último que se puso.</p>
+        <p>Con la misma clave K lee las muestras elegidas y saca los 1400 bits. Con K fabrica el mismo flujo y deshace el cifrado. Con la misma red neuronal descomprime el texto.</p>
+        <p>No necesita el audio original.</p>
+        <p class="analogia">Como desarmar un paquete: primero se quita lo último que se puso.</p>
         <details><summary>Detalle técnico</summary>
           <p>XOR aplicado dos veces con el mismo flujo devuelve el dato original, por eso el descifrado es la misma operación. La red, con los mismos pesos y la misma configuración, recalcula las mismas probabilidades, y el decodificador aritmético reconstruye los tokens uno por uno hasta el token de fin. Ver <a href="recuperacion.html">Etapa 6</a>.</p>
         </details>
@@ -118,37 +128,37 @@
       <article class="paso" data-paso="cifras" hidden>
         <span class="eyebrow">Paso 7</span>
         <h2>Las cifras del caso de estudio</h2>
-        <p>El modelo se probó con el poema «Nocturno» de José Asunción Silva, escondido en una canción. Estos son los números medidos:</p>
+        <p>El poema «Nocturno» de José Asunción Silva, escondido en una canción:</p>
         <dl class="ini-cifras">
           <dt>Texto</dt><dd><b>901</b> caracteres, <b>928</b> bytes</dd>
-          <dt>Comprimido</dt><dd><b>173</b> + <b>2</b> de longitud = <b>175</b> bytes = <b>1400</b> bits</dd>
-          <dt>Audio</dt><dd>WAV de 16 bits, 44 100 Hz, estéreo, 4 min 45 s: <b>M = 25 143 552</b> muestras</dd>
+          <dt>Comprimido</dt><dd><b>173</b> + <b>2</b> = <b>175</b> bytes = <b>1400</b> bits</dd>
+          <dt>Audio</dt><dd>WAV estéreo, <b>25 143 552</b> muestras</dd>
           <dt>Muestras usadas</dt><dd><b>0.006 %</b></dd>
           <dt>Calidad</dt><dd>PSNR de <b>135.89 dB</b></dd>
-          <dt>Recuperación</dt><dd><span class="pill ok">exacta</span>, verificada con SHA-256</dd>
+          <dt>Recuperación</dt><dd><span class="pill ok">exacta</span> (SHA-256)</dd>
         </dl>
         <details><summary>Detalle técnico</summary>
-          <p>1400 / 25 143 552 = 0.0056 %, que se redondea a 0.006 %. El PSNR compara el audio original con el que lleva el mensaje: mientras más alto, más parecidos; 135.89 dB indica una diferencia ínfima. SHA-256 calcula un resumen de 256 bits de cada texto: el del original y el del recuperado son iguales, así que los textos coinciden byte por byte.</p>
+          <p>El audio es un WAV de 16 bits, 44 100 Hz, estéreo y 4 min 45 s: M = 25 143 552 muestras. 1400 / 25 143 552 = 0.0056 %, que se redondea a 0.006 %. El PSNR compara el audio original con el que lleva el mensaje: mientras más alto, más parecidos; 135.89 dB indica una diferencia ínfima. SHA-256 calcula un resumen de 256 bits de cada texto: el del original y el del recuperado son iguales, así que los textos coinciden byte por byte.</p>
         </details>
       </article>
       <article class="paso" data-paso="uso" hidden>
         <span class="eyebrow">Paso 8</span>
         <h2>Cómo usar este sitio</h2>
-        <p>Cada etapa del menú superior es una página como esta: pasos cortos con una idea cada uno y, a su lado (encima en el teléfono), una escena que cambia con cada paso. Avanza con «Siguiente →», con los puntos o con las flechas ← → del teclado.</p>
-        <p>Si quieres fórmulas y precisión, abre «Detalle técnico». Si no, puedes saltarlo: el texto principal se entiende solo. Las escenas 3D se giran arrastrando y se acercan con la rueda o pellizcando.</p>
-        <p>Debajo tienes el mapa de las etapas. Si tienes poco tiempo, empieza por la 1 (compresión) y la 7 (seguridad).</p>
+        <p>Cada etapa es una presentación como esta: pasos cortos y una escena que cambia con cada uno. Avanza con las flechas <kbd>←</kbd> <kbd>→</kbd> del teclado o con los botones.</p>
+        <p><kbd>M</kbd> abre el mapa de todo el recorrido; <kbd>E</kbd>, las tablas completas y las demostraciones libres. Las escenas 3D se giran arrastrando.</p>
+        <p>Con poco tiempo, ve a la etapa 1 (compresión) y a la 7 (seguridad).</p>
       </article>
       <div class="mando"></div>
     </div>
     <div class="escena">
-      <div class="lienzo" id="ini-lienzo" role="img" aria-label="Línea de ensamblaje del mensaje: texto, compresión, cifrado e inserción en una onda de audio, con la clave conectada al cifrado y a la inserción"></div>
-      <p class="ini-sentido" id="ini-sentido"><b>Emisor →</b> el mensaje avanza de izquierda a derecha</p>
-      <ol class="ini-tablero" id="ini-tablero">
-        <li data-c="ink">Texto<b>928 B</b></li>
-        <li data-c="net">Comprimido<b>175 B</b></li>
-        <li data-c="ciph">Cifrado<b>175 B</b></li>
-        <li data-c="pos">En el audio<b>1400 bits</b></li>
-      </ol>
+      <div class="lienzo" id="ini-lienzo" role="img" aria-label="Línea de ensamblaje del mensaje: texto, compresión, cifrado e inserción en una onda de audio, con la clave conectada al cifrado y a la inserción">
+        <ol class="ini-tablero" id="ini-tablero" aria-label="Tamaño del mensaje en cada estación">
+          <li data-c="ink">Texto<b>928 B</b></li>
+          <li data-c="net">Comprimido<b>175 B</b></li>
+          <li data-c="ciph">Cifrado<b>175 B</b></li>
+          <li data-c="pos">En el audio<b>1400 bits</b></li>
+        </ol>
+      </div>
       <p class="narra" id="ini-narra"><b>Qué estás viendo:</b> …</p>
     </div>
   </div>
@@ -176,7 +186,7 @@ import { recorrido, animar, sinMovimiento } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
 
 const lienzo = document.getElementById("ini-lienzo");
-const e = escena3d(lienzo, { camara: [0.6, 4.5, 14], mirar: [0.6, 0.6, 0] });
+const e = escena3d(lienzo, { camara: [0.3, 4.5, 16], mirar: [0.3, 1.5, 0] });
 let C = e.colores();
 
 /* ---------- Estaciones de la línea de ensamblaje ---------- */
@@ -190,13 +200,20 @@ function disco(x, r, nombre) {
 const bases = [disco(X.texto, 1.25, "muted"), disco(X.comp, 1.0, "net"), disco(X.cif, 1.0, "ciph")];
 const placa = new THREE.Mesh(new THREE.BoxGeometry(AUD1 - AUD0 + 0.6, 0.08, 1.6), new THREE.MeshStandardMaterial({ color: C.pos, transparent: true, opacity: 0.18 }));
 placa.position.set((AUD0 + AUD1) / 2, -0.5, 0); placa.userData.c = "pos"; e.scene.add(placa); bases.push(placa);
+// Banda transportadora con rodillos que une las estaciones.
+const banda = new THREE.Mesh(new THREE.BoxGeometry(15.4, 0.06, 2.4), new THREE.MeshStandardMaterial({ color: C.line, transparent: true, opacity: 0.5 }));
+banda.position.set(0.3, -0.6, 0); banda.userData.c = "line"; e.scene.add(banda); bases.push(banda);
+const matRod = new THREE.MeshStandardMaterial({ color: C.muted, transparent: true, opacity: 0.35 });
+const rodillos = new THREE.Group();
+for (let x = -7.2; x <= 7.8; x += 0.75) { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.4, 8), matRod); r.rotation.x = Math.PI / 2; r.position.set(x, -0.66, 0); rodillos.add(r); }
+e.scene.add(rodillos);
 
 /* ---------- Onda de audio: muestras como tallos verticales ---------- */
 const onda = x => 0.55 * Math.sin((x - AUD0) * 3.1) + 0.3 * Math.sin((x - AUD0) * 7.3 + 1) + 0.15 * Math.sin((x - AUD0) * 13.7);
 const NS = 260, tallos = [];
 const pts = [];
 for (let i = 0; i < NS; i++) {
-  const x = AUD0 + (AUD1 - AUD0) * i / (NS - 1), y = onda(x) + 0.4;
+  const x = AUD0 + (AUD1 - AUD0) * i / (NS - 1), y = 1.2 * onda(x) + 0.85;
   tallos.push(new THREE.Vector3(x, y, 0));
   pts.push(x, -0.42, 0, x, y, 0);
 }
@@ -235,26 +252,31 @@ const cana = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.12, 0.12), matK); cana.
 const d1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.22, 0.1), matK); d1.position.set(0.45, -0.15, 0);
 const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.1), matK); d2.position.set(0.6, -0.12, 0);
 llave.add(anillo, cana, d1, d2);
-const PK = new THREE.Vector3(2.6, 3.0, 0);
+const PK = new THREE.Vector3(2.6, 3.4, 0);
 llave.position.copy(PK); e.scene.add(llave);
 const matL = new THREE.MeshStandardMaterial({ color: C.key, transparent: true, opacity: 0.45 });
-const enlaces = [new THREE.Vector3(X.cif, 1.35, 0), new THREE.Vector3(X.aud, 1.45, 0)].map(fin => {
+const enlaces = [new THREE.Vector3(X.cif, 1.35, 0), new THREE.Vector3(X.aud, 2.4, 0)].map(fin => {
   const c = new THREE.QuadraticBezierCurve3(PK.clone().add(new THREE.Vector3(0, -0.2, 0)), new THREE.Vector3((PK.x + fin.x) / 2, PK.y + 0.2, 0), fin);
   e.scene.add(new THREE.Mesh(new THREE.TubeGeometry(c, 40, 0.025, 6, false), matL));
   const chispa = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), matK); e.scene.add(chispa);
   return { c, chispa };
 });
 
-/* ---------- Rótulos ---------- */
-const rot = (t, c, x, y, tam = 0.46) => { const s = etiqueta(t, { color: c, tam }); s.position.set(x, y, 0); e.scene.add(s); return s; };
+/* ---------- Rótulos (más grandes en pantallas angostas) ---------- */
+const rotulos = [];
+const rot = (t, c, x, y, tam = 0.46) => { const s = etiqueta(t, { color: c, tam }); s.position.set(x, y, 0); s.userData.base = s.scale.clone(); e.scene.add(s); rotulos.push(s); return s; };
 rot("Texto", "ink", X.texto, 2.25);
 rot("1 · Comprimir", "net", X.comp, 1.6);
 rot("2 · Cifrar", "ciph", X.cif, 1.6);
-rot("3 · Esconder en el audio", "pos", X.aud, 1.85);
+rot("3 · Esconder en el audio", "pos", X.aud, 2.75);
 rot("Clave K", "key", PK.x, PK.y + 0.6);
-const rEmisor = rot("Emisor  →", "muted", 0.6, 4.3, 0.55);
-const rReceptor = rot("←  Receptor", "key", 0.6, 4.3, 0.55);
+const rEmisor = rot("Emisor  →", "muted", -2.0, 3.6, 0.55);
+const rReceptor = rot("←  Receptor", "key", -2.0, 3.6, 0.55);
 rReceptor.visible = false;
+function escalarRotulos() {
+  const k = lienzo.clientWidth && lienzo.clientWidth < 560 ? 1.35 : 1;
+  rotulos.forEach(s => s.scale.copy(s.userData.base).multiplyScalar(k));
+}
 
 /* ---------- Estado: f va de 0 (texto) a 3 (en el audio) ---------- */
 let f = 0, claveActiva = 0;
@@ -288,29 +310,82 @@ e.alCuadro((dt, tiempo) => {
 e.alTema(c => {
   C = c;
   bases.forEach(b => b.material.color.copy(C[b.userData.c]));
-  matT.color.copy(C.muted); matOnda.color.copy(C.muted);
+  matT.color.copy(C.muted); matOnda.color.copy(C.muted); matRod.color.copy(C.muted);
   matK.color.copy(C.key); matK.emissive.copy(C.key); matL.color.copy(C.key);
   pintar();
 });
 pintar();
 enlaces.forEach(en => (en.chispa.visible = false));
 
-/* ---------- Cámara por paso ---------- */
-const CAM = {
-  general: [[0.6, 4.6, 14.5], [0.6, 0.7, 0]],
-  texto:   [[-4.6, 3.2, 8.5], [-3.4, 0.7, 0]],
-  comp:    [[-3.4, 2.4, 6], [-2.2, 0.6, 0]],
-  cif:     [[0.9, 3.2, 7], [1.2, 1.2, 0]],
-  aud:     [[4.6, 3.0, 7.8], [4.4, 0.8, 0]],
-  clave:   [[2.4, 4.4, 9.5], [2.6, 1.4, 0]],
+/* ---------- Cámara: tomas encuadradas según el tamaño real del lienzo ----------
+   Cada toma es un centro, el ancho y alto que deben caber y la dirección desde la que se mira.
+   Entre tomas la cámara viaja con un pequeño arco hacia atrás (se aleja y vuelve a acercarse). */
+const tanM = Math.tan(THREE.MathUtils.degToRad(e.camera.fov / 2));
+const V3 = a => new THREE.Vector3(...a);
+const TOMAS = {
+  general: { min: [-7.4, -0.7, -1.2], max: [7.9, 4.0, 1.2], dir: [0.75, 0.5, 1], dirM: [1.35, 0.8, 1] },
+  texto:   { min: [-7.7, -0.7, -1.3], max: [-4.1, 2.9, 1.3], dir: [-0.35, 0.5, 1] },
+  comp:    { min: [-4.8, -0.7, -1.2], max: [-0.8, 2.3, 1.2], dir: [-0.25, 0.45, 1] },
+  cif:     { min: [-1.5, -0.7, -1.2], max: [3.3, 4.1, 1.2], dir: [0.1, 0.4, 1] },
+  aud:     { min: [1.9, -0.7, -1.2], max: [8.0, 3.4, 1.2], dir: [0.35, 0.4, 1] },
+  clave:   { min: [-0.6, -0.6, -1.0], max: [7.7, 4.2, 1.0], dir: [0.15, 0.6, 1] },
 };
-let cancelarCam = () => {}, cancelarF = () => {};
-function mover([p, t], ms = 1100) {
-  cancelarCam();
-  const p0 = e.camera.position.clone(), t0 = e.controls.target.clone();
-  const p1 = new THREE.Vector3(...p), t1 = new THREE.Vector3(...t);
-  cancelarCam = animar(ms, u => { e.camera.position.lerpVectors(p0, p1, u); e.controls.target.lerpVectors(t0, t1, u); });
+const ESTACION = ["texto", "comp", "cif", "aud"];
+const ARRIBA = new THREE.Vector3(0, 1, 0);
+// Distancia y centro para que la caja de la toma quepa en el lienzo, dejando arriba el espacio de la franja de tamaños.
+function encuadre(t) {
+  const W = lienzo.clientWidth || 1, H = lienzo.clientHeight || 1, asp = W / H;
+  const ft = Math.min(0.24, 62 / H), fb = 0.03, fx = 0.04;
+  const dir = V3(asp < 1.25 && t.dirM ? t.dirM : t.dir).normalize();
+  const der = new THREE.Vector3().crossVectors(ARRIBA, dir).normalize(), arr = new THREE.Vector3().crossVectors(dir, der);
+  const a = V3(t.min), b = V3(t.max), c = a.clone().add(b).multiplyScalar(0.5);
+  const esq = [0, 1, 2, 3, 4, 5, 6, 7].map(k => new THREE.Vector3(k & 1 ? b.x : a.x, k & 2 ? b.y : a.y, k & 4 ? b.z : a.z));
+  const v = new THREE.Vector3();
+  let d = 1;
+  for (let it = 0; it < 4; it++) {
+    d = 0;
+    for (const p of esq) {
+      v.subVectors(p, c); const x = v.dot(der), y = v.dot(arr), z = v.dot(dir);
+      d = Math.max(d, z + Math.abs(x) / (tanM * asp * (1 - fx)), z + (y > 0 ? y / ((1 - 2 * ft) * tanM) : -y / ((1 - 2 * fb) * tanM)));
+    }
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const p of esq) {
+      v.subVectors(p, c); const s = d - v.dot(dir);
+      const nx = v.dot(der) / (s * tanM * asp), ny = v.dot(arr) / (s * tanM);
+      x0 = Math.min(x0, nx); x1 = Math.max(x1, nx); y0 = Math.min(y0, ny); y1 = Math.max(y1, ny);
+    }
+    c.addScaledVector(der, (x0 + x1) / 2 * d * tanM * asp).addScaledVector(arr, ((y0 + y1) / 2 - (fb - ft)) * d * tanM);
+  }
+  return { c, d: d * 1.01, dir };
 }
+const mezclar = (a, b, u) => ({ c: a.c.clone().lerp(b.c, u), d: a.d + (b.d - a.d) * u, dir: a.dir.clone().lerp(b.dir, u).normalize() });
+function aplicar(s, arco = 0) {
+  e.controls.target.copy(s.c);
+  e.camera.position.copy(s.dir).multiplyScalar(s.d * (1 + arco)).add(s.c);
+}
+function ahora() { const c = e.controls.target.clone(), v = e.camera.position.clone().sub(c); const d = v.length(); return { c, d, dir: v.divideScalar(d) }; }
+// Toma que sigue al mensaje: mezcla las tomas de las dos estaciones entre las que está f.
+const tomaDeF = x => { const k = Math.max(0, Math.min(2, Math.floor(x))); return mezclar(encuadre(TOMAS[ESTACION[k]]), encuadre(TOMAS[ESTACION[k + 1]]), Math.max(0, Math.min(1, x - k))); };
+let toma = TOMAS.general, cancelarCam = () => {};
+function viajar(nombre, ms = 1500, arco = 0.22) {
+  cancelarCam(); e.controls.autoRotate = false;
+  toma = TOMAS[nombre];
+  const a = ahora(), b = encuadre(toma);
+  cancelarCam = animar(ms, u => aplicar(mezclar(a, b, u), arco * Math.sin(Math.PI * u)));
+}
+function seguir(ms, fin) {
+  cancelarCam(); e.controls.autoRotate = false;
+  const a = ahora();
+  cancelarCam = animar(ms, u => { const s = tomaDeF(f); aplicar(u < 0.15 ? mezclar(a, s, u / 0.15) : s); }, fin);
+}
+let medida = "";
+new ResizeObserver(() => {
+  const m = lienzo.clientWidth + "x" + lienzo.clientHeight;
+  if (m === medida || !lienzo.clientWidth) return;
+  medida = m; escalarRotulos(); cancelarCam(); aplicar(encuadre(toma));
+}).observe(lienzo);
+e.controls.autoRotateSpeed = 0.6;
+let cancelarF = () => {};
 function irF(destino, ms) {
   cancelarF();
   const f0 = f;
@@ -319,16 +394,16 @@ function irF(destino, ms) {
 }
 
 const tablero = [...document.querySelectorAll("#ini-tablero li")];
-const narra = document.getElementById("ini-narra"), sentido = document.getElementById("ini-sentido");
+const narra = document.getElementById("ini-narra");
 const PASOS = [
-  { cam: "general", f: 0, on: [0], k: 0, txt: "El poema (928 bytes) espera al inicio de la línea, a la izquierda. A la derecha están las tres estaciones del emisor y la onda del audio que lo va a esconder." },
-  { cam: "comp", f: 1, on: [1], k: 0, txt: "El bloque del texto se encoge y se vuelve morado: la red neuronal y el codificador lo dejan en 175 bytes, incluidos los 2 de longitud." },
-  { cam: "cif", f: 2, on: [2], k: 1, txt: "Los bloques se revuelven y se vuelven verdes: el contenido se mezcla con el flujo de bits que fabrica la clave K (en azul). El tamaño no cambia." },
-  { cam: "aud", f: 3, on: [3], k: 1, txt: "Cada bloque, ahora naranja, cae en la punta de una muestra de la onda gris, elegida con la clave. Proporción no a escala: en el caso real se usa el 0.006 % de las muestras." },
-  { cam: "clave", f: 3, on: [2, 3], k: 1, txt: "La llave azul se conecta solo al cifrado y a la inserción. La red neuronal y el programa son públicos; sin K no se sabe qué muestras leer ni cómo descifrarlas." },
-  { cam: "general", f: 0, on: [3, 2, 1, 0], k: 1, rec: true, txt: "Camino de vuelta: los puntos salen de la onda, se ordenan y descifran (verde), se descomprimen (morado) y el texto vuelve a su tamaño original." },
-  { cam: "general", f: 0, on: [0, 1, 2, 3], k: 0, txt: "La línea completa. Debajo, los tamaños del caso real en cada estación: 928 bytes de texto, 175 bytes comprimidos y cifrados, 1400 bits dentro del audio." },
-  { cam: "general", f: 0, on: [], k: 0, txt: "Esta escena 3D se puede girar arrastrando y acercar con la rueda o pellizcando. Cada etapa tiene una escena así, sincronizada con sus pasos." },
+  { cam: "general", f: 0, on: [0], k: 0, txt: "La línea del emisor: el poema (bloques grises) a la izquierda, las tres estaciones y la onda del audio a la derecha." },
+  { cam: "comp", f: 1, on: [1], k: 0, txt: "El bloque del texto se encoge y se vuelve morado: 928 bytes quedan en 175." },
+  { cam: "cif", f: 2, on: [2], k: 1, txt: "Los bloques se revuelven y se vuelven verdes al mezclarse con el flujo que fabrica la clave K (azul). El tamaño no cambia." },
+  { cam: "aud", f: 3, on: [3], k: 1, txt: "Cada bloque, ahora naranja, cae en una muestra de la onda elegida con la clave. No a escala: en el caso real se usa el 0.006 % de las muestras." },
+  { cam: "clave", f: 3, on: [2, 3], k: 1, txt: "La llave azul se conecta solo al cifrado y a la inserción. Sin K no se sabe qué muestras leer ni cómo descifrarlas." },
+  { cam: "general", f: 0, on: [3, 2, 1, 0], k: 1, rec: true, txt: "Camino de vuelta: la cámara sigue al mensaje desde la onda, por el descifrado (verde) y la descompresión (morado), hasta el texto." },
+  { cam: "general", f: 0, on: [0, 1, 2, 3], k: 0, txt: "La línea completa con los tamaños del caso real en cada estación." },
+  { cam: "general", f: 0, on: [], k: 0, giro: true, txt: "La escena gira sola. Arrástrala para girarla tú; la rueda o el pellizco acercan." },
 ];
 let primera = true;
 recorrido(document.getElementById("recorrido"), (i, nombre, dir) => {
@@ -337,21 +412,24 @@ recorrido(document.getElementById("recorrido"), (i, nombre, dir) => {
   tablero.forEach((li, k) => li.classList.toggle("on", p.on.includes(k)));
   claveActiva = p.k;
   rEmisor.visible = !p.rec; rReceptor.visible = !!p.rec;
-  sentido.innerHTML = p.rec ? "<b>← Receptor</b> el mensaje vuelve de derecha a izquierda con la misma clave K" : "<b>Emisor →</b> el mensaje avanza de izquierda a derecha";
-  if (primera) {
+  if (primera || sinMovimiento()) {
     // Al abrir la página (o un enlace #paso-N) se muestra el estado final del paso sin animar.
-    primera = false; f = p.f; pintar();
-    const [cp, ct] = CAM[p.cam]; e.camera.position.set(...cp); e.controls.target.set(...ct);
+    primera = false; cancelarF(); cancelarCam(); f = p.f; pintar();
+    toma = TOMAS[p.cam]; aplicar(encuadre(toma));
   } else if (p.rec) {
-    // El receptor arranca con el mensaje dentro del audio y lo devuelve al texto.
+    // El receptor arranca con el mensaje dentro del audio y la cámara lo acompaña de estación en estación.
     cancelarF(); f = 3; pintar();
-    mover(CAM.aud, 500);
-    setTimeout(() => { if (rReceptor.visible) { irF(0, 4800); mover(CAM.general, 4200); } }, sinMovimiento() ? 0 : 650);
+    viajar("aud", 700, 0.1);
+    setTimeout(() => {
+      if (!rReceptor.visible) return;
+      irF(0, 5200);
+      seguir(5200, () => { if (rReceptor.visible) viajar("general", 1500, 0.05); });
+    }, 750);
   } else {
     irF(p.f, dir < 0 ? 900 : undefined);
-    mover(CAM[p.cam]);
+    viajar(p.cam);
   }
-  if (sinMovimiento()) { f = p.f; pintar(); }
+  e.controls.autoRotate = !!p.giro && !sinMovimiento();
 });
 </script>
 </body>

@@ -8,28 +8,47 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/css/base.css">
+<script src="assets/js/modelo.js"></script>
 <script type="module" src="assets/js/sitio.js"></script>
 <style>
-.pre-sec { margin-top: 2.5rem; display: grid; gap: 1rem; }
+/* Recorrido: una pregunta por paso y, en la escena, su ilustración */
+.paso .ir { display: inline-block; margin-top: .2rem; font-size: var(--s-1); font-weight: 600; }
+.pre-vista { position: relative; border-radius: 8px; background: var(--soft); overflow: hidden; }
+.pre-vista svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.pre-vista.entra svg { animation: pre-entra .5s cubic-bezier(.2, 0, 0, 1) both; }
+@keyframes pre-entra { from { opacity: 0; transform: scale(.94); } }
+.pre-vista svg .crece { transform-box: fill-box; transform-origin: left center; animation: pre-crece .9s .15s cubic-bezier(.2, .7, .2, 1) both; }
+.pre-vista svg .sube { transform-box: fill-box; transform-origin: center bottom; animation: pre-sube .9s .15s cubic-bezier(.2, .7, .2, 1) both; }
+.pre-vista svg .aparece { animation: pre-aparece .5s both; animation-delay: calc(.25s + var(--k, 0) * 90ms); }
+@keyframes pre-crece { from { transform: scaleX(0); } }
+@keyframes pre-sube { from { transform: scaleY(0); } }
+@keyframes pre-aparece { from { opacity: 0; transform: translateY(6px); } }
+.pre-vista text { font-family: var(--f-body); fill: var(--ink); }
+.pre-vista .mono { font-family: var(--f-mono); }
+.pre-vista .disp { font-family: var(--f-display); font-weight: 700; }
+.pre-vista .mu { fill: var(--muted); }
+.pre-vista .k { fill: var(--key); } .pre-vista .c { fill: var(--ciph); } .pre-vista .p { fill: var(--pos); } .pre-vista .n { fill: var(--net); } .pre-vista .h { fill: var(--hash); } .pre-vista .bad { fill: var(--bad); } .pre-vista .ok { fill: var(--ok); }
+.pre-vista .caja { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.pre-vista .linea { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+.pre-vista .guia { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; }
+.escena .narra { font-size: .9rem; padding: .45rem .75rem; }
+@media (max-width: 900px) {
+  .escena .narra { font-size: .78rem; padding: .3rem .5rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow: clip; overflow-clip-margin: content-box; }
+}
+/* Glosario y referencias (van al panel «Explorar») */
+.pre-sec { display: grid; gap: 1rem; }
 .pre-sec > h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
-.pre-faq { display: grid; gap: .6rem; max-width: 80ch; }
-.pre-faq details.card { padding: .85rem 1.1rem; }
-.pre-faq summary { cursor: pointer; font-weight: 600; font-size: 1.08rem; }
-.pre-faq details[open] summary { color: var(--key); margin-bottom: .45rem; }
-.pre-faq details p { margin: 0; }
-.pre-faq .ir { display: inline-block; margin-top: .5rem; font-size: var(--s-1); font-weight: 600; }
 .pre-buscar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
 .pre-buscar input { width: min(100%, 26rem); font-family: var(--f-body); }
 .pre-letras { display: flex; flex-wrap: wrap; gap: .3rem; }
-.pre-letras a { font: 600 var(--s-1)/1 var(--f-mono); padding: .35rem .5rem; border-radius: 6px; background: var(--soft); color: var(--ink); text-decoration: none; }
-.pre-glos { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: .75rem; margin: 0; }
-.pre-glos .card { display: grid; gap: .3rem; align-content: start; scroll-margin-top: 5rem; }
+.pre-letras button { font: 600 var(--s-1)/1 var(--f-mono); padding: .35rem .5rem; border-radius: 6px; background: var(--soft); color: var(--ink); }
+.pre-glos { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: .75rem; margin: 0; }
+.pre-glos .card { display: grid; gap: .3rem; align-content: start; scroll-margin-top: 1rem; }
 .pre-glos dt { font: 700 1.08rem/1.25 var(--f-display); }
-.pre-glos dt .letra { display: none; }
 .pre-glos dd { margin: 0; color: var(--ink); }
-.pre-glos dd.dónde { font-size: var(--s-1); }
+.pre-glos dd.donde { font-size: var(--s-1); }
 .pre-vacio { color: var(--muted); }
-.pre-refs { padding-left: 1.2rem; display: grid; gap: .4rem; max-width: 90ch; margin: 0; overflow-wrap: anywhere; }
+.pre-refs { padding-left: 1.2rem; display: grid; gap: .4rem; margin: 0; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
@@ -38,78 +57,101 @@
   <div class="cabeza">
     <span class="eyebrow">Para cerrar · Dudas que ya surgieron</span>
     <h1>Preguntas frecuentes</h1>
-    <p>Las preguntas que surgieron al revisar el artículo, cada una con su respuesta corta y la etapa donde se explica en detalle. Más abajo hay un glosario con todos los términos del sitio y las referencias para verificar.</p>
+    <p>Las preguntas que surgieron al revisar el artículo, con su respuesta corta y la etapa donde se explica. El glosario y las referencias están en «Explorar».</p>
   </div>
 
-  <section class="pre-sec" aria-labelledby="pre-faq-t">
-    <h2 id="pre-faq-t">Preguntas</h2>
-    <div class="pre-faq">
-      <details class="card" open>
-        <summary>¿Cada una de las 28 capas tiene a su vez otra red?</summary>
-        <p>Sí. Cada capa del Transformer tiene dos subcapas: la autoatención, que combina la información de los tokens anteriores, y una red prealimentada (perceptrón multicapa) que procesa cada token por separado, con 1536 → 8960 → 1536 neuronas. Así la define el artículo original del Transformer (Vaswani et al., 2017, sección 3.3), y los tamaños están en la configuración oficial de Qwen2.5-1.5B.</p>
-        <a class="ir" href="compresion.html">Ver etapa 1 · Compresión →</a>
-      </details>
-      <details class="card">
-        <summary>¿Qué es lo «proporcional» en el codificador aritmético?</summary>
-        <p>La longitud de cada subintervalo. En cada paso el intervalo actual se divide en un subintervalo por token posible, y la longitud de cada uno es proporcional a la probabilidad que la red le da. El codificador conserva el del token que aparece en el texto, así que la longitud se multiplica por p.</p>
-        <a class="ir" href="compresion.html">Ver la demostración en la etapa 1 →</a>
-      </details>
-      <details class="card">
-        <summary>¿Qué significa que los bits «se escriben en el mensaje comprimido»?</summary>
-        <p>Cuando los dos extremos del intervalo empiezan con los mismos bits, todo número que quede dentro empieza también con ellos, y esos bits ya no pueden cambiar. Por eso se escriben en el mensaje comprimido y el intervalo se amplía al doble por cada bit escrito. Así el programa trabaja con enteros de 62 bits sin necesitar precisión infinita.</p>
-        <a class="ir" href="compresion.html">Ver etapa 1 · Compresión →</a>
-      </details>
-      <details class="card">
-        <summary>¿Qué es cada término de f<sub>v</sub> = ⌊p<sub>v</sub>(2<sup>24</sup> − V)⌋ + 1?</summary>
-        <p>p<sub>v</sub> es la probabilidad del token v; f<sub>v</sub> su frecuencia entera; 2<sup>24</sup> = 16 777 216 las unidades que se reparten; V = 151 936 las salidas de la red; ⌊·⌋ redondea hacia abajo; el +1 garantiza que ningún token quede con frecuencia cero, y se restan V unidades para que la suma no pase de 2<sup>24</sup>. Se usan enteros para que el emisor y el receptor obtengan exactamente los mismos subintervalos.</p>
-        <a class="ir" href="compresion.html">Ver etapa 1 · Compresión →</a>
-      </details>
-      <details class="card">
-        <summary>¿Cómo puede un token valer 0.04 «bits» si los bits son enteros?</summary>
-        <p>Los bits del archivo sí son enteros: el mensaje comprimido tiene 1384. Lo que puede ser decimal es la información de cada token, −log<sub>2</sub> p, que se mide en shannons (Sh) según la norma ISO/IEC 80000-13. Es como un dado: una cara tiene log<sub>2</sub> 6 = 2.585 Sh; un lanzamiento necesita 3 bits, pero 100 lanzamientos caben en 259 bits y no en 300. Lo entero es el total.</p>
-        <a class="ir" href="compresion.html">Ver etapa 1 · Compresión →</a>
-      </details>
-      <details class="card">
-        <summary>Si hay dos secuencias en el cifrado, ¿cuál es la otra condición inicial?</summary>
-        <p>Ninguna de las dos usa directamente el x<sub>0</sub> y el r de la clave. Las dos salen de la clave con SHA-512: x<sup>(1)</sup> = 0.436400, r<sup>(1)</sup> = 3.991783 y x<sup>(2)</sup> = 0.671569, r<sup>(2)</sup> = 3.998479. La secuencia de posiciones usa x<sub>p</sub> = 0.843506, r<sub>p</sub> = 3.996021.</p>
-        <a class="ir" href="clave.html">Ver etapa 2 · Clave →</a>
-      </details>
-      <details class="card">
-        <summary>Si SHA-512 genera las condiciones iniciales, ¿para qué se definen x<sub>0</sub> y r antes?</summary>
-        <p>Porque x<sub>0</sub>, r y N no son condiciones iniciales: son la clave secreta K, como una contraseña que comparten el emisor y el receptor. Se definen una vez y de ellas salen, con SHA-512, las condiciones iniciales y los parámetros reales de las tres secuencias.</p>
-        <a class="ir" href="clave.html">Ver etapa 2 · Clave →</a>
-      </details>
-      <details class="card">
-        <summary>¿SHA-512 produce las secuencias?</summary>
-        <p>No. SHA-512 solo produce una cadena fija de 512 bits. Las secuencias salen del mapa logístico, iterado a partir de los valores que se toman de esa cadena. En sistemas dinámicos, a esa secuencia se le llama órbita; en este sitio se le dice secuencia.</p>
-        <a class="ir" href="caos.html">Ver etapa 3 · Caos →</a>
-      </details>
-      <details class="card">
-        <summary>¿Por qué se binarizan las dos secuencias y luego se aplica XOR?</summary>
-        <p>Cada secuencia da números entre 0 y 1. Con el umbral en 0.5, cada número se vuelve un bit: mayor que 0.5 da 1, menor o igual da 0. La XOR de las dos cadenas de bits es el flujo de clave. Se usan dos para que, aunque alguien reconstruyera una secuencia, todavía le faltara la otra.</p>
-        <a class="ir" href="cifrado.html">Ver etapa 4 · Cifrado →</a>
-      </details>
-      <details class="card">
-        <summary>¿«8n iteraciones adicionales» significa que antes hubo otras 8n?</summary>
-        <p>No. Cada secuencia arranca de su propia condición inicial, se itera N veces y esos valores se descartan (transitorio). Después se itera 8n veces más, y esos valores sí se usan, uno por cada bit del mensaje. «Adicionales» quiere decir «después del transitorio».</p>
-        <a class="ir" href="caos.html">Ver etapa 3 · Caos →</a>
-      </details>
-      <details class="card">
-        <summary>¿De dónde sale el espacio de clave de 2<sup>112.91</sup>?</summary>
-        <p>En memoria la clave ocupa 144 bits (64 de x<sub>0</sub>, 64 de r y 16 de N). Se cuentan los valores distintos que puede tomar cada componente dentro de su rango: 4.49 × 10<sup>16</sup> para x<sub>0</sub> (55.32 bits), 2.25 × 10<sup>13</sup> para r (44.36 bits) y 9 901 para N (13.27 bits). Eso suma 112.95 bits; como el 97.67 % de las claves son válidas, quedan 2<sup>112.91</sup> claves, más que el mínimo recomendado de 2<sup>100</sup>.</p>
-        <a class="ir" href="seguridad.html">Ver etapa 7 · Seguridad →</a>
-      </details>
-      <details class="card">
-        <summary>¿Por qué SHA-512 no estaba en la versión anterior del artículo?</summary>
-        <p>Se agregó en esta revisión. Al recalcular el espacio de clave, como pidió un evaluador, se encontró que en la versión anterior N solo desplazaba la misma secuencia, y el espacio real quedaba en unos 2<sup>89.7</sup>. Derivar los parámetros de la clave completa con SHA-512 corrige ese problema: cualquier cambio mínimo en K produce secuencias completamente distintas.</p>
-        <a class="ir" href="clave.html">Ver etapa 2 · Clave →</a>
-      </details>
+  <div class="recorrido" id="recorrido">
+    <div class="narracion">
+      <article class="paso" data-paso="capas">
+        <span class="eyebrow">Pregunta 1 · Compresión</span>
+        <h2>¿Cada una de las 28 capas tiene a su vez otra red?</h2>
+        <p>Sí. Cada capa del Transformer tiene autoatención, que combina la información de los tokens anteriores, y una red prealimentada (perceptrón multicapa) de 1536 → 8960 → 1536 neuronas, que procesa cada token por separado.</p>
+        <a class="ir" href="compresion.html#paso-1">Ver etapa 1 · Compresión →</a>
+        <details><summary>Fuente</summary><p>Así la define el artículo original del Transformer (Vaswani et al., 2017, sección 3.3). Los tamaños están en la configuración oficial de Qwen2.5-1.5B.</p></details>
+      </article>
+      <article class="paso" data-paso="proporcional">
+        <span class="eyebrow">Pregunta 2 · Compresión</span>
+        <h2>¿Qué es lo «proporcional» en el codificador aritmético?</h2>
+        <p>La longitud de cada subintervalo. El intervalo actual se divide en un subintervalo por token posible, con longitud proporcional a la probabilidad que le da la red. Se conserva el del token del texto, así que la longitud se multiplica por p.</p>
+        <a class="ir" href="compresion.html#paso-1">Ver la demostración en la etapa 1 →</a>
+      </article>
+      <article class="paso" data-paso="escribir">
+        <span class="eyebrow">Pregunta 3 · Compresión</span>
+        <h2>¿Qué significa que los bits «se escriben en el mensaje comprimido»?</h2>
+        <p>Si los dos extremos del intervalo empiezan con los mismos bits, todo número de adentro también empieza así y esos bits ya no cambian. Se escriben en el mensaje comprimido y el intervalo se amplía al doble por cada bit escrito.</p>
+        <a class="ir" href="compresion.html#paso-1">Ver etapa 1 · Compresión →</a>
+        <details><summary>Detalle técnico</summary><p>Gracias a eso el programa trabaja con enteros de 62 bits sin necesitar precisión infinita.</p></details>
+      </article>
+      <article class="paso" data-paso="frecuencias">
+        <span class="eyebrow">Pregunta 4 · Compresión</span>
+        <h2>¿Qué es cada término de la fórmula de las frecuencias f<sub>v</sub>?</h2>
+        <p>La fórmula f<sub>v</sub> = ⌊p<sub>v</sub>(2<sup>24</sup> − V)⌋ + 1 convierte cada probabilidad en una frecuencia entera, para que el emisor y el receptor obtengan exactamente los mismos subintervalos.</p>
+        <a class="ir" href="compresion.html#paso-1">Ver etapa 1 · Compresión →</a>
+        <details><summary>Detalle técnico</summary><p>Se reparten 2<sup>24</sup> − V unidades y luego se suma 1 a cada uno de los V tokens, así la suma de frecuencias no pasa de 2<sup>24</sup>.</p></details>
+      </article>
+      <article class="paso" data-paso="shannon">
+        <span class="eyebrow">Pregunta 5 · Compresión</span>
+        <h2>¿Cómo vale un token 0.04 «bits» si los bits son enteros?</h2>
+        <p>Lo decimal es la información de cada token, −log<sub>2</sub> p, medida en shannons (Sh) según ISO/IEC 80000-13. Los bits del archivo son enteros: el mensaje comprimido tiene 1384.</p>
+        <p class="analogia">Un dado: 2.585 Sh por tiro; 100 tiros, 259 bits.</p>
+        <a class="ir" href="compresion.html#paso-1">Ver etapa 1 · Compresión →</a>
+      </article>
+      <article class="paso" data-paso="otra">
+        <span class="eyebrow">Pregunta 6 · Clave</span>
+        <h2>Si hay dos secuencias en el cifrado, ¿cuál es la otra condición inicial?</h2>
+        <p>Ninguna de las dos usa directamente el x<sub>0</sub> y el r de la clave. Las dos salen de la clave con SHA-512, igual que la secuencia de posiciones. En la escena están los seis valores, calculados en tu navegador.</p>
+        <a class="ir" href="clave.html#paso-1">Ver etapa 2 · Clave →</a>
+      </article>
+      <article class="paso" data-paso="antes">
+        <span class="eyebrow">Pregunta 7 · Clave</span>
+        <h2>Si SHA-512 da las condiciones iniciales, ¿para qué se definen x<sub>0</sub> y r?</h2>
+        <p>Porque x<sub>0</sub>, r y N no son condiciones iniciales: son la clave secreta K, que comparten emisor y receptor. De ella salen, con SHA-512, las condiciones iniciales y los parámetros.</p>
+        <p class="analogia">Como una contraseña: se define una vez.</p>
+        <a class="ir" href="clave.html#paso-1">Ver etapa 2 · Clave →</a>
+      </article>
+      <article class="paso" data-paso="produce">
+        <span class="eyebrow">Pregunta 8 · Caos</span>
+        <h2>¿SHA-512 produce las secuencias?</h2>
+        <p>No. SHA-512 solo produce una cadena fija de 512 bits. Las secuencias salen del mapa logístico, iterado a partir de los valores que se toman de esa cadena.</p>
+        <a class="ir" href="caos.html#paso-1">Ver etapa 3 · Caos →</a>
+        <details><summary>Nombre técnico</summary><p>En sistemas dinámicos, a esa secuencia se le llama órbita; en este sitio se le dice secuencia.</p></details>
+      </article>
+      <article class="paso" data-paso="binarizar">
+        <span class="eyebrow">Pregunta 9 · Cifrado</span>
+        <h2>¿Por qué se binarizan las dos secuencias y luego se aplica XOR?</h2>
+        <p>Con el umbral en 0.5 cada número se vuelve un bit: mayor que 0.5 da 1, menor o igual da 0. La XOR de las dos cadenas es el flujo de clave. Con dos, quien reconstruyera una todavía no tendría la otra.</p>
+        <a class="ir" href="cifrado.html#paso-1">Ver etapa 4 · Cifrado →</a>
+      </article>
+      <article class="paso" data-paso="adicionales">
+        <span class="eyebrow">Pregunta 10 · Caos</span>
+        <h2>¿«8n iteraciones adicionales» significa que antes hubo otras 8n?</h2>
+        <p>No. Cada secuencia se itera N veces y esos valores se descartan (transitorio). Después se itera 8n veces más y esos sí se usan, uno por bit. «Adicionales» quiere decir «después del transitorio».</p>
+        <a class="ir" href="caos.html#paso-1">Ver etapa 3 · Caos →</a>
+      </article>
+      <article class="paso" data-paso="espacio">
+        <span class="eyebrow">Pregunta 11 · Seguridad</span>
+        <h2>¿De dónde sale el tamaño del espacio de clave?</h2>
+        <p>Se cuentan los valores de cada componente en su rango: 55.32 bits para x<sub>0</sub>, 44.36 para r y 13.27 para N. Suman 112.95; con el 97.67 % de claves válidas quedan 2<sup>112.91</sup>, más que el mínimo de 2<sup>100</sup>.</p>
+        <a class="ir" href="seguridad.html#paso-1">Ver etapa 7 · Seguridad →</a>
+        <details><summary>Detalle técnico</summary><p>En memoria la clave ocupa 144 bits (64 de x<sub>0</sub>, 64 de r y 16 de N). x<sub>0</sub> puede tomar 4.49 × 10<sup>16</sup> valores, r 2.25 × 10<sup>13</sup> y N 9 901.</p></details>
+      </article>
+      <article class="paso" data-paso="nuevo">
+        <span class="eyebrow">Pregunta 12 · Clave</span>
+        <h2>¿Por qué SHA-512 no estaba en la versión anterior del artículo?</h2>
+        <p>Se agregó en esta revisión. Al recalcular el espacio de clave, como pidió un evaluador, se vio que N solo desplazaba la misma secuencia y el espacio real era de unos 2<sup>89.7</sup>. Con SHA-512, cualquier cambio en K da secuencias distintas.</p>
+        <a class="ir" href="clave.html#paso-1">Ver etapa 2 · Clave →</a>
+      </article>
+      <div class="mando"></div>
     </div>
-  </section>
+    <div class="escena">
+      <div class="vista pre-vista" id="pre-vista" role="img" aria-label="Ilustración de la pregunta actual"></div>
+      <p class="narra" id="pre-narra"><b>Qué estás viendo:</b> …</p>
+    </div>
+  </div>
 
   <section class="pre-sec" aria-labelledby="pre-glos-t">
     <h2 id="pre-glos-t">Glosario</h2>
-    <p style="margin:0;max-width:72ch">Todos los términos que se explican en el sitio, en orden alfabético. Escribe en el buscador para filtrar por nombre o por contenido.</p>
+    <p style="margin:0">Todos los términos que se explican en el sitio, en orden alfabético. Escribe en el buscador para filtrar por nombre o por contenido.</p>
     <div class="pre-buscar">
       <label for="pre-q" class="note">Buscar término</label>
       <input type="text" id="pre-q" placeholder="Por ejemplo: bit, hash, audio…" autocomplete="off">
@@ -137,6 +179,172 @@
 </main>
 <footer class="pie"></footer>
 <script type="module">
+import { recorrido, sinMovimiento } from "./assets/js/guia.js";
+const $ = id => document.getElementById(id);
+const Mo = window.Modelo, C = Mo.CASO;
+const d = await Mo.derivar(C.x0, C.r, C.N);
+const fl = Mo.flujo(d, 1);
+const sec1 = Mo.secuencia(d.x1, d.r1, d.N, 40);
+const p6 = x => x.toFixed(6);
+
+/* ---------- Ilustraciones (SVG de 440 × 300) ---------- */
+const T = (x, y, txt, cls = "", tam = 15, extra = "") => `<text x="${x}" y="${y}" class="${cls}" font-size="${tam}" ${extra}>${txt}</text>`;
+const R = (x, y, w, h, fill, extra = "") => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="5" style="fill:${fill}" ${extra}/>`;
+const flecha = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="linea" marker-end="url(#pre-pt)"/>`;
+const DEF = `<defs><marker id="pre-pt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--muted)"/></marker></defs>`;
+const v = "var(--", w = n => `${v}${n})`;
+
+const ILUS = [
+  // 1. Capas: 28 capas apiladas; una se abre en autoatención + red prealimentada
+  () => {
+    let s = T(70, 26, "28 capas", "disp n", 17, 'text-anchor="middle"');
+    for (let k = 0; k < 28; k++) s += R(28, 38 + k * 8.6, 84, 6, k === 13 ? w("net") : w("net-soft"), `class="aparece" style="--k:${k / 4}"`);
+    s += `<path d="M112 152 L170 34 M112 158 L170 280" class="guia"/>`;
+    s += R(170, 30, 258, 252, w("surface"), 'class="caja"') + T(184, 54, "Cada capa", "disp", 16);
+    s += R(184, 70, 92, 196, w("net-soft")) + T(230, 160, "Auto-", "", 15, 'text-anchor="middle"') + T(230, 180, "atención", "", 15, 'text-anchor="middle"');
+    s += T(354, 74, "Red prealimentada", "", 13, 'text-anchor="middle"') + T(354, 90, "(perceptrón multicapa)", "mu", 11.5, 'text-anchor="middle"');
+    const xs = [300, 354, 408], hs = [26, 150, 26];
+    s += `<path d="M309 172 L345 106 M309 184 L345 250 M363 106 L399 172 M363 250 L399 184" class="linea" style="opacity:.5"/>`;
+    xs.forEach((x, k) => { s += R(x - 9, 178 - hs[k] / 2, 18, hs[k], w("net"), 'class="sube"') + T(x, 270, ["1536", "8960", "1536"][k], "mono", 13, 'text-anchor="middle"'); });
+    return s;
+  },
+  // 2. Subintervalos proporcionales
+  () => {
+    const ps = [["noche", .5, "net"], ["luna", .3, "net-soft"], ["otros", .2, "soft"]];
+    let s = T(20, 40, "Intervalo actual", "mu", 14), x = 20;
+    ps.forEach(([t, p, c], k) => { s += R(x, 52, 400 * p - 3, 56, w(c), `class="aparece" style="--k:${k};stroke:var(--line)"`) + T(x + 200 * p, 86, `${t} · ${p}`, k ? "" : "disp", k ? 15 : 17, `text-anchor="middle" ${k ? "" : 'style="fill:var(--surface)"'}`); x += 400 * p; });
+    s += `<path d="M20 122 L20 132 L217 132 L217 122" class="linea"/>` + T(118, 152, "longitud proporcional a p", "n", 14, 'text-anchor="middle"');
+    s += `<path d="M20 160 L20 196 M217 160 L420 196" class="guia"/>`;
+    s += R(20, 200, 400, 46, w("net"), 'class="crece"') + T(220, 229, "nuevo intervalo: longitud × 0.5", "", 16, 'text-anchor="middle" style="fill:var(--surface)"');
+    s += T(20, 284, "Valores de ejemplo.", "mu", 13);
+    return s;
+  },
+  // 3. Bits comunes de los extremos
+  () => {
+    let s = T(20, 40, "Extremos del intervalo (en binario)", "mu", 14);
+    const fila = (y, et, resto) => T(20, y, et, "mu", 14) + R(118, y - 22, 64, 30, w("key-soft")) + T(122, y, "0.1011", "mono k", 19) + T(184, y, resto, "mono", 19);
+    s += fila(84, "inferior", " 0010…") + fila(126, "superior", " 1001…");
+    s += flecha(150, 142, 150, 186);
+    s += R(60, 192, 320, 44, w("surface"), 'class="caja aparece"') + T(220, 220, "mensaje comprimido: 1011", "mono k", 17, 'text-anchor="middle" class="aparece"');
+    s += T(220, 266, "el intervalo se amplía × 2 por cada bit: × 16", "", 15, 'text-anchor="middle"');
+    s += T(20, 290, "Valores de ejemplo.", "mu", 13);
+    return s;
+  },
+  // 4. Términos de la fórmula
+  () => {
+    let s = `<text x="220" y="56" font-size="27" text-anchor="middle" class="mono"><tspan class="n">f<tspan font-size="17" dy="6">v</tspan></tspan><tspan dy="-6"> = ⌊</tspan><tspan class="k">p<tspan font-size="17" dy="6">v</tspan></tspan><tspan dy="-6">(</tspan><tspan class="c">2<tspan font-size="17" dy="-11">24</tspan></tspan><tspan dy="11"> − </tspan><tspan class="p">V</tspan>)⌋ <tspan class="bad">+ 1</tspan></text>`;
+    const L = [["p", "k", "probabilidad del token v"], ["2²⁴", "c", "16 777 216 unidades que se reparten"], ["V", "p", "151 936 salidas de la red"], ["⌊ ⌋", "", "redondea hacia abajo"], ["+ 1", "bad", "ningún token queda con frecuencia 0"], ["f", "n", "frecuencia entera del token v"]];
+    L.forEach(([a, c, t], k) => { const y = 102 + k * 32; s += `<g class="aparece" style="--k:${k}">${R(24, y - 20, 60, 28, w("surface"), 'class="caja"')}${T(54, y, a, "mono " + c, 17, 'text-anchor="middle"')}${T(98, y, t, "", 15)}</g>`; });
+    return s;
+  },
+  // 5. Shannons y bits con un dado
+  () => {
+    let s = R(24, 30, 88, 88, w("surface"), 'class="caja"');
+    [[46, 52], [90, 52], [68, 74], [46, 96], [90, 96]].forEach(([x, y]) => (s += `<circle cx="${x}" cy="${y}" r="7" style="fill:var(--ink)"/>`));
+    s += T(132, 62, "1 lanzamiento:", "mu", 15) + T(132, 96, "log₂ 6 = 2.585 Sh", "disp k", 23);
+    s += T(24, 156, "100 lanzamientos guardados juntos", "", 14) + R(24, 164, 330 * 259 / 300, 30, w("key"), 'class="crece"') + T(24 + 330 * 259 / 300 + 6, 185, "259 bits", "mono k", 14);
+    s += T(24, 222, "100 lanzamientos de 3 bits cada uno", "", 14) + R(24, 230, 330, 30, w("muted"), 'class="crece"') + T(360, 251, "300 bits", "mono mu", 14);
+    s += T(24, 288, "Lo entero es el total: el mensaje comprimido mide 1384 bits.", "mu", 13);
+    return s;
+  },
+  // 6. Las condiciones iniciales salen de SHA-512
+  () => {
+    let s = R(14, 112, 96, 76, w("key-soft")) + T(62, 140, "K", "disp k", 22, 'text-anchor="middle"') + T(62, 164, "x0, r, N", "mono k", 13, 'text-anchor="middle"');
+    s += flecha(112, 150, 140, 150) + R(144, 122, 78, 56, w("hash")) + T(183, 155, "SHA-512", "disp", 14, 'text-anchor="middle" style="fill:var(--surface)"');
+    const F = [["Cifrado 1", "c", `x⁽¹⁾ = ${p6(d.x1)}`, `r⁽¹⁾ = ${p6(d.r1)}`], ["Cifrado 2", "c", `x⁽²⁾ = ${p6(d.x2)}`, `r⁽²⁾ = ${p6(d.r2)}`], ["Posiciones", "p", `xp = ${p6(d.xp)}`, `rp = ${p6(d.rp)}`]];
+    F.forEach(([n, c, a, b], k) => { const y = 34 + k * 88; s += `<g class="aparece" style="--k:${k}"><path d="M224 150 C 236 150, 232 ${y + 38}, 248 ${y + 38}" class="linea"/>${R(250, y, 182, 76, w("surface"), 'class="caja"')}${T(262, y + 22, n, "disp " + c, 15)}${T(262, y + 44, a, "mono", 13.5)}${T(262, y + 64, b, "mono", 13.5)}</g>`; });
+    return s;
+  },
+  // 7. x0, r y N son la clave, como una contraseña
+  () => {
+    let s = R(20, 30, 400, 120, w("key-soft")) + T(40, 60, "Clave secreta K (como una contraseña)", "disp k", 16);
+    [["x0", C.x0], ["r", C.r], ["N", C.N]].forEach(([a, b], k) => { s += `<g class="aparece" style="--k:${k}">${R(40 + k * 128, 76, 116, 56, w("surface"), 'class="caja"')}${T(98 + k * 128, 98, a, "mono mu", 13, 'text-anchor="middle"')}${T(98 + k * 128, 122, String(b), "mono", 16, 'text-anchor="middle"')}</g>`; });
+    s += flecha(220, 154, 220, 184) + R(166, 188, 108, 40, w("hash")) + T(220, 214, "SHA-512", "disp", 15, 'text-anchor="middle" style="fill:var(--surface)"');
+    s += flecha(220, 230, 220, 252) + T(220, 276, "condiciones iniciales y parámetros de las 3 secuencias", "", 14, 'text-anchor="middle"');
+    return s;
+  },
+  // 8. SHA-512 da una cadena fija; el mapa logístico da la secuencia
+  () => {
+    const h = Mo.hex(d.hash);
+    let s = R(16, 30, 120, 44, w("hash")) + T(76, 58, "SHA-512", "disp", 16, 'text-anchor="middle" style="fill:var(--surface)"');
+    s += T(16, 96, "una cadena fija", "", 13.5) + T(16, 114, "de 512 bits", "", 13.5) + T(16, 134, h.slice(0, 12) + "…", "mono mu", 12);
+    s += flecha(76, 142, 76, 166) + T(16, 186, "se toman x y r", "mu", 13.5);
+    s += R(160, 30, 264, 244, w("surface"), 'class="caja"') + T(172, 54, "Mapa logístico, iterado:", "", 14) + T(172, 74, "x ← r · x · (1 − x)", "mono c", 14);
+    const X = i => 176 + i * 6.1, Y = y => 258 - y * 160;
+    s += `<polyline points="${[...sec1].map((y, i) => `${X(i).toFixed(1)},${Y(y).toFixed(1)}`).join(" ")}" style="fill:none;stroke:var(--ciph);stroke-width:1.5;opacity:.6"/>`;
+    s += [...sec1].map((y, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(y).toFixed(1)}" r="3" class="aparece" style="fill:var(--ciph);--k:${i / 8}"/>`).join("");
+    s += T(16, 230, "Esto es la secuencia:", "disp c", 14) + T(16, 250, "40 valores de la del", "mu", 12.5) + T(16, 266, "cifrado 1 (a la derecha)", "mu", 12.5);
+    return s;
+  },
+  // 9. Binarizar con umbral 0.5 y XOR
+  () => {
+    const x0 = 112, dx = 40;
+    let s = T(16, 30, "Umbral 0.5: mayor da 1, menor o igual da 0.", "mu", 14);
+    const filaN = (y, et, arr, c) => T(16, y, et, "mu", 13) + [...arr].map((v, i) => T(x0 + i * dx + 16, y, v.toFixed(2), "mono " + c, 12.5, 'text-anchor="middle"')).join("");
+    const filaB = (y, et, arr, c, big) => T(16, y, et, big ? "disp" : "mu", 13) + [...arr].map((b, i) => R(x0 + i * dx, y - 21, 32, 30, b ? w(c) : w("surface"), `class="aparece" style="--k:${i / 2};stroke:var(--${c})"`) + T(x0 + i * dx + 16, y, String(b), "mono", 16, `text-anchor="middle" ${b ? 'style="fill:var(--surface)"' : ""}`)).join("");
+    s += filaN(66, "secuencia 1", fl.s1.slice(0, 8), "c") + filaB(100, "bits 1", fl.b1.slice(0, 8), "ciph");
+    s += filaN(144, "secuencia 2", fl.s2.slice(0, 8), "c") + filaB(178, "bits 2", fl.b2.slice(0, 8), "ciph");
+    s += `<line x1="112" y1="198" x2="428" y2="198" style="stroke:var(--ink);stroke-width:1.5"/>`;
+    s += filaB(232, "XOR = flujo", fl.bits.slice(0, 8), "key", 1);
+    s += T(16, 280, `Primeros 8 valores del caso de estudio: el primer byte del flujo de clave es 0x${Mo.hex(fl.bytes)}.`, "mu", 12.5);
+    return s;
+  },
+  // 10. Transitorio y 8n iteraciones
+  () => {
+    const tot = C.N + 8 * C.n, A = 400 * C.N / tot;
+    let s = T(20, 44, "x⁽¹⁾", "mono c", 15) + flecha(34, 52, 34, 74);
+    s += R(20, 80, A, 54, w("muted"), 'class="crece" style="opacity:.55"') + R(20 + A + 2, 80, 398 - A, 54, w("ciph"), 'class="crece"');
+    s += T(20 + A / 2, 113, `N = ${C.N}`, "mono", 17, 'text-anchor="middle"') + T(20 + A + 200 - A / 2, 113, "8n", "mono", 16, 'text-anchor="middle" style="fill:var(--surface)"');
+    s += T(20, 164, "transitorio: se calculan", "", 14) + T(20, 182, "y se descartan", "", 14);
+    s += T(420, 164, `${8 * C.n} iteraciones`, "c", 14, 'text-anchor="end"') + T(420, 182, "adicionales: se usan", "c", 14, 'text-anchor="end"');
+    s += T(220, 236, `n = ${C.n} bytes → 8n = ${8 * C.n} valores, uno por bit`, "", 15, 'text-anchor="middle"');
+    s += T(220, 266, "«adicionales» = después del transitorio", "mu", 14, 'text-anchor="middle"');
+    return s;
+  },
+  // 11. Del tamaño en memoria a las claves válidas
+  () => {
+    const E = 400 / 144, x0 = 20;
+    let s = T(x0, 36, "Memoria: 144 bits", "mu", 14);
+    let x = x0; [["x0 · 64", 64], ["r · 64", 64], ["N · 16", 16]].forEach(([t, b]) => { s += R(x, 46, b * E - 2, 34, w("soft"), 'style="stroke:var(--line)"') + T(x + b * E / 2, 69, t, "mono", 13, 'text-anchor="middle"'); x += b * E; });
+    s += T(x0, 118, "Valores útiles: 112.95 bits", "", 14); x = x0;
+    [["55.32", 55.32, "key"], ["44.36", 44.36, "ciph"], ["13.27", 13.27, "pos"]].forEach(([t, b, c], k) => { s += R(x, 128, b * E - 2, 34, w(c), `class="crece" style="animation-delay:${.15 + k * .2}s"`) + (k < 2 ? T(x + b * E / 2, 151, t, "mono", 13, 'text-anchor="middle" style="fill:var(--surface)"') : T(x + b * E + 4, 151, t, "mono p", 13)); x += b * E; });
+    s += T(x0, 198, "97.67 % válidas: − 0.03 bits", "", 14) + R(x0, 208, 112.91 * E, 34, w("ok"), 'class="crece" style="animation-delay:.8s"') + T(x0 + 112.91 * E / 2, 231, "2¹¹²·⁹¹ ≈ 9.78 × 10³³ claves", "disp", 14, 'text-anchor="middle" style="fill:var(--surface)"');
+    s += `<line x1="${x0 + 100 * E}" y1="104" x2="${x0 + 100 * E}" y2="252" class="guia"/>` + T(x0 + 100 * E, 272, "mínimo recomendado: 2¹⁰⁰", "", 13, 'text-anchor="middle"');
+    return s;
+  },
+  // 12. Antes y después de SHA-512
+  () => {
+    const E = 330 / 120, x0 = 90;
+    let s = T(20, 40, "Espacio de clave (escala en bits)", "mu", 14);
+    s += T(20, 96, "Antes", "disp", 16) + R(x0, 74, 89.7 * E, 36, w("bad"), 'class="crece"') + T(x0 + 89.7 * E - 8, 98, "≈ 2⁸⁹·⁷", "mono", 14, 'text-anchor="end" style="fill:var(--surface)"');
+    s += T(20, 166, "Ahora", "disp", 16) + R(x0, 144, 112.91 * E, 36, w("ok"), 'class="crece" style="animation-delay:.4s"') + T(x0 + 112.91 * E - 8, 168, "2¹¹²·⁹¹", "mono", 14, 'text-anchor="end" style="fill:var(--surface)"');
+    s += `<line x1="${x0 + 100 * E}" y1="60" x2="${x0 + 100 * E}" y2="196" class="guia"/>` + T(x0 + 100 * E, 214, "mínimo 2¹⁰⁰", "", 13, 'text-anchor="middle"');
+    s += T(20, 250, "Antes, N solo desplazaba la misma secuencia.", "", 14) + T(20, 272, "Con SHA-512, cualquier cambio en K da secuencias distintas.", "", 14);
+    return s;
+  },
+];
+const NARRA = [
+  "las 28 capas apiladas. Una se abre: autoatención y una red prealimentada cuyas capas tienen 1536, 8960 y 1536 neuronas (alturas a escala).",
+  "un intervalo dividido según las probabilidades de ejemplo. El texto sigue con «noche», así que se conserva su subintervalo, de la mitad de la longitud.",
+  "los dos extremos comparten los primeros bits (en azul). Esos bits ya son seguros y pasan al mensaje comprimido.",
+  "la fórmula con cada término en un color y, debajo, qué significa cada uno.",
+  "la información de un lanzamiento de dado es decimal; el total de bits para guardar 100 lanzamientos es entero.",
+  "la clave K entra en SHA-512 y salen los seis valores de las tres secuencias, calculados en tu navegador con la clave del caso de estudio.",
+  "los tres componentes de la clave del caso de estudio. Se definen una vez; lo que se itera son los valores que salen de SHA-512.",
+  "a la izquierda, SHA-512 entrega una sola cadena de 512 bits. A la derecha, la secuencia: valores que salen de iterar el mapa logístico.",
+  "los 8 primeros valores reales de las dos secuencias de cifrado, sus bits y la XOR que forma el flujo de clave.",
+  "la secuencia en una línea de tiempo a escala: primero las N iteraciones que se descartan y después las 8n que se usan.",
+  "de los 144 bits en memoria a los 112.95 bits útiles y las 2¹¹²·⁹¹ claves válidas, con el mínimo recomendado marcado.",
+  "el espacio de clave antes y después de SHA-512, frente al mínimo recomendado de 2¹⁰⁰.",
+];
+const vista = $("pre-vista"), narra = $("pre-narra");
+recorrido($("recorrido"), i => {
+  vista.innerHTML = `<svg viewBox="0 0 440 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${DEF}${ILUS[i]()}</svg>`;
+  vista.classList.remove("entra"); void vista.offsetWidth; if (!sinMovimiento()) vista.classList.add("entra");
+  narra.innerHTML = "<b>Qué estás viendo:</b> " + NARRA[i];
+});
+
+/* ---------- Glosario (en el panel «Explorar») ---------- */
 const E = {
   "compresion.html": "Etapa 1 · Compresión", "clave.html": "Etapa 2 · Clave", "caos.html": "Etapa 3 · Caos", "cifrado.html": "Etapa 4 · Cifrado",
   "insercion.html": "Etapa 5 · Audio", "recuperacion.html": "Etapa 6 · Receptor", "seguridad.html": "Etapa 7 · Seguridad",
@@ -185,12 +393,13 @@ const G = [
 const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const inicial = t => norm(t)[0].toUpperCase();
 const idDe = t => "pre-t-" + norm(t).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-const dl = document.getElementById("pre-glos");
-dl.innerHTML = G.map(([t, d, p]) => `<div class="card" id="${idDe(t)}" data-txt="${norm(t + " " + d).replace(/"/g, "")}" data-letra="${inicial(t)}"><dt>${t}</dt><dd>${d}</dd><dd class="dónde"><a href="${p}">${E[p]} →</a></dd></div>`).join("");
+const dl = $("pre-glos");
+dl.innerHTML = G.map(([t, dd, p]) => `<div class="card" id="${idDe(t)}" data-txt="${norm(t + " " + dd).replace(/"/g, "")}"><dt>${t}</dt><dd>${dd}</dd><dd class="donde"><a href="${p}#paso-1">${E[p]} →</a></dd></div>`).join("");
 const letras = [...new Set(G.map(g => inicial(g[0])))];
-document.getElementById("pre-letras").innerHTML = letras.map(l => `<a href="#${idDe(G.find(g => inicial(g[0]) === l)[0])}">${l}</a>`).join("");
-
-const q = document.getElementById("pre-q"), cuenta = document.getElementById("pre-cuenta"), vacio = document.getElementById("pre-vacio");
+// Botones (no enlaces #) para no tocar el hash del recorrido; desplazan dentro del panel «Explorar».
+$("pre-letras").innerHTML = letras.map(l => `<button type="button" data-id="${idDe(G.find(g => inicial(g[0]) === l)[0])}">${l}</button>`).join("");
+$("pre-letras").addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) $(b.dataset.id)?.scrollIntoView({ block: "start", behavior: sinMovimiento() ? "auto" : "smooth" }); });
+const q = $("pre-q"), cuenta = $("pre-cuenta"), vacio = $("pre-vacio");
 function filtrar() {
   const s = norm(q.value.trim());
   let n = 0;

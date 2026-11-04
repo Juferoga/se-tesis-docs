@@ -12,15 +12,35 @@
 <script src="assets/js/modelo.js"></script>
 <script type="module" src="assets/js/sitio.js"></script>
 <style>
-.caos-panel { display: grid; gap: .5rem; font-size: .95rem; min-width: 0; }
-.caos-panel table.data { font-size: .85rem; }
-.caos-panel table.data td { font-family: var(--f-mono); white-space: nowrap; }
+/* Escena: el dibujo (2D o 3D) llena el lienzo; los datos van en una tarjeta flotante compacta. */
+#caos-lienzo #caos-cv, #caos-lienzo .caos-3d { position: absolute; inset: 0; }
+#caos-lienzo .caos-3d { overflow: hidden; }
+#caos-lienzo .caos-panel { position: absolute; left: 10px; bottom: 10px; z-index: 2; max-width: min(460px, calc(100% - 20px)); display: grid; gap: .3rem; font-size: .84rem; line-height: 1.35;
+  background: color-mix(in srgb, var(--surface) 90%, transparent); border: 1px solid var(--line); border-radius: 8px; padding: .5rem .7rem; box-shadow: 0 4px 18px rgb(0 0 0 / .12); backdrop-filter: blur(4px); }
+#caos-lienzo .caos-panel.der { left: auto; right: 10px; top: 10px; bottom: auto; max-width: min(300px, 34%); }
+#caos-lienzo .caos-panel:empty { display: none; }
+#caos-lienzo .caos-panel.entra { animation: caos-tarjeta .45s cubic-bezier(.2, 0, 0, 1) both; }
+@keyframes caos-tarjeta { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+#caos-lienzo .ayuda3d { bottom: auto; top: .5rem; }
+.caos-panel .ct { font: 600 .7rem/1.2 var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.caos-panel .mono { font-size: .8rem; }
+.caos-panel .note { margin: 0; font-size: .74rem; }
+.caos-panel .formula { margin: 0; padding: .3rem .5rem; font-size: .85rem; }
+.caos-panel .kv { gap: .1rem .8rem; font-size: .8rem; }
 .caos-panel .uno { color: var(--ciph); font-weight: 600; }
-.caos-panel ul { margin: 0; padding-left: 1.2rem; }
-.caos-grande { font: 700 var(--s2)/1.1 var(--f-display); color: var(--ciph); }
+.caos-fila { display: flex; flex-wrap: wrap; gap: .15rem .9rem; align-items: baseline; }
+.caos-grande { font: 700 1.3rem/1 var(--f-display); color: var(--ciph); }
 .caos-c1 { color: var(--ciph); font-weight: 600; }
 .caos-c2 { color: var(--key); font-weight: 600; }
 .caos-cp { color: var(--pos); font-weight: 600; }
+@media (max-width: 900px) {
+  #caos-lienzo .caos-panel, #caos-lienzo .caos-panel.der { left: 6px; right: 6px; top: auto; bottom: 6px; max-width: none; padding: .3rem .5rem; font-size: .72rem; gap: .15rem; }
+  .caos-panel .sec, #caos-lienzo .ayuda3d { display: none !important; }
+  .caos-panel .mono, .caos-panel .kv { font-size: .68rem; }
+  .caos-panel .formula { font-size: .72rem; padding: .2rem .4rem; }
+  .caos-grande { font-size: 1rem; }
+  #caos-narra { font-size: .78rem; line-height: 1.3; padding: 0 .55rem; border-block: .35rem solid transparent; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
 #caos-explora { margin-top: 2.5rem; display: grid; gap: 1rem; }
 #caos-explora h2 { font: 700 var(--s2)/1.2 var(--f-display); margin: 0; }
 #caos-explora input[type="number"] { width: 16ch; max-width: 100%; }
@@ -43,9 +63,8 @@
       <article class="paso" data-paso="mapa">
         <span class="eyebrow">Paso 1</span>
         <h2>Una regla muy simple</h2>
-        <p>El mapa logístico toma un número x entre 0 y 1 y calcula el siguiente con x_{n+1} = r·x_n·(1 − x_n). Luego repite con el resultado, una y otra vez. La lista de resultados es la secuencia.</p>
-        <p>r es el parámetro de control. En el modelo r está entre 3.99 y 4.</p>
-        <p class="analogia">Es como amasar: cada pasada estira la masa al doble y la dobla sobre sí misma. Dos granos de harina que empiezan juntos terminan, tras pocas pasadas, en lugares muy distintos de la masa.</p>
+        <p>El mapa logístico toma un x entre 0 y 1 y calcula el siguiente con x_{n+1} = r·x_n·(1 − x_n). Se repite con cada resultado: la lista es la secuencia. En el modelo, r está entre 3.99 y 4.</p>
+        <p class="analogia">Como amasar: cada pasada estira la masa y la dobla sobre sí misma.</p>
         <details><summary>Detalle técnico</summary><p>Cada paso cuesta dos multiplicaciones y una resta. En sistemas dinámicos el nombre técnico de esta lista de valores es «órbita»; aquí se dice secuencia.</p></details>
       </article>
       <article class="paso" data-paso="mano" hidden>
@@ -71,24 +90,22 @@
       <article class="paso" data-paso="rango" hidden>
         <span class="eyebrow">Paso 5</span>
         <h2>Por qué r está entre 3.99 y 4</h2>
-        <p>El mapa es caótico para 3.57 &lt; r ≤ 4, pero dentro de esa región hay ventanas periódicas donde la secuencia se repite, como la de periodo 3 cerca de r ≈ 3.83.</p>
-        <p>Además, el umbral 0.5 que convierte valores en bits solo queda equilibrado cerca de 4. En las pruebas, con r entre 3.7 y 3.8 la proporción de unos fue 72.7 %.</p>
-        <p class="analogia">La escena es un paisaje: hacia la derecha crece r, hacia el fondo crece x, y la altura dice cuánto tiempo pasa la secuencia en cada valor. Los picos son repeticiones; la alfombra baja y ancha es caos que cubre todo [0, 1].</p>
-        <details><summary>Detalle técnico</summary><p>Para cada r se calculan 3000 valores tras 500 de transitorio y se cuentan en 80 intervalos de x. Altura ∝ raíz cuadrada del conteo, recortada para que los picos no tapen el resto. La ventana de periodo 3 empieza en r = 1 + √8 ≈ 3.8284.</p></details>
+        <p>Hay caos para 3.57 &lt; r ≤ 4, pero con ventanas donde la secuencia se repite, como la de periodo 3 cerca de r ≈ 3.83. Y el umbral 0.5 solo reparte bien los bits cerca de 4: con r entre 3.7 y 3.8 salió 72.7 % de unos.</p>
+        <details><summary>Detalle técnico</summary><p>En el paisaje, los picos son repeticiones y la alfombra baja es caos. Hacia la derecha crece r, hacia el fondo crece x, y la altura dice cuánto tiempo pasa la secuencia en cada valor. Para cada r se calculan 3000 valores tras 500 de transitorio y se cuentan en 80 intervalos de x. Altura ∝ raíz cuadrada del conteo, recortada para que los picos no tapen el resto. La ventana de periodo 3 empieza en r = 1 + √8 ≈ 3.8284.</p></details>
       </article>
       <article class="paso" data-paso="lyapunov" hidden>
         <span class="eyebrow">Paso 6</span>
         <h2>El exponente de Lyapunov</h2>
-        <p>El exponente de Lyapunov λ mide qué tan rápido se separan, en promedio, dos arranques cercanos. Si λ es positivo la separación crece de forma exponencial: hay caos. Si es negativo, la secuencia se asienta en un ciclo.</p>
+        <p>El exponente de Lyapunov λ mide qué tan rápido se separan, en promedio, dos arranques cercanos. Si es positivo, hay caos; si es negativo, la secuencia cae en un ciclo.</p>
         <p>Con la clave del caso, λ vale 0.6483 para r(1), 0.6748 para r(2) y 0.6576 para rp. El máximo, en r = 4, es ln 2 ≈ 0.6931.</p>
-        <details><summary>Detalle técnico</summary><p>λ = promedio de ln|r·(1 − 2x_i)| a lo largo de la secuencia, que es el logaritmo del factor de estiramiento en cada paso.</p></details>
+        <details><summary>Detalle técnico</summary><p>Con λ &gt; 0 la separación crece de forma exponencial, como e^(λn). λ = promedio de ln|r·(1 − 2x_i)| a lo largo de la secuencia, que es el logaritmo del factor de estiramiento en cada paso.</p></details>
       </article>
       <article class="paso" data-paso="transitorio" hidden>
         <span class="eyebrow">Paso 7</span>
         <h2>El transitorio se descarta</h2>
-        <p>Antes de usar valores, cada secuencia se itera N = 6173 veces y esos resultados se botan. N es parte de la clave.</p>
-        <p>Todo se calcula en float64 (IEEE 754), un formato estándar de números reales. Así emisor y receptor obtienen secuencias idénticas, dígito por dígito.</p>
-        <p class="analogia">Es como barajar un mazo muchas veces antes de repartir: las primeras mezclas no se ven, pero hacen que la primera carta repartida no dependa de cómo estaba ordenado el mazo.</p>
+        <p>Primero se itera N = 6173 veces y esos valores se botan. N es parte de la clave.</p>
+        <p>Todo va en float64 (IEEE 754): emisor y receptor obtienen la misma secuencia.</p>
+        <p class="analogia">Como barajar mucho antes de repartir.</p>
         <details><summary>Detalle técnico</summary><p>float64 = IEEE 754 binary64, 53 bits de precisión. Como el caos amplifica cualquier diferencia, ambos lados deben usar exactamente la misma aritmética y el mismo orden de operaciones. La secuencia de posiciones descarta Np = N + 1000 = 7173.</p></details>
       </article>
       <article class="paso" data-paso="binario" hidden>
@@ -113,9 +130,11 @@
       <div class="mando"></div>
     </div>
     <div class="escena">
-      <div class="lienzo" id="caos-l2"><canvas id="caos-cv" role="img" aria-label="Visualización del paso actual"></canvas></div>
-      <div class="lienzo" id="caos-l3" hidden></div>
-      <div class="caos-panel" id="caos-panel"></div>
+      <div class="lienzo" id="caos-lienzo">
+        <canvas id="caos-cv" role="img" aria-label="Visualización del paso actual"></canvas>
+        <div class="caos-3d" id="caos-l3" hidden></div>
+        <div class="caos-panel" id="caos-panel" aria-live="polite"></div>
+      </div>
       <p class="narra" id="caos-narra"><b>Qué estás viendo:</b> …</p>
     </div>
   </div>
@@ -178,11 +197,19 @@ let unos = 0; for (const b of F.bits) unos += b;
 
 /* ---------- Lienzo 2D ---------- */
 const cv = $("caos-cv");
+const tarjeta = $("caos-panel");
+// Zona que tapa la tarjeta: franja de abajo, o columna derecha si la tarjeta va al lado
+function reserva() {
+  if (!tarjeta.innerHTML || tarjeta.hidden) return { abajo: 0, der: 0 };
+  return tarjeta.classList.contains("der") && getComputedStyle(tarjeta).top !== "auto"
+    ? { abajo: 0, der: tarjeta.offsetWidth + 16 } : { abajo: tarjeta.offsetHeight + 14, der: 0 };
+}
 function prep() {
-  const dpr = Math.min(devicePixelRatio || 1, 2), w = cv.clientWidth || 600, h = cv.clientHeight || w * 0.75;
-  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
-  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-  g.font = `${w < 420 ? 10 : 12}px ${color("f-mono")}`; g.lineCap = "round";
+  const dpr = Math.min(devicePixelRatio || 1, 2), W = cv.clientWidth || 600, H = cv.clientHeight || W * 0.75;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const r = reserva(), w = Math.max(200, W - r.der), h = Math.max(120, H - r.abajo);
+  g.font = `${w < 420 ? 10 : w > 900 ? 14 : 12}px ${color("f-mono")}`; g.lineCap = "round";
   return { g, w, h };
 }
 const K = n => color(n);
@@ -340,7 +367,7 @@ const DIBUJO = [
   },
   // 9 · 8n iteraciones
   (g, w, h, t) => {
-    const l = 16, ww = w - 32, y = Math.max(34, h * 0.16), bh = 26;
+    const l = 16, ww = w - 32, y = Math.max(34, h * 0.14), bh = Math.min(44, Math.max(24, h * 0.07));
     const xN = l + ww * d.N / TOT;
     g.fillStyle = K("soft"); g.fillRect(l, y, xN - l, bh); g.strokeStyle = K("line"); g.strokeRect(l + .5, y + .5, ww, bh);
     g.fillStyle = K("ciph"); g.fillRect(xN, y, (l + ww - xN) * t, bh);
@@ -348,7 +375,7 @@ const DIBUJO = [
     texto(g, "8n = 1400", l + ww, y - 12, K("ciph"), "right");
     texto(g, "a escala: 7573 iteraciones por secuencia", l, y + bh + 16, K("muted"));
     // ampliación: primeros 3 bytes
-    const tp = y + bh + Math.max(56, h * 0.18), n = 24, cw = ww / n, bx = 22;
+    const tp = y + bh + Math.max(56, h * 0.24), n = 24, cw = ww / n, bx = Math.min(56, Math.max(22, h * 0.09));
     g.strokeStyle = K("muted"); g.setLineDash([3, 3]); g.beginPath(); g.moveTo(xN, y + bh); g.lineTo(l, tp - 24); g.moveTo(l + ww, y + bh); g.lineTo(l + ww, tp - 24); g.stroke(); g.setLineDash([]);
     for (let i = 0; i < n; i++) {
       const x = l + i * cw, a = Math.max(0, Math.min(1, t * n - i));
@@ -364,7 +391,8 @@ const DIBUJO = [
 
 /* ---------- Escena 3D: paisaje de bifurcación ---------- */
 const l3 = $("caos-l3");
-const e = escena3d(l3, { camara: [0.2, 6.2, 7.6], mirar: [-0.2, 0.1, 0.2] });
+const FOV = 45, RAD = Math.PI / 180;
+const e = escena3d(l3, { camara: [0.2, 6.2, 7.6], mirar: [-0.2, 0.1, 0.2], fov: FOV });
 let col = e.colores();
 const RC = 180, XB = 80, ANCHO = 6, FONDO = 4;
 const rX = r => ((r - 3.5) / 0.5) * ANCHO - ANCHO / 2, xZ = x => (0.5 - x) * FONDO;
@@ -414,32 +442,54 @@ rot("3.57", rX(3.57), 0.9, -FONDO / 2, "muted");
 e.scene.add(grupo);
 e.alTema(c => { col = c; teñir(); franja.material.color.copy(c.ciph); umbral.material.color.copy(c.ink); marcas.forEach(m => m.material.color.copy(c[m.userData.c])); });
 
-/* ---------- Panel y narración ---------- */
-const tabla = (cab, filas) => `<div class="scroll"><table class="data"><thead><tr>${cab.map(c => `<th>${c}</th>`).join("")}</tr></thead><tbody>${filas.map(f => `<tr>${f.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+/* ---------- Cámara del paisaje: encuadre según el tamaño del lienzo y la tarjeta ---------- */
+// Caja que debe verse: x en [−3.6, 3.3] (con rótulos), z en [−2, 2.7], alturas hasta ~1.9
+const VISTA3D = { c: [-0.15, 0.35], w: 3.5, d: 2.45, alto: 1.4, el: 36, az: -14 };
+const INICIO3D = { ...VISTA3D, el: 78, az: 0, w: 4.6 };
+function objetivo3d(v) {
+  const W = l3.clientWidth || 600, H = l3.clientHeight || 400, res = reserva().abajo;
+  const t = Math.tan(FOV * RAD / 2), tv = t * Math.max(60, H - res) / H, th = t * W / H, el = v.el * RAD;
+  const dist = Math.max((v.d * Math.sin(el) + v.alto * Math.cos(el)) / tv + 0.3 * v.d * Math.cos(el), v.w / th + v.d * Math.cos(el)) * 1.02;
+  return { T: new THREE.Vector3(v.c[0], 0.35, v.c[1]), dist, el, az: v.az * RAD, res, W, H };
+}
+function colocar3d(o) {
+  e.controls.target.copy(o.T);
+  e.camera.position.set(o.T.x + o.dist * Math.cos(o.el) * Math.sin(o.az), o.T.y + o.dist * Math.sin(o.el), o.T.z + o.dist * Math.cos(o.el) * Math.cos(o.az));
+  e.camera.lookAt(o.T);
+  e.camera.setViewOffset(o.W, o.H, 0, o.res / 2, o.W, o.H);
+}
+function volar3d(ms) {
+  const a = objetivo3d(INICIO3D), b = objetivo3d(VISTA3D), L = (x, y, t) => x + (y - x) * t;
+  return animar(ms, t => colocar3d({ ...b, dist: L(a.dist, b.dist, t), el: L(a.el, b.el, t), az: L(a.az, b.az, t) }), () => colocar3d(b));
+}
+new ResizeObserver(() => { if (!l3.hidden && l3.clientWidth) colocar3d(objetivo3d(VISTA3D)); }).observe(l3);
+
+/* ---------- Tarjeta de datos y narración ---------- */
 const bitTxt = (b, n) => Array.from(b.slice(0, n), (v, i) => v + (i % 8 === 7 ? " " : "")).join("").trim();
+const LADO = [false, false, true, false, false, false, false, false, false, false]; // tarjeta a la derecha (telaraña)
 const PANEL = [
-  () => `<p class="formula">x_{n+1} = r · x_n · (1 − x_n)</p><p class="note">Aquí r = r(1) = ${f6(r1)}. Los puntos verdes empiezan en la mitad izquierda; los naranjas, en la derecha.</p>`,
-  () => tabla(["n", "cálculo", "x_{n+1}"], mano.slice(0, 5).map((v, i) => [String(i), `${f6(r1)} × ${f6(v)} × (1 − ${f6(v)})`, f6(mano[i + 1])])),
-  () => `<dl class="kv"><dt>Arranque</dt><dd class="mono">x(1) = ${f6(x1)}</dd><dt>Iteraciones dibujadas</dt><dd class="mono">30</dd><dt>Últimos valores</dt><dd class="mono">${cob.slice(26, 31).map(v => v.toFixed(4)).join(", ")}</dd></dl>`,
-  () => tabla(["iteración", "a", "b", "|a − b|"], [0, 10, 20, 30, sep, 40, 60].map(i => [String(i), f6(sa[i]), f6(sb[i]), Math.abs(sa[i] - sb[i]).toExponential(2)])),
-  () => `<ul><li>Región caótica: 3.57 &lt; r ≤ 4.</li><li>Ventana de periodo 3 cerca de r ≈ 3.83: la secuencia se repite cada 3 valores.</li><li>Con r entre 3.7 y 3.8, la proporción de unos fue 72.7 %.</li><li>Parámetros del caso, dentro de la franja: <span class="caos-c1">r(1) = ${f6(d.r1)}</span>, <span class="caos-c2">r(2) = ${f6(d.r2)}</span>, <span class="caos-cp">rp = ${f6(d.rp)}</span>.</li></ul>`,
-  () => `<dl class="kv"><dt class="caos-c1">λ(r(1)), r(1) = ${f6(d.r1)}</dt><dd class="mono">${lam[0].toFixed(4)}</dd><dt class="caos-c2">λ(r(2)), r(2) = ${f6(d.r2)}</dt><dd class="mono">${lam[1].toFixed(4)}</dd><dt class="caos-cp">λ(rp), rp = ${f6(d.rp)}</dt><dd class="mono">${lam[2].toFixed(4)}</dd><dt>Máximo, r = 4</dt><dd class="mono">ln 2 ≈ 0.6931</dd></dl>`,
-  () => `<dl class="kv"><dt>Arranque x(1)</dt><dd class="mono">${f6(x1)}</dd><dt>Iteraciones descartadas</dt><dd class="mono">N = ${d.N}</dd><dt>Primer valor usado</dt><dd class="mono">${f6(F.s1[0])} (iteración ${d.N + 1})</dd><dt>Aritmética</dt><dd>float64, IEEE 754</dd></dl>`,
-  () => tabla(["i", "secuencia 1", "bit", "secuencia 2", "bit"], [...Array(8)].map((_, i) => [String(i + 1), f6(F.s1[i]), F.b1[i] ? '<span class="uno">1</span>' : "0", f6(F.s2[i]), F.b2[i] ? '<span class="uno">1</span>' : "0"])),
-  () => `<div class="scroll"><table class="data"><tbody><tr><th>Secuencia 1</th><td>${bitTxt(F.b1, 32)}</td></tr><tr><th>Secuencia 2</th><td>${bitTxt(F.b2, 32)}</td></tr><tr><th>XOR = flujo</th><td>${bitTxt(F.bits, 32)}</td></tr></tbody></table></div><p>Unos en el flujo completo: <span class="caos-grande">${(unos / L * 100).toFixed(2)} %</span> <span class="note">(${unos} de ${L} bits, calculado)</span></p>`,
-  () => `<dl class="kv"><dt>Mensaje cifrado</dt><dd class="mono">n = ${NB} bytes</dd><dt>Bits = valores por secuencia</dt><dd class="mono">8n = ${L}</dd><dt>Iteraciones por secuencia</dt><dd class="mono">${d.N} + ${L} = ${TOT}</dd></dl>`,
+  () => `<p class="formula">x_{n+1} = r · x_n · (1 − x_n)</p><p class="note sec">Aquí r = r(1) = ${f6(r1)}. Verdes: arrancan en la mitad izquierda; naranjas, en la derecha.</p>`,
+  () => `<div class="caos-fila mono"><span>x(1) = ${f6(x1)}</span><span>r(1) = ${f6(r1)}</span></div><div class="mono sec">${f6(r1)} × ${f6(mano[0])} × (1 − ${f6(mano[0])}) = ${f6(mano[1])}</div>`,
+  () => `<dl class="kv"><dt>Arranque</dt><dd class="mono">x(1) = ${f6(x1)}</dd><dt>Rebotes</dt><dd class="mono">30</dd><dt class="sec">Últimos valores</dt><dd class="mono sec">${cob.slice(26, 31).map(v => v.toFixed(4)).join(", ")}</dd></dl>`,
+  () => `<div class="caos-fila"><span>Diferencia inicial: <b class="mono">10⁻¹⁰</b></span><span>Pasa de 0.1 en la iteración <b class="mono">${sep}</b></span></div><div class="mono sec">|a − b|: it. 10 → ${Math.abs(sa[10] - sb[10]).toExponential(2)} · it. 20 → ${Math.abs(sa[20] - sb[20]).toExponential(2)} · it. 30 → ${Math.abs(sa[30] - sb[30]).toExponential(2)}</div>`,
+  () => `<div class="caos-fila mono"><span class="caos-c1">r(1) = ${f6(d.r1)}</span><span class="caos-c2">r(2) = ${f6(d.r2)}</span><span class="caos-cp">rp = ${f6(d.rp)}</span></div><p class="note sec">Caos para 3.57 &lt; r ≤ 4 · ventana de periodo 3 cerca de r ≈ 3.83 · con r entre 3.7 y 3.8, 72.7 % de unos.</p>`,
+  () => `<div class="caos-fila mono"><span class="caos-c1">λ(r(1)) = ${lam[0].toFixed(4)}</span><span class="caos-c2">λ(r(2)) = ${lam[1].toFixed(4)}</span><span class="caos-cp">λ(rp) = ${lam[2].toFixed(4)}</span></div><p class="note sec">Máximo, en r = 4: ln 2 ≈ 0.6931.</p>`,
+  () => `<div class="caos-fila mono"><span>N = ${d.N} descartadas</span><span>primer valor usado: ${f6(F.s1[0])} (iteración ${d.N + 1})</span></div><p class="note sec">Aritmética float64 (IEEE 754) en emisor y receptor.</p>`,
+  () => `<div class="mono"><span class="caos-c1">sec 1</span> ${[0, 1, 2].map(i => f6(F.s1[i])).join(", ")}… → <b>${F.b1.slice(0, 3).join(" ")}</b></div><div class="mono"><span class="caos-c2">sec 2</span> ${[0, 1, 2].map(i => f6(F.s2[i])).join(", ")}… → <b>${F.b2.slice(0, 3).join(" ")}</b></div>`,
+  () => `<div><span class="caos-grande">${(unos / L * 100).toFixed(2)} %</span> de unos en el flujo <span class="note">(${unos} de ${L} bits)</span></div><div class="mono sec">XOR: ${bitTxt(F.bits, 16)}…</div>`,
+  () => `<div class="caos-fila mono"><span>n = ${NB} bytes</span><span>8n = ${L} valores</span><span>${d.N} + ${L} = ${TOT} iteraciones</span></div>`,
 ];
 const NARRA = [
-  "21 puntos repartidos en [0, 1] (arriba) y adónde los lleva una aplicación de la regla (abajo). Cada mitad se estira sobre casi todo el intervalo, y la mitad derecha llega en orden inverso: es el doblez.",
+  "21 puntos de [0, 1] (arriba) y adónde los lleva una aplicación de la regla (abajo): cada mitad se estira sobre casi todo el intervalo y la derecha llega en orden inverso, el doblez.",
   "los cinco primeros valores de la secuencia, uno por columna. La línea discontinua es 0.5.",
   "el diagrama de telaraña de la secuencia 1: 30 rebotes entre la curva y la recta y = x.",
-  "arriba, las dos trayectorias; abajo, su diferencia en escala logarítmica. La diferencia crece en línea recta (crecimiento exponencial) hasta llenar el intervalo.",
-  "el paisaje de bifurcación en 3D. Arrástralo para girarlo. La franja verde transparente es [3.99, 4) y las tres rayas son r(1), r(2) y rp; la línea discontinua del suelo es el umbral 0.5.",
-  "el exponente de Lyapunov según r. En verde, caos (λ > 0); en rojo, ciclos (λ < 0). Los puntos son r(1), r(2) y rp; la franja es [3.99, 4).",
-  "los 7573 valores de la secuencia 1 en orden: en gris los 6173 del transitorio, que se descartan, y en verde los 1400 que se usan.",
+  "arriba, las dos trayectorias; abajo, su diferencia en escala logarítmica, que crece en línea recta (crecimiento exponencial).",
+  "el paisaje de bifurcación en 3D: los picos son repeticiones y la alfombra baja es caos. La franja verde es [3.99, 4); las tres rayas, r(1), r(2) y rp; la línea discontinua del suelo, el umbral 0.5.",
+  "el exponente de Lyapunov según r: verde, caos (λ > 0); rojo, ciclos (λ < 0). Los puntos son r(1), r(2) y rp; la franja, [3.99, 4).",
+  "los 7573 valores de la secuencia 1 en orden: en gris los 6173 del transitorio, que se descartan; en verde los 1400 que se usan.",
   "los primeros valores tras el transitorio cayendo arriba o abajo de 0.5; debajo de cada uno, su bit.",
   "arriba, las dos filas de bits y su XOR (32 primeros); abajo, los 1400 bits del flujo de clave.",
-  "la barra completa a escala y, debajo, la ampliación de las primeras 24 iteraciones usadas de la secuencia 1: cada una da un bit (lleno = 1).",
+  "la barra completa a escala y, debajo, la ampliación de las primeras 24 iteraciones usadas: cada una da un bit (lleno = 1).",
 ];
 
 let paso = 0, prog = 1, cancelar = () => {};
@@ -451,15 +501,21 @@ function mostrar(i) {
   cancelar();
   paso = i;
   const es3d = DIBUJO[i] === null;
-  $("caos-l2").hidden = es3d; l3.hidden = !es3d;
-  $("caos-panel").innerHTML = PANEL[i]();
+  cv.hidden = es3d; l3.hidden = !es3d;
+  tarjeta.classList.toggle("der", LADO[i]);
+  tarjeta.innerHTML = PANEL[i]();
+  tarjeta.classList.remove("entra"); void tarjeta.offsetWidth; if (!sinMovimiento()) tarjeta.classList.add("entra");
   $("caos-narra").innerHTML = "<b>Qué estás viendo:</b> " + NARRA[i];
   const ms = [1600, 2400, 3200, 2600, 1400, 1600, 2200, 1800, 2200, 1600][i];
-  if (es3d) { cancelar = animar(ms, t => (paisaje.scale.y = Math.max(0.001, t))); return; }
+  if (es3d) {
+    const c1 = animar(ms, t => (paisaje.scale.y = Math.max(0.001, t))), c2 = volar3d(2200);
+    cancelar = () => { c1(); c2(); };
+    return;
+  }
   prog = 0; cancelar = animar(ms, t => { prog = t; dibujar(); }, () => { prog = 1; dibujar(); });
 }
 recorrido($("recorrido"), i => mostrar(i));
-new ResizeObserver(() => dibujar()).observe($("caos-l2"));
+new ResizeObserver(() => dibujar()).observe($("caos-lienzo"));
 alCambiarTema(() => { dibujar(); dibujarX(); });
 if (document.fonts?.ready) document.fonts.ready.then(() => { dibujar(); dibujarX(); });
 
