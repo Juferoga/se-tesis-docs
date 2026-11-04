@@ -266,6 +266,8 @@
 <script type="module">
 import { recorrido, animar, sinMovimiento, color, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
+import { gestorCapas } from "./assets/js/capas-rsp.js";
+import { capasSeguridad } from "./assets/js/seguridad-capas.js";
 const $ = id => document.getElementById(id);
 const fmtN = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 const SUP = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
@@ -598,7 +600,7 @@ function mostrar(i) {
   primera = false;
 }
 aplicar(est);
-recorrido($("recorrido"), i => mostrar(i));
+recorrido($("recorrido"), i => mostrar(i), gestorCapas(capasSeguridad()));
 
 /* ---------- Para explorar ---------- */
 function contar() {

@@ -285,6 +285,7 @@
 <script type="module">
 import { recorrido, animar, color, alCambiarTema, sinMovimiento, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
+import { capasCaos } from "./assets/js/caos-capas.js";
 
 const M = window.Modelo, C = M.CASO, NB = 175, L = NB * 8;
 const $ = id => document.getElementById(id);
@@ -479,52 +480,6 @@ const DIBUJO = [
   },
 ];
 
-/* ---------- Dibujos de las capas de detalle (↓) ---------- */
-const LN2 = Math.LN2;
-const hist = (() => { const s = M.secuencia(x1, r1, d.N, 200000), B = 50, h = new Float64Array(B); for (const v of s) h[Math.min(B - 1, Math.floor(v * B))]++; return Array.from(h, c => c / s.length * B); })();
-const rho = x => 1 / (Math.PI * Math.sqrt(x * (1 - x)));
-const CAPA = {
-  // paso 1 · conjugación: la tienda T y f4, unidas por h
-  0: (g, w, h, t) => {
-    const lado = w > 1.3 * h, S = Math.max(60, Math.min(lado ? (w - 140) / 2 : w - 70, lado ? h - 60 : (h - 110) / 2));
-    const cajas = lado ? [[(w - 2 * S - 100) / 2 + 20, (h - S) / 2 - 12], [(w + 100) / 2 + 10, (h - S) / 2 - 12]] : [[(w - S) / 2 + 10, 10], [(w - S) / 2 + 10, 10 + S + 80]];
-    [[y => 1 - Math.abs(1 - 2 * y), "T(y) = 1 − |1 − 2y|"], [x => 4 * x * (1 - x), "f₄(x) = 4x(1 − x)"]].forEach(([f, nom], k) => {
-      const [x0, y0] = cajas[k], X = v => x0 + v * S, Y = v => y0 + (1 - v) * S;
-      ejes(g, x0, y0, S, S, { ys: [0, 1] });
-      g.strokeStyle = K("line"); g.beginPath(); g.moveTo(X(0), Y(0)); g.lineTo(X(1), Y(1)); g.stroke();
-      g.strokeStyle = k ? K("ciph") : K("hash"); g.lineWidth = 2; g.beginPath();
-      const n = Math.max(2, Math.round(200 * t));
-      for (let i = 0; i <= n; i++) { const v = i / 200; i ? g.lineTo(X(v), Y(f(v))) : g.moveTo(X(v), Y(f(v))); } g.stroke(); g.lineWidth = 1;
-      texto(g, nom, X(0.5), y0 + S + 8, K("muted"), "center", "top");
-    });
-    const [a, b] = cajas;
-    if (lado) { texto(g, "h →", (a[0] + S + b[0]) / 2, a[1] + S / 2 - 9, K("ink"), "center"); texto(g, "sin²(πy/2)", (a[0] + S + b[0]) / 2, a[1] + S / 2 + 9, K("muted"), "center"); }
-    else texto(g, "↓ h(y) = sin²(πy/2)", a[0] + S / 2, a[1] + S + 52, K("ink"), "center");
-  },
-  // paso 6 · λ(r) con la referencia ln 2
-  5: (g, w, h, t) => {
-    DIBUJO[5](g, w, h, 1);
-    const l = 46, tp = 14, ww = w - l - 14, hh = h - tp - 36, Y = v => tp + (0.9 - v) / 2.1 * hh;
-    g.setLineDash([6, 4]); g.strokeStyle = K("ink"); g.globalAlpha = t; g.beginPath(); g.moveTo(l, Y(LN2)); g.lineTo(l + ww * t, Y(LN2)); g.stroke(); g.setLineDash([]);
-    texto(g, "ln 2 ≈ 0.6931", l + 8, Y(LN2) - 10, K("ink")); g.globalAlpha = 1;
-  },
-  // paso 8 · histograma de la secuencia 1 frente a la densidad del arcoseno
-  7: (g, w, h, t) => {
-    const l = 44, tp = 16, ww = w - l - 14, hh = h - tp - 40, top = 5, X = v => l + v * ww, Y = v => tp + (1 - Math.min(top, v) / top) * hh;
-    ejes(g, l, tp, ww, hh, { ys: [] });
-    for (const v of [0, 1, 2, 3, 4, 5]) texto(g, String(v), l - 5, Y(v), K("muted"), "right");
-    const B = hist.length, bw = ww / B;
-    for (let i = 0; i < B; i++) { const v = hist[i] * t; g.fillStyle = (i + 0.5) / B > 0.5 ? K("ciph") : K("line"); g.fillRect(X(i / B) + 1, Y(v), bw - 2, Y(0) - Y(v)); }
-    g.strokeStyle = K("ink"); g.lineWidth = 1.6; g.beginPath();
-    for (let i = 1; i < 400; i++) { const x = i / 400; i > 1 ? g.lineTo(X(x), Y(rho(x))) : g.moveTo(X(x), Y(rho(x))); } g.stroke(); g.lineWidth = 1;
-    g.setLineDash([5, 4]); g.strokeStyle = K("muted"); g.beginPath(); g.moveTo(X(0.5), tp); g.lineTo(X(0.5), tp + hh); g.stroke(); g.setLineDash([]);
-    for (const v of [0, 0.5, 1]) texto(g, String(v), X(v), tp + hh + 12, K("muted"), "center");
-    texto(g, "ρ(x), r = 4", X(0.5) + 8, Y(1.4) - 10, K("ink"));
-    texto(g, "secuencia 1", X(0.5) + 8, Y(1.4) + 8, K("muted"));
-  },
-};
-CAPA[7].mismo = true; // las dos capas del paso 8 muestran el mismo histograma
-
 /* ---------- Escena 3D: paisaje de bifurcación ---------- */
 const l3 = $("caos-l3");
 const FOV = 45, RAD = Math.PI / 180;
@@ -644,10 +599,10 @@ const NARRA = [
   "la barra completa a escala y, debajo, la ampliación de las primeras 24 iteraciones usadas: cada una da un bit (lleno = 1).",
 ];
 
-let paso = 0, prog = 1, cancelar = () => {}, infoAct = "", capa = 0;
+let paso = 0, prog = 1, cancelar = () => {}, infoAct = "";
 tarjeta.querySelector(".boton-i").addEventListener("click", () => abrirInfo({ eyebrow: `Paso ${paso + 1} · datos de la escena`, titulo: TIT[paso], secciones: [{ html: `<div class="caos-info">${infoAct}</div>` }] }));
 function dibujar() {
-  const fn = (capa && CAPA[paso]) || DIBUJO[paso]; if (!fn) return;
+  const fn = DIBUJO[paso]; if (!fn) return;
   const { g, w, h } = prep(); fn(g, w, h, prog);
 }
 function mostrar(i) {
@@ -669,13 +624,7 @@ function mostrar(i) {
   }
   prog = 0; cancelar = animar(ms, t => { prog = t; dibujar(); }, () => { prog = 1; dibujar(); });
 }
-recorrido($("recorrido"), i => { capa = 0; mostrar(i); }, (i, k) => {
-  if (i !== paso) return;
-  const antes = !!(capa && CAPA[i]); capa = k;
-  if (!CAPA[i] || DIBUJO[i] === null) return;
-  if (antes && k && CAPA[i].mismo) return;
-  cancelar(); prog = 0; cancelar = animar(1200, t => { prog = t; dibujar(); }, () => { prog = 1; dibujar(); });
-});
+recorrido($("recorrido"), i => mostrar(i), (i, k, titulo, vista) => capasCaos(vista, i, k)); // cada capa (↓) tiene su animación propia en la vista
 new ResizeObserver(() => dibujar()).observe($("caos-lienzo"));
 alCambiarTema(() => { dibujar(); dibujarX(); });
 if (document.fonts?.ready) document.fonts.ready.then(() => { dibujar(); dibujarX(); });

@@ -273,6 +273,8 @@
 <footer class="pie"></footer>
 <script type="module">
 import { recorrido, sinMovimiento } from "./assets/js/guia.js";
+import { gestorCapas } from "./assets/js/capas-rsp.js";
+import { capasPreguntas } from "./assets/js/preguntas-capas.js";
 const $ = id => document.getElementById(id);
 const Mo = window.Modelo, C = Mo.CASO;
 const d = await Mo.derivar(C.x0, C.r, C.N);
@@ -435,7 +437,7 @@ recorrido($("recorrido"), i => {
   vista.innerHTML = `<svg viewBox="0 0 440 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${DEF}${ILUS[i]()}</svg>`;
   vista.classList.remove("entra"); void vista.offsetWidth; if (!sinMovimiento()) vista.classList.add("entra");
   narra.innerHTML = "<b>Qué estás viendo:</b> " + NARRA[i];
-});
+}, gestorCapas(capasPreguntas()));
 
 /* ---------- Glosario (en el panel «Explorar») ---------- */
 const E = {

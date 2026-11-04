@@ -11,7 +11,8 @@
 //
 // Uso:
 //   import { recorrido } from "./assets/js/guia.js";
-//   recorrido(document.getElementById("recorrido"), (i, nombre, dir) => { /* actualizar la escena */ });
+//   recorrido(document.getElementById("recorrido"), (i, nombre, dir) => { /* actualizar la escena */ },
+//             (i, k, titulo, vista) => { /* k > 0: dibujar en «vista» la animación de la capa k del paso i */ });
 //
 // Teclado: → espacio y AvPág avanzan; ← y RePág retroceden; ↓ ↑ entran y salen de las capas de detalle; Inicio y Fin. Al pasar del último paso se abre la
 // etapa siguiente, y al retroceder desde el primero, el último paso de la etapa anterior: todo el sitio es una
@@ -168,6 +169,12 @@ export function recorrido(raiz, alCambiar, alNivel) {
   pasos.forEach(p => prepararPaso(p, escena));
   let nivel = 0;
   const niveles = pasos.map((p, i) => prepararNiveles(p, i, k => irNivel(k)));
+  // Vista propia de las capas: un contenedor que cubre la escena mientras se profundiza.
+  // La página dibuja allí la animación de cada capa con alNivel(i, k, titulo, vista).
+  const vista = document.createElement("div");
+  vista.className = "vista-capa";
+  vista.hidden = true;
+  escena?.append(vista);
   function irNivel(k, { desdeHash = false } = {}) {
     const lista = niveles[actual] || [];
     k = Math.max(0, Math.min(lista.length, k));
@@ -178,13 +185,19 @@ export function recorrido(raiz, alCambiar, alNivel) {
     p.dataset.nivel = k;
     lista.forEach((n, j) => n.classList.toggle("activa", j === k - 1));
     raiz.classList.toggle("profundo", k > 0);
+    if (escena) {
+      escena.classList.toggle("con-capa", k > 0);
+      vista.hidden = k === 0;
+      vista.dataset.capa = k ? `${actual + 1}-${k}` : "";
+      if (k) { vista.replaceChildren(); if (!sinMovimiento()) { vista.classList.remove("entra"); void vista.offsetWidth; vista.classList.add("entra"); } }
+    }
     const visible = k ? lista[k - 1] : p;
     if (k) matematica(lista[k - 1]);
     visible.classList.remove("baja", "sube");
     if (!sinMovimiento() && !desdeHash) { void visible.offsetWidth; visible.classList.add(dir > 0 ? "baja" : "sube"); }
     if (!desdeHash) history.replaceState(null, "", `#paso-${actual + 1}${k ? "-" + k : ""}`);
     document.dispatchEvent(new CustomEvent("nivel-cambiado", { detail: { i: actual, nivel: k, total: lista.length } }));
-    try { alNivel?.(actual, k, lista[k - 1]?.dataset.titulo); } catch (e) { console.error(e); }
+    try { alNivel?.(actual, k, lista[k - 1]?.dataset.titulo, k ? vista : null); } catch (e) { console.error(e); }
   }
   const ant = Object.assign(document.createElement("button"), { className: "ghost", type: "button" });
   const sig = Object.assign(document.createElement("button"), { type: "button" });

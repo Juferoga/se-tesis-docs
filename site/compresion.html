@@ -546,6 +546,7 @@ tr.uno td:first-child { font-weight: 600; }
 <script type="module">
 import { recorrido, animar, sinMovimiento, color, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
+import { capaCompresion } from "./assets/js/compresion-capas.js";
 
 const $ = id => document.getElementById(id);
 const miles = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -1128,10 +1129,7 @@ recorrido($("recorrido"), (i) => {
   narra.innerHTML = `<b>Qué estás viendo:</b> ${NARRA[i]}`;
   primera = false;
   foco = -1;
-}, (i, k) => {
-  // En el paso 5, cada capa de detalle deja encendida la subcapa de la que habla (1: autoatención, 2: red prealimentada).
-  foco = i === 4 && k ? k - 1 : -1;
-});
+}, capaCompresion);
 </script>
 </body>
 </html>

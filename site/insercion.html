@@ -241,6 +241,7 @@ body { grid-template-columns: minmax(0, 1fr); }
 <script type="module">
 import { recorrido, animar, sinMovimiento, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
+import { crearCapas } from "./assets/js/insercion-capas.js";
 const Mo = window.Modelo, C = Mo.CASO, M = C.M, L = 8 * C.n, FS = 44100, TRAMAS = M / 2;
 const $ = id => document.getElementById(id);
 const fmtN = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ").replace("-", "−");
@@ -411,18 +412,6 @@ document.querySelectorAll("[data-histo]").forEach(el => {
   g += `<text x="2" y="${tope(0)}">${HOBS[0]}</text><text x="${W - 2}" y="${tope(NB - 1)}" text-anchor="end">${HOBS[NB - 1]}</text>`;
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Histograma de las 1400 posiciones: más altas en los extremos del audio">${g}</svg>`;
 });
-// Versión 3D detrás de las cintas: una barra por tramo y una marca con la referencia.
-const gHist = new THREE.Group(); scene.add(gHist); gHist.visible = false;
-const ZH = ZL - 2.2, EH = 4.6 / 210, barras = [];
-HOBS.forEach((n, k) => {
-  const x = X0 + LEN * (k + 0.5) / NB, w = LEN / NB * 0.78;
-  const bar = new THREE.Mesh(new THREE.BoxGeometry(w, Math.max(0.02, n * EH), 0.6), mat("pos", { transparent: true, opacity: .8 }));
-  bar.position.set(x, -1.1 + n * EH / 2, ZH);
-  const ref = new THREE.Mesh(new THREE.BoxGeometry(w * 1.08, 0.05, 0.66), mat("ink"));
-  ref.position.set(x, -1.1 + HREF[k] * EH, ZH);
-  bar.userData = { k, n }; gHist.add(bar, ref); barras.push(bar);
-});
-{ const u = new THREE.Mesh(new THREE.BoxGeometry(LEN, 0.03, 0.03), mat("muted")); u.position.set(0, -1.1 + 70 * EH, ZH + 0.34); gHist.add(u); }
 
 /* ---------- Cámara: encuadre según el aspecto del lienzo, dejando libre lo que tapan las tarjetas ---------- */
 const lienzo = $("ins-lienzo");
@@ -496,7 +485,6 @@ const TOMA = {
   agujas: { c: [0, 0.6, 0.4], dir: [0, 0.38, 1], ancho: 26.5, alto: 5.2, retrato: { dir: [0.8, 0.5, 1], caja: [[-13, -1.2, -1.3], [12.3, 2.4, 2.1]] } },
   ocho: { c: [0, 2.6, 0], dir: [0, 0.22, 1], ancho: 26.5, alto: 7.2, retrato: { dir: [0.8, 0.35, 1], caja: [[-13, -1.2, -1.3], [12.3, 6.2, 2.1]] } },
   muestras: { c: [0, 0.1, 0], dir: [0, 0.1, 1], ancho: 13.4, alto: 5.6 },
-  hist: { c: [0, 1.2, -1], dir: [0, 0.18, 1], ancho: 26.5, alto: 6.4, retrato: { dir: [0.55, 0.2, 1], caja: [[-13, -1.3, -3.5], [12.3, 3.6, 2.1]] } },
   wav: { c: [-0.45, 0.05, -0.2], dir: [0.25, 0.5, 1], ancho: 6.6, alto: 3.9 },
   comparar: { c: [-0.3, -4, 0], dir: [0, 0.3, 1], ancho: 29, alto: 11.5, retrato: { dir: [0.7, 0.3, 1], caja: [[-13, -9, -1.3], [12.3, 1.8, 2.1]] } },
 };
@@ -520,7 +508,6 @@ mas.addEventListener("click", () => masDatos && abrirInfo({ eyebrow: "Datos de l
 const kv = filas => `<dl class="kv">${filas.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`;
 
 function mostrar({ cinta = true, comp = false, mues = false, cols = false, ochoV = false, n = 0, filaMP3 = false, enRincon = false }) {
-  gHist.visible = false;
   gCinta.visible = cinta; gComp.visible = comp; gMues.visible = mues; gCols.visible = cols;
   filaB.visible = filaMP3; filaA.userData.t.visible = filaMP3;
   gCols.position.copy(enRincon ? RINCON : new THREE.Vector3(0, -0.8, 0.5));
@@ -661,7 +648,6 @@ e.alPasar(() => [agujas, puntas].filter(o => enVista(o) && o.count > 0), (o, q) 
   for (let i = 0; i < o.count; i++) { const dx = xDe(P[i]) - q.x, dz = zDe(P[i]) - q.z, dd = dx * dx + dz * dz; if (dd < dm) { dm = dd; mejor = i; } }
   return posTxt(mejor);
 }, { color: "pos" });
-e.alPasar(() => barras.filter(enVista), b => `<b>${tramo(b.userData.k)}</b> · ${b.userData.n} posiciones<br>densidad con r<sub>p</sub>: ${HREF[b.userData.k]} · uniforme: 70`, { color: "pos" });
 const NOMBRE_BIT = k => (k === 15 ? "LSB, peso 1" : k === 0 ? "bit de signo, peso −32 768" : `peso ${2 ** (15 - k)}`);
 e.alPasar(() => columnas.filter(o => enVista(o.g)).flatMap(o => o.rod), m => {
   const o = columnas.find(c => c.rod.includes(m)), k = o.rod.indexOf(m), c = columnas.indexOf(o) % 8, mp3 = columnas.indexOf(o) >= 8;
@@ -674,21 +660,13 @@ e.alPasar(() => [cIzq, cDer, eIzq, eDer].filter(enVista), (o, q) => {
   return `<b>${est ? "Estegoaudio" : "Audio"}, canal ${izq ? "izquierdo (p par)" : "derecho (p impar)"}</b><br>${fmtT(u * DUR)} · trama ≈ ${fmtN(Math.floor(u * TRAMAS))} · forma ilustrativa`;
 }, { color: "muted" });
 
+const capas = crearCapas({ P, HOBS, HREF, M, L, FS, d, Mo });
 recorrido($("recorrido"), (i, nombre) => {
   cancelAnim(); cancelAnim = () => {};
   relojes.forEach(clearTimeout); relojes = [];
   datosEscena(null);
   PASOS[nombre]();
-}, (i, k, titulo) => {
-  // Capa «Hallazgo»: el histograma aparece en 3D detrás de las cintas, con todas las agujas encendidas.
-  const nombre = document.querySelectorAll("#recorrido .paso")[i]?.dataset.paso;
-  if (nombre !== "todas") return;
-  const ver = k === 1;
-  cancelAnim(); cancelAnim = () => {};
-  agujas.count = puntas.count = ver ? 0 : L; ponDato(fmtN(L), "posiciones de 1400");
-  gHist.visible = ver;
-  tomar(ver ? TOMA.hist : TOMA.agujas, 1300);
-});
+}, (i, k, titulo, vista) => capas(document.querySelectorAll("#recorrido .paso")[i]?.dataset.paso, k, vista));
 
 /* ---------- Para explorar ---------- */
 function explorarPos() {

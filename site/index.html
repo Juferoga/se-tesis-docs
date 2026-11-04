@@ -227,6 +227,7 @@
 <script type="module">
 import { recorrido, animar, sinMovimiento, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
+import { capaInicio } from "./assets/js/inicio-capas.js";
 
 const lienzo = document.getElementById("ini-lienzo");
 const e = escena3d(lienzo, { camara: [0.3, 4.5, 16], mirar: [0.3, 1.5, 0] });
@@ -536,7 +537,7 @@ recorrido(document.getElementById("recorrido"), (i, nombre, dir) => {
     viajar(p.cam);
   }
   e.controls.autoRotate = !!p.giro && !sinMovimiento();
-});
+}, capaInicio);
 </script>
 </body>
 </html>

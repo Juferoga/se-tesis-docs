@@ -225,6 +225,8 @@
 <script type="module">
 import { recorrido, animar, sinMovimiento, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
+import { gestorCapas } from "./assets/js/capas-rsp.js";
+import { capasRecuperacion } from "./assets/js/recuperacion-capas.js";
 const Mo = window.Modelo, C = Mo.CASO, M = C.M, L = 1400, FS = 44100;
 const $ = id => document.getElementById(id);
 const fmtN = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ").replace("-", "−");
@@ -561,7 +563,7 @@ function mostrar(i, dir) {
   if (i === 9) { ponerTiempos(0); cancelarA = animar(1300, u => ponerTiempos(Math.max(0.02, u))); }
   if (primera) { primera = false; vista = VISTAS[P.v]; encuadrarYa(); } else mover(VISTAS[P.v]);
 }
-recorrido($("recorrido"), (i, nombre, dir) => mostrar(i, dir));
+recorrido($("recorrido"), (i, nombre, dir) => mostrar(i, dir), gestorCapas(capasRecuperacion({ d, pos, fl, W16, K16, M, L })));
 
 /* ---------- Para explorar ---------- */
 const tmax = Math.max(...T.map(t => t[1]));

@@ -249,6 +249,7 @@ body { grid-template-columns: minmax(0, 1fr); }
 <script type="module">
 import { recorrido, animar, color, alCambiarTema, sinMovimiento, abrirInfo } from "./assets/js/guia.js";
 import { escena3d, THREE, etiqueta } from "./assets/js/tres.js";
+import { crearCapas } from "./assets/js/cifrado-capas.js";
 const Mo = window.Modelo, C = Mo.CASO;
 const $ = id => document.getElementById(id);
 const enc = new TextEncoder(), dec = new TextDecoder("utf-8", { fatal: false });
@@ -660,12 +661,13 @@ function vBits() {
   decir(`un cuadro por cada uno de los 175 bytes cifrados. Los dos verdes, c<sub>1</sub> y c<sub>2</sub>, llevan la longitud cifrada; los grises son los 173 bytes del mensaje. Debajo, esos dos bytes abiertos en sus 16 bits, w<sub>1</sub> … w<sub>16</sub>: ${Mo.bin8(CB[0])} ${Mo.bin8(CB[1])}. En total n = 175 bytes → L = 8 × 175 = 1400 bits.`);
 }
 
+const capas = crearCapas({ K, CB, MSG, F, VB, VC, Mo, d });
 const VISTAS = { xor: vXor, flujo: vFlujo, cifrar: vCifrar, descifrar: vDescifrar, porque: vPorque, histograma: vHist, dos: vDos, bits: vBits };
 recorrido($("recorrido"), (i, nombre) => {
   cancelarTodo(); cancelCam(); limpiar(); tarjetas(); toma = null; datosEscena(null);
   verHtml(nombre);
   VISTAS[nombre]();
-});
+}, (i, k, titulo, vista) => capas(document.querySelectorAll("#recorrido .paso")[i]?.dataset.paso, k, vista));
 
 /* ---------- Para explorar ---------- */
 function explorar() {
