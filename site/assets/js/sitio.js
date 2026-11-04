@@ -136,6 +136,7 @@ addEventListener("keydown", e => {
 
 // 4. Banco de dudas con buscador (tecla /). Los datos están en dudas.js.
 let dudasDlg = null, DUDAS = null;
+const NIVELES = [["hecha", "1 · Las que ya preguntaron", "para empezar por lo conocido"], ["normal", "2 · Para entender mejor", "concepto y funcionamiento"], ["experta", "3 · Nivel experto", "rigor matemático y de seguridad"]];
 const norm = t => String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/<[^>]+>/g, "").toLowerCase();
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const sinEtiquetas = t => esc(t).replace(/&lt;(\/?)(sub|sup)&gt;/g, "<$1$2>");
@@ -158,9 +159,13 @@ export async function abrirDudas(consulta = "") {
       const q = norm(inp.value).split(/\s+/).filter(Boolean);
       const lista = DUDAS.filter(d => (!filtro || d.etapa === filtro) && q.every(w => d._t.includes(w)));
       dudasDlg.querySelector(".dudas-cuenta").textContent = `${lista.length} de ${DUDAS.length} preguntas`;
-      dudasDlg.querySelector(".dudas-lista").innerHTML = lista.length ? lista.map(d => `<details${q.length && lista.length <= 3 ? " open" : ""}><summary><span class="dudas-et">${esc(d.etapa)}</span><span>${sinEtiquetas(d.p)}</span></summary>
+      const item = d => `<details${q.length && lista.length <= 3 ? " open" : ""}><summary><span class="dudas-et">${esc(d.etapa)}</span><span>${sinEtiquetas(d.p)}</span></summary>
         <div class="dudas-r"><p>${sinEtiquetas(d.r)}</p>${d.f ? `<p class="dudas-f">${sinEtiquetas(d.f)}</p>` : ""}
-        <p class="dudas-pie">${d.fuente ? `<span>Fuente: ${sinEtiquetas(d.fuente)}</span>` : ""}<a class="dudas-ir" href="${esc(d.url)}">Ver en el sitio →</a></p></div></details>`).join("")
+        <p class="dudas-pie">${d.fuente ? `<span>Fuente: ${sinEtiquetas(d.fuente)}</span>` : ""}<a class="dudas-ir" href="${esc(d.url)}">Ver en el sitio →</a></p></div></details>`;
+      dudasDlg.querySelector(".dudas-lista").innerHTML = lista.length ? NIVELES.map(([n, t, e]) => {
+          const g = lista.filter(d => (d.nivel || "normal") === n);
+          return g.length ? `<h3 class="dudas-grupo">${t} <small>${g.length} · ${e}</small></h3>` + g.map(item).join("") : "";
+        }).join("")
         : `<p class="note">No hay preguntas con esas palabras. Prueba con otra o quita el filtro de etapa.</p>`;
     };
     inp.addEventListener("input", pintar);
@@ -177,8 +182,9 @@ export async function abrirDudas(consulta = "") {
   if (!DUDAS) {
     dudasDlg.querySelector(".dudas-lista").innerHTML = `<p class="note">Cargando…</p>`;
     try { DUDAS = (await import("./dudas.js")).DUDAS; } catch { dudasDlg.querySelector(".dudas-lista").innerHTML = `<p class="note">No se pudieron cargar las preguntas.</p>`; return; }
-    DUDAS.forEach(d => (d._t = norm([d.etapa, d.p, d.r, d.f, d.fuente, ...(d.claves || [])].join(" "))));
-    const etapas = [...new Set(DUDAS.map(d => d.etapa))];
+    DUDAS.forEach(d => (d._t = norm([d.etapa, d.p, d.r, d.f, d.fuente, ...(d.claves || []), NIVELES.find(n => n[0] === d.nivel)?.[1]].join(" "))));
+    const ORDEN = ["Inicio", "Compresión", "Clave", "Caos", "Cifrado", "Inserción", "Recuperación", "Seguridad"];
+    const etapas = [...new Set(DUDAS.map(d => d.etapa))].sort((a, b) => ORDEN.indexOf(a) - ORDEN.indexOf(b));
     dudasDlg.querySelector(".dudas-filtros").innerHTML = etapas.map(e => `<button type="button" class="ghost" data-e="${esc(e)}" aria-pressed="false">${esc(e)}</button>`).join("");
   }
   if (consulta) inp.value = consulta;
