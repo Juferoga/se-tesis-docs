@@ -182,7 +182,7 @@
         <section class="nivel" data-titulo="Costo computacional">
         <p>Una pasada de la red cuesta del orden de 2P operaciones de coma flotante por token, con \(P=1.54\times10^9\) parámetros, más la atención, que crece con el contexto. El código reutiliza las claves y los valores de los tokens anteriores (caché KV, <code>past_key_values</code>), así que para los 294 símbolos del poema:</p>
         \[ C_{\text{red}}\approx2P\,(Q+1)\approx9.1\times10^{11} \]
-        <p>Cifrar, insertar y extraer son lineales: unas \(2.4\times10^{4}\) iteraciones del mapa logístico y 1400 lecturas, siete órdenes de magnitud menos. En tiempo medido la diferencia es de unos tres (110.06 s frente a 0.073 s), porque las etapas cortas incluyen leer y guardar archivos. No se registró si la implementación usa caché KV; sin ella, la atención crece con el cuadrado de Q.</p>
+        <p>Cifrar, insertar y extraer son lineales: unas \(2.4\times10^{4}\) iteraciones del mapa logístico y 1400 lecturas, siete órdenes de magnitud menos. En tiempo medido la diferencia es de unos tres (110.06 s frente a 0.073 s), porque las etapas cortas incluyen leer y guardar archivos. La implementación usa caché KV (<code>past_key_values</code>), así que cada token nuevo solo calcula su propia atención; sin ella, el costo crecería con el cuadrado de Q.</p>
         <p class="ref">J. Kaplan et al., «Scaling laws for neural language models», arXiv:2001.08361, 2020.</p>
         </section>
       </article>

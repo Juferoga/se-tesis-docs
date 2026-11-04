@@ -51,6 +51,7 @@ if (barra) {
     <nav class="etapas" aria-label="Etapas">${ETAPAS.map(e =>
       `<a href="${e.url}#paso-1"${e.id === actual ? ' aria-current="page"' : ""} title="${e.nombre}"><b>${e.n}</b><span>${e.nombre}</span></a>`).join("")}</nav>
     <div class="acciones">
+      <button class="ghost" type="button" id="boton-dudas" title="Buscar dudas · tecla /">Dudas <kbd>/</kbd></button>
       ${explorar ? '<button class="ghost" type="button" id="boton-explorar" title="Tecla E">Explorar <kbd>E</kbd></button>' : ""}
       <button class="ghost" type="button" id="boton-mapa" title="Tecla M">Mapa <kbd>M</kbd></button>
       <button class="ghost" type="button" id="boton-tema" aria-label="Cambiar tema"></button>
@@ -70,6 +71,7 @@ if (barra) {
   barra.querySelector('[aria-current="page"]')?.scrollIntoView({ inline: "center", block: "nearest" });
   barra.querySelector("#boton-explorar")?.addEventListener("click", () => explorar.showModal());
   barra.querySelector("#boton-mapa").addEventListener("click", abrirMapa);
+  barra.querySelector("#boton-dudas").addEventListener("click", () => abrirDudas());
   const barraProg = barra.querySelector(".progreso i");
   const pintar = (i = 0) => (barraProg.style.width = `${(antes + i + 1) / total * 100}%`);
   pintar();
@@ -128,15 +130,68 @@ addEventListener("keydown", e => {
   if (e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.("input, select, textarea, [contenteditable]")) return;
   const k = e.key.toLowerCase();
   if (k === "m") { e.preventDefault(); mapa?.open ? mapa.close() : (explorar?.close(), abrirMapa()); }
+  if (e.key === "/" && !document.querySelector("dialog[open]")) { e.preventDefault(); abrirDudas(); }
   if (k === "e" && explorar) { e.preventDefault(); explorar.open ? explorar.close() : (mapa?.close(), explorar.showModal()); }
 });
 
-// 4. Ayuda de teclado la primera vez.
+// 4. Banco de dudas con buscador (tecla /). Los datos están en dudas.js.
+let dudasDlg = null, DUDAS = null;
+const norm = t => String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/<[^>]+>/g, "").toLowerCase();
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const sinEtiquetas = t => esc(t).replace(/&lt;(\/?)(sub|sup)&gt;/g, "<$1$2>");
+export async function abrirDudas(consulta = "") {
+  mapa?.close(); explorar?.close();
+  if (!dudasDlg) {
+    dudasDlg = document.createElement("dialog");
+    dudasDlg.className = "dudas";
+    dudasDlg.innerHTML = `<div class="dudas-cab"><div><span class="eyebrow">Banco de preguntas</span><h2>Busca tu duda</h2></div>
+        <button type="button" class="ghost" data-cerrar>Cerrar · Esc</button></div>
+      <div class="dudas-busca"><input type="search" placeholder="Escribe una palabra: ulp, colisión, SHA-512, canal, Lyapunov…" aria-label="Buscar entre las preguntas" autocomplete="off">
+        <div class="dudas-filtros" role="group" aria-label="Filtrar por etapa"></div><p class="dudas-cuenta" aria-live="polite"></p></div>
+      <div class="dudas-lista"></div>`;
+    document.body.append(dudasDlg);
+    dudasDlg.querySelector("[data-cerrar]").addEventListener("click", () => dudasDlg.close());
+    dudasDlg.addEventListener("click", e => { if (e.target === dudasDlg) dudasDlg.close(); if (e.target.closest(".dudas-ir")) dudasDlg.close(); });
+    const inp = dudasDlg.querySelector("input");
+    let filtro = "";
+    const pintar = () => {
+      const q = norm(inp.value).split(/\s+/).filter(Boolean);
+      const lista = DUDAS.filter(d => (!filtro || d.etapa === filtro) && q.every(w => d._t.includes(w)));
+      dudasDlg.querySelector(".dudas-cuenta").textContent = `${lista.length} de ${DUDAS.length} preguntas`;
+      dudasDlg.querySelector(".dudas-lista").innerHTML = lista.length ? lista.map(d => `<details${q.length && lista.length <= 3 ? " open" : ""}><summary><span class="dudas-et">${esc(d.etapa)}</span><span>${sinEtiquetas(d.p)}</span></summary>
+        <div class="dudas-r"><p>${sinEtiquetas(d.r)}</p>${d.f ? `<p class="dudas-f">${sinEtiquetas(d.f)}</p>` : ""}
+        <p class="dudas-pie">${d.fuente ? `<span>Fuente: ${sinEtiquetas(d.fuente)}</span>` : ""}<a class="dudas-ir" href="${esc(d.url)}">Ver en el sitio →</a></p></div></details>`).join("")
+        : `<p class="note">No hay preguntas con esas palabras. Prueba con otra o quita el filtro de etapa.</p>`;
+    };
+    inp.addEventListener("input", pintar);
+    dudasDlg.querySelector(".dudas-filtros").addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      filtro = filtro === b.dataset.e ? "" : b.dataset.e;
+      dudasDlg.querySelectorAll(".dudas-filtros button").forEach(x => x.setAttribute("aria-pressed", x.dataset.e === filtro));
+      pintar();
+    });
+    dudasDlg.pintar = pintar;
+  }
+  dudasDlg.showModal();
+  const inp = dudasDlg.querySelector("input");
+  if (!DUDAS) {
+    dudasDlg.querySelector(".dudas-lista").innerHTML = `<p class="note">Cargando…</p>`;
+    try { DUDAS = (await import("./dudas.js")).DUDAS; } catch { dudasDlg.querySelector(".dudas-lista").innerHTML = `<p class="note">No se pudieron cargar las preguntas.</p>`; return; }
+    DUDAS.forEach(d => (d._t = norm([d.etapa, d.p, d.r, d.f, d.fuente, ...(d.claves || [])].join(" "))));
+    const etapas = [...new Set(DUDAS.map(d => d.etapa))];
+    dudasDlg.querySelector(".dudas-filtros").innerHTML = etapas.map(e => `<button type="button" class="ghost" data-e="${esc(e)}" aria-pressed="false">${esc(e)}</button>`).join("");
+  }
+  if (consulta) inp.value = consulta;
+  dudasDlg.pintar();
+  inp.focus();
+}
+
+// 5. Ayuda de teclado la primera vez.
 let vista = false;
 try { vista = sessionStorage.getItem("ayuda-teclas") === "1"; sessionStorage.setItem("ayuda-teclas", "1"); } catch {}
 if (!vista && rec) {
   const t = Object.assign(document.createElement("div"), { className: "aviso-teclas" });
-  t.innerHTML = "Usa <kbd>←</kbd> <kbd>→</kbd> para avanzar por toda la presentación · <kbd>M</kbd> mapa" + (explorar ? " · <kbd>E</kbd> explorar" : "");
+  t.innerHTML = "Usa <kbd>←</kbd> <kbd>→</kbd> para avanzar por toda la presentación · <kbd>M</kbd> mapa · <kbd>/</kbd> buscar dudas" + (explorar ? " · <kbd>E</kbd> explorar" : "");
   document.body.append(t);
   setTimeout(() => t.classList.add("fuera"), 4500);
   setTimeout(() => t.remove(), 5200);
